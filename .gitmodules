@@ -1,0 +1,4 @@
+[submodule "fall-2022/MUSI-8803/humdrum-tools"]
+	path = fall-2022/MUSI-8803/humdrum-tools
+	url = https://github.com/humdrum-tools/humdrum-tools
+	ignore = untracked
