@@ -1,0 +1,16 @@
+- Focus only on one part of the piece (minimum 30 seconds, maximum 2 minutes)
+    * 4:00-4:45
+
+- 3 key musical features (e.g. rhythmic, textural, timbral, harmonic, structural, phrasing, etc)
+    - frequency
+    - background intensity
+    - textural/timbral (specifically, sharpness/fuzzyness of sounds)
+
+x axis: time
+y axis: frequency
+one y axis for each of the two primary non-background sounds
+  - bottom: radio-static-like sound
+  - top: bright noise/struck-piano note sample sound
+sharpness/buzziness: jaggedness of line
+fuzziness of sound: blurriness of line
+opacity of background: intensity of background pad sound
