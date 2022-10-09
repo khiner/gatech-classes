@@ -1,0 +1,1 @@
+extract -i "**harm" *.krn | hrd | context -n 4 -o "[=;]" | sort | uniq -c | sort

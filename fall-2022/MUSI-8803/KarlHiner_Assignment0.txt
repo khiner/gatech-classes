@@ -1,0 +1,13 @@
+Karl Hiner: MUSI-8808 Assignment 0
+
+1) Name or describe something that you have learned in class so far that you have enjoyed learning about and/or seen value in learning.
+
+I have enjoyed being exposed to academic papers in Music Informatics. I had very little knowledge coming into this class what the field is about beyond a very broad sense of it. I also appreciate the emphasis on hypothesis-driven research. This is something I have very little practice with, and I enjoy the challenge of exercising this part of my brain, as my natural tendancy is to approach things exploratively.
+
+2) Name or describe something that you feel you are struggling with, or do not yet understand or 'have a good grasp of', or feel that you do not see the connection to 'the bigger picture' with.
+
+From the "big picture" perspective, I am curious about the research community, some of their common broad goals, what some of the "major results" are in the field, if/how the research outcomes feed into other areas like commercial industry, and what common challenges CM researchers face in making a broad impact.
+
+3) Name or describe something that you are hoping to learn in the class that you have not learned yet.
+
+I am most looking forward to learning approaches and techniques for quantifying inference over large (or small!) musical corpora. What inferences can we reasonably make based on the mid/high-level features we derive? How do we reason about the various forms of uncertainty we run into, from methodological/data errors to imprecise definitions/operationalization?
