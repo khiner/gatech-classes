@@ -1,0 +1,15 @@
+Chords, genre (rock & roll, pop, country rock), the mix, harmonies (close harmonies, contour, relationships)
+Lyrics (sentiment analysis), riffs (nice because it's more uniquely identifiable than chords)
+
+
+"vocal harmony" - two or more voices at the same time, where each voice is present for at least 50% of the time period of all voices (minimum of one second)
+"harmony closess" - average interval between each voice in harmony
+"song harmony closeness" - mean harmony closeness of all harmonies in song
+"artist harmony closeness" - mean song closeness of all songs for artist
+
+
+Combination of all of the above in e.g. 
+
+Analysis:
+    - Similarity metric (and distance measure) of combination of measured variables
+    - The Everly bros will be among the closest third to the Beatles amongst all rock music, when measuring "harmony closeness"

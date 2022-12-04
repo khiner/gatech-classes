@@ -1,0 +1,10 @@
+TODO this & next week:
+
+- Karl: Scrape Chordify data for > 2018 & potentially getting more chords in past years too, since we don't have many
+- Sile: Billboard data - unique songs & billboard entry date, and filtering out songs already in billboard chordify.
+
+Things to think about with sampling:
+- Imbalance in total number of Billbaord Top-N (100, 20, etc) per-year
+- Would be nice to have a similar distribution of metrics representing songs' "popularity" for each period (year)
+    - E.g. Distribution of peak position in each year
+

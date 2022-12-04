@@ -1,0 +1,149 @@
+---
+title: "GraphicsInR"
+output: html_document
+date: "2022-10-26"
+---
+load library and read-in built-in humdrumR data
+```{r}
+library(humdrumR)
+chors <- readHumdrum(humdrumRroot, 'HumdrumData/BachChorales/chor')
+```
+
+# Visualizations in R
+We have already seen some basic plots (barplots, histograms) in other humdrumR notebooks. Please look there for additional examples using humdrumR data.
+
+Below are some examples of basic plots which you can use as reference. For each example there's one with made-up data in R, and a second with musical data in humdrumR.
+
+## line plots 
+### Made-up data
+```{r}
+d <- jitter(c(1:20), factor=2)
+plot(d)
+```
+
+### HumdrumR data - e.g., track pitch height over time for a single chorale melody.
+
+```{r}
+ch <- chors[5]
+with(ch[[,4]], semits(Token)) |> plot(type='l')
+?time
+```
+
+## Bar plots 
+### Made-up data:
+```{r}
+v <- sample(1:20, replace=FALSE)
+barplot(v)
+```
+
+### humdrumR data - e.g., examine distribution of rhythmic durations
+```{r}
+with(ch, recip(Token), table(.)) |> barplot(main = "", xlab = "Foo", ylab = "booo")
+```
+
+## Histogram plots - used to examine grouping/clustering of highly continuous data into fixed categories or bins of size N.
+
+### Made-up data:
+```{r}
+h <- runif(2000, min=1, max=100)
+hist(h, breaks=100) 
+hist(h, breaks = 10) # notice the fewer the breaks, the smoother the data looks.
+```
+
+### humdrumR data: pitch distribution in semits of all chorales (change N to see effect)
+```{r}
+with(chors, semits(Token), hist(., breaks=15))
+
+```
+
+## Scatter plots
+### Made-up data
+```{r}
+n <- 100
+x <- rnorm(n)
+y <- 23 + 2.2 * x + rnorm(n, sd = 2)
+
+plot(x, y)
+```
+
+### humdrumR data - e.g., examine interaction/correlation of pitch height and duration variables (across all songs)
+```{r}
+ph <- with(chors, semits(Token))
+dur <- with(chors, duration(Token))
+plot(dur, ph)
+```
+
+Below are are some examples of the same plots with grouping by 3rd variable
+
+### Line/scatter plots 
+#### E.g., one melody per file for several files (illustrate differences by file). 
+The following shows one color *per file*
+```{r}
+with(chors[[,4]], semits(Token), plot(Record, ., col=rainbow(max(File))[File]))
+```
+#### OR if you wanted to keep those as lines (not dots...) 
+...and have a separate line for each file, then:
+
+```{r}
+plot.new()
+plot.window(ylim = c(-20, 20), xlim = with(chors, range(Record)))
+
+for (file in 1:10) {
+  with(chors[file], where = Spine == 4, {
+  points(Record, semits(Token), type = 'l', col = rainbow(10)[file])
+  })
+}
+
+
+```
+
+
+Example of scatter(like) plot showing pitch height as a function of duration. Each part (Spine field) is color coded.
+```{r}
+with(chors, plot(duration(Token), pch = 16,
+                 semits(Token), 
+                 col = rainbow(4)[Spine]))
+```
+
+
+### Examples of other plots
+
+##### Box plots
+
+#### Heat maps
+Create distribution of #s that mimics musical scale values
+```{r}
+sc <- c(1,1,1,1,1,1,1,5,5,5,5,5,3,3,3,3,4,4,4,2,2,2,6,6,7,7)
+```
+
+Sample with replacement to mimic a major scale:
+```{r}
+mel <- sample(sc, size= 500, replace=TRUE)
+```
+ditto for rhythmic values
+```{r}
+rvals <- c(1,1,2,2,4,4,4,4,4,4,8,8,8,8,8,8,8,8,12,12,16,16,16,16,24)
+rhy <- sample(rvals, size= 500, replace=TRUE)
+```
+
+Heatmap requires a matrix table of data, so in base R:
+```{r}
+s <- data.frame(rhy,mel)
+stab <- table(s)
+heatmap(stab, Rowv = NA, Colv = NA, col=heat.colors(10)) 
+```
+note: creating legend is non-trivial! (Also, heatmaps are horrible.)
+
+### Aside: regex (str_replace)
+You may want to use regular expressions in order to modify your data (be careful not to overwrite unless that is what you want!)
+
+We saw a simple example in the "intro" R file about converting all lower case kern values to upper case with the "toupper" function.
+
+Let's look at another example: get rid of all beaming information (J and L - even though there's an option for that ;)
+```{r}
+within(ch, kern(Token), gsub("[JK]", "", .))
+```
+
+
+
+## Try better representation of heat maps using size...

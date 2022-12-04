@@ -1,0 +1,82 @@
+---
+title: "Assignment5"
+output: html_document
+date: "2022-10-26"
+---
+### 8803/4843 Assignment 5 - Visualizations in R/humdrumR.
+Please submit your file as an "RMD" (R markdown) file.  
+To see the output of your file as an HTML doc, click "Knit" at the top of Rstudio.
+
+Due: Monday, Oct.31  
+Name:  
+
+For each of the situations below, you will choose a visualization that you think best illustrates the relation you would like to show. Using the 'BaseGraphicsCheatsheet' file in Canvas, add all necessary information (e.g., axes labels, title, etc.) to the graphs to make the best visualization possible.
+
+Be sure to include ALL code (including any reading-in of files, even if they are on your local machine.)
+
+
+Q1. Show the distribution of Roman Numerals in the bhchorale (chorales with harmony) folder. Show Roman numerals without inversion (i.e., remove inversions). Show the major keys only.  
+[4843 students may show all RN regardless of inversion].
+
+```{r}
+library(humdrumR)
+
+# Group:
+# - Lowered roots (beginning with '-')
+# - Raised roots (beginning with '#')
+# - Semicolon suffixes
+# - Inversions (lowercase characters 'b-g')
+# - Chord shifts (keep the first group in strings separated by '/')
+chors <- readHumdrum('~/Development/gatech-classes/fall-2022/MUSI-8803/ClassicalMusic/bach/bhchorales/chor')
+rns <- with(chors,
+  subset = Exclusive == 'harm',
+  gsub("(^-)|(^#)|([b-g]*)|(;$)|(/.*$)", "", .)
+) |> table()
+
+# Remove:
+# - Alternative functional harmony labels (suffixed with brackets, i.e. '[.*]')
+# - Implicit harmonies (surrounded by parens, i.e. '(.*)')
+# - Rests (a single 'r')
+rns <- rns[grep('(\\[.*\\])|(\\(.*\\))|(^r$)', names(rns), invert=TRUE)]
+
+# - Only keep major keys (Roman numerals with uppercase letters)
+rns <- rns[grep("(^[IV])", names(rns))]
+
+barplot(rns,
+  main='Distribution of major chord degrees in Bach Chorales',
+  xlab='Major chord degree',
+  ylab='Count',
+)
+
+```
+
+Q2. Show pitch height of all voice parts in the chorales over time. Include in your visualization a grouping or coding by voice part (SATB).
+
+
+```{r}
+with(chors[[,2:6]], semits(Token),
+  plot(timeline(Token), .,
+    cex = 0.6, pch=4, col=rainbow(max(Spine))[Spine],
+    main='Pitch height of voice parts in Bach chorales over time',
+    xlab='Time (cumulative whole notes since start)',
+    ylab='Semitones (Middle-C = 0)'
+  ),
+  legend(x='topright', legend=c('S', 'A', 'T', 'B'), pch=4, col=rev(rainbow(max(Spine))[2:max(Spine)]))
+)
+
+```
+
+Q3. Show the interaction of the distribution of all melodic intervals by duration (use whichever representations for interval and duration that you think is best, e.g., 'major second' vs 2 semitones; quarter note value vs 0.25 duration).
+
+
+```{r}
+within(chors, Intervals <- interval(Token, simple=T), Durations <- recip(Token)) -> chors_interval_dur
+with(chors_interval_dur, table(Intervals, Durations),
+     heatmap(., Rowv = NA, Colv = NA,
+          main='Melodic interval vs duration',
+          xlab='Reciprocal of beat proportion',
+          ylab='Interval')
+)
+
+```
+
