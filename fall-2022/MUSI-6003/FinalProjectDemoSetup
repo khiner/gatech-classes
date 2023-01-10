@@ -1,0 +1,47 @@
+Demo setup:
+
+Ableton: Receive MIDI "From Max 1"
+Max patch: Double-click click noteout object and select from Max 1 as the midi port
+~/Development/reflection-recreation python ReflectionRecreation/other/main.py
+
+
+
+Script:
+
+## Intro
+
+Our group chose Brian Eno’s Reflection as our piece to recreate.
+
+Reflection is a software application for generating endless ambient music, as well as an accompanying single-song album showcasing an hour of the app’s output.
+
+Brian Eno is a widely influential producer, composer, songwriter, and audiovisual artist.
+
+Although Eno did not invent the idea of generative or ambient music, he is credited with coining both terms.
+
+Eno considers Reflection to be his most sophisticated ambient experiment to date, and the one
+that best honors his original intention with ambient music to "make endless music, music that
+would be there as long as you wanted it to be."
+
+Unlike the previous works Eno created, Reflection is noninteractive, and the user has a passive role.
+The listener can only play and pause the audio, connect to Apple TV, and set a sleep timer.
+
+For Reflection, Eno and his collaborators created a rule-based stochastic generative music system by writing scripts to change MIDI clips in a Digital Audio Workstation to explore the concept of endless changing.
+
+Scripts include note shifting, a bouncing ball delay, a Markov chain, and a script to damp velocity above a specific pitch.
+
+Reflection also generates endless visual content based on the values of these parameters in real time.
+
+## Our recreation
+
+For our recreation, we used the same basic methodology of writing a script to change MIDI clips on the fly to produce an infinite generative stream of notes.
+
+We randomly transition between 10 pre-generated MIDI tracks, and use the same note manipulation algorithm and probabilities as the descriptions we found for Reflection:
+• 14% of the notes shift down three scale degrees
+• 41% of the notes shift down by an octave
+* note onsets are uniformly distributed within a preset range
+
+This stream is sent over OSC to a MaxMSP patch, which processes the notes, using stochastic rule-based algorithms affecting aspects like note velocity and pan position, as well as probabilistically triggering a bell sound with a custom bouncing ball delay.
+
+We then send the MIDI notes to Ableton to play tones designed to sound similar to those in Reflection.
+
+Finall, we also generate a visualization similar to Reflection's, with color and pattern preset transitions stochastically governed by the generated notes.
