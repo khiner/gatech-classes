@@ -1,0 +1,71 @@
+\documentclass[twoside,10pt]{article}
+\input{macro.tex}
+
+\newcommand{\eqn}[1]{\begin{equation*}#1\end{equation*}}
+\newcommand{\aln}[1]{\begin{align}#1\end{align}}
+\newcommand{\s}{\enspace}
+
+\begin{document}
+
+\title{CSE 6643 Homework 1}
+\author{Karl Hiner}
+\date{}
+\maketitle
+
+\section{Basics [25 pts]}
+
+\subsection*{(a) [5 pts]}
+Suppose that $\vct{v}_1, \vct{v}_2, \vct{v}_3, \vct{v}_4$ is a basis of the vector space $V \subset \R^n$. Prove that the list 
+\begin{equation}
+  \vct{v}_1 + \vct{v}_2, \vct{v}_2 + \vct{v}_3, \vct{v}_3 + \vct{v}_4, \vct{v}_4
+\end{equation}
+is also a basis of $V$.
+
+1. Since $\vct{v}_1, \vct{v}_2, \vct{v}_3, \vct{v}_4$ is a basis of the vector space $V \subset \R^n$, for all $\vct{u} \in V$,
+\eqn{\vct{u} = a_1\vct{v}_1 + a_2\vct{v}_2 + a_3\vct{v}_3 + a_4\vct{v}_4, \s a_i \in \R.}
+2. Rearranging terms:
+\aln{
+  \vct{u} &= a_1\vct{v}_1 + a_2\vct{v}_2 + a_3\vct{v}_3 + a_4\vct{v}_4\\
+  &= a_1\vct{v}_1 + 2a_2\vct{v}_2 - a_2\vct{v}_2 + 2a_3\vct{v}_3 - a_3\vct{v}_3 + 2a_4\vct{v}_4 - a_4\vct{v}_4\\
+  &= a_1(\vct{v}_1 + \frac{2a_2}{a_1}\vct{v}_2) + (-a_2)(\vct{v}_2 + \vct{v}_3) + ()(\vct{v}_3 + \vct{v}_4) + (-a_4)\vct{v}_4\\
+}
+
+\subsection*{(b) [10 pts]}
+For $U$ a subspace of the vector space $V \subset \R^n$ with $\dim(U) = \dim(V)$. Prove that $U = V$.
+
+\subsection*{(c) [10 pts]}
+Show that the subspaces of $\R^3$ are precisely $\{0\}$, $\R^{3}$, all lines in $\R^3$ through the origin, and all planes in $\R^3$ through the origin.
+
+\section{Norm Equivalencies [25 pts]}
+In a finite-dimensional space, all norms are equivalent. In this problem, you will be asked to verify this theorem for some special norms. Prove the following inequalities. 
+
+Let $\vct{x} \in \R^n$ be an $n$-dimensional vector. Let $\mtx{A} \in \R^{m \times n}$ be an $m \times n$ matrix. Then: 
+
+\subsection*{(a) [10 pts]}
+\begin{equation*}
+  \|\vct{x}\|_{\infty} \leq \|x\|_2 \leq \sqrt{n}\|\vct{x}\|_{\infty}.
+\end{equation*}
+
+\subsection*{(b) [7.5 pts]}
+\begin{equation*}
+  \|\mtx{A}\|_{\infty} \leq \sqrt{n}\|\mtx{A}\|_2.
+\end{equation*}
+
+\subsection*{(c) [7.5 pts]}
+\begin{equation*}
+  \|\mtx{A}\|_{2} \leq \sqrt{m}\|\mtx{A}\|_{\infty}.
+\end{equation*}
+
+\section{Perturbing [25 pts]}
+For $\vct{u}, \vct{v} \in \K^m$, the matrix $\mtx{A} \coloneqq \Id + \vct{u}\vct{v}^{*}$ is called a \emph{rank-one} perturbation of the identity. 
+
+\subsection*{(a) [15 pts]}
+Show that if $\mtx{A}$ is nonsingular, then its inverse has the form $\mtx{A}^{-1} = \Id + \alpha \vct{u}\vct{v}^{*}$ for some scalar $\alpha$, and give an expression for $\alpha$.
+
+\subsection*{(b) [5 pts]}
+For what $\vct{u}$ and $\vct{v}$ is $\mtx{A}$ nonsingular? 
+
+\subsection*{(c) [5 pts]} 
+If $\mtx{A}$ is singular, what is $\mnull(\mtx{A})$?
+
+\end{document}
