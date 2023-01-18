@@ -1,7 +1,7 @@
 \documentclass[twoside,10pt]{article}
 \input{macro.tex}
 
-\newcommand{\eqn}[1]{\begin{equation*}#1\end{equation*}}
+\newcommand{\eqn}[1]{\begin{equation}#1\end{equation}}
 \newcommand{\aln}[1]{\begin{align}#1\end{align}}
 \newcommand{\s}{\enspace}
 
@@ -21,20 +21,95 @@ Suppose that $\vct{v}_1, \vct{v}_2, \vct{v}_3, \vct{v}_4$ is a basis of the vect
 \end{equation}
 is also a basis of $V$.
 
-1. Since $\vct{v}_1, \vct{v}_2, \vct{v}_3, \vct{v}_4$ is a basis of the vector space $V \subset \R^n$, for all $\vct{u} \in V$,
-\eqn{\vct{u} = a_1\vct{v}_1 + a_2\vct{v}_2 + a_3\vct{v}_3 + a_4\vct{v}_4, \s a_i \in \R.}
-2. Rearranging terms:
+We can prove these vectors form a basis of $V$ if we show that they are linearly independent and span the vector space.\\
+
+\subsubsection*{(a1) Linear independence:}
+
+To show that the given vectors are linearly independent, we first assume the vectors are linearly \textit{dependent}, and find the coefficients for the linear combination that equals the zero vector.
+If the only solution is that the coefficients are all zero, then the vectors are linearly independent.
+
+Suppose there exists $\{a_1, a_2, a_3, a_4\}, a_i \in \R, a_i \neq 0$ such that
+
+\eqn{a_1(\vct{v}_1 + \vct{v}_2) + a_2(\vct{v}_2 + \vct{v}_3) + a_3(\vct{v}_3 + \vct{v}_4) + a_4\vct{v}_4 = \vct{0}.}
+
+Rearranging terms,
+
+\eqn{a_1\vct{v}_1 + (a_1 + a_2)\vct{v}_2 + (a_2 + a_3)\vct{v}_3 + (a_3 + a_4)\vct{v}_4 = \vct{0}.}
+
+Since $\vct{v}_1, \vct{v}_2, \vct{v}_3, \vct{v}_4$ is a basis of $V$, we can rewrite this as
+
+\eqn{a_1\vct{v}_1 + a_2\vct{v}_2 + a_3\vct{v}_3 + a_4\vct{v}_4 = \vct{0}.}
+
+Since $\vct{v}_1, \vct{v}_2, \vct{v}_3, \vct{v}_4$ are linearly independent, we can conclude that $a_1 = a_2 = a_3 = a_4 = 0$.
+
+Thus, the vectors $\vct{v}_1 + \vct{v}_2, \vct{v}_2 + \vct{v}_3, \vct{v}_3 + \vct{v}_4, \vct{v}_4$ are linearly independent.\\
+
+\subsubsection*{(a2) Span:}
+
+Since $(\vct{v}_1, \vct{v}_2, \vct{v}_3, \vct{v}_4)$ is a basis of $V$, any vector $\vct{u} \in V$ can be expressed as a linear combination with coefficients $\{a_1, a_2, a_3, a_4\}, a_i \in \R$.
+
+If we can show that each vector in $L = (\vct{v}_1 + \vct{v}_2, \vct{v}_2 + \vct{v}_3, \vct{v}_3 + \vct{v}_4, \vct{v}_4)$ can be expressed in terms of $(\vct{v}_1, \vct{v}_2, \vct{v}_3, \vct{v}_4)$, then we will show that any vector $\vct{u} \in V$ can be also be expressed as a linear combination of the vectors in $L$:
+
 \aln{
-  \vct{u} &= a_1\vct{v}_1 + a_2\vct{v}_2 + a_3\vct{v}_3 + a_4\vct{v}_4\\
-  &= a_1\vct{v}_1 + 2a_2\vct{v}_2 - a_2\vct{v}_2 + 2a_3\vct{v}_3 - a_3\vct{v}_3 + 2a_4\vct{v}_4 - a_4\vct{v}_4\\
-  &= a_1(\vct{v}_1 + \frac{2a_2}{a_1}\vct{v}_2) + (-a_2)(\vct{v}_2 + \vct{v}_3) + ()(\vct{v}_3 + \vct{v}_4) + (-a_4)\vct{v}_4\\
+\vct{v}_1 + \vct{v}_2 &= (1)\vct{v}_1 + (1)\vct{v}_2\\
+\vct{v}_2 + \vct{v}_3 &= (1)\vct{v}_2 + (1)\vct{v}_3\\
+\vct{v}_3 + \vct{v}_4 &= (1)\vct{v}_3 + (1)\vct{v}_4\\
+\vct{v}_4 &= (1)\vct{v}_4
 }
+
+Thus, $L$ spans $V$.
+
+Therefore, the list $\vct{v}_1 + \vct{v}_2, \vct{v}_2 + \vct{v}_3, \vct{v}_3 + \vct{v}_4, \vct{v}_4$ is also a basis of V.
 
 \subsection*{(b) [10 pts]}
 For $U$ a subspace of the vector space $V \subset \R^n$ with $\dim(U) = \dim(V)$. Prove that $U = V$.
 
+Since we are given that $U$ is a subspace of $V$, every vector in $U$ is also in $V$, so $U$ is a subset of $V$.
+
+Since $\dim(U) = \dim(V)$, $U$ and $V$ have the same number of linearly independent vectors.
+This, combined with the previously shown result that every vector in $U$ is also in $V$, implies that $U$ and $V$ have the same set of linearly independent vectors, and thus contain the same set of vectors.
+
 \subsection*{(c) [10 pts]}
 Show that the subspaces of $\R^3$ are precisely $\{0\}$, $\R^{3}$, all lines in $\R^3$ through the origin, and all planes in $\R^3$ through the origin.
+
+First, we must show that these sets are indeed subspaces of $\R^3$.
+For each set $\mathbb{U}$, we must show that the following conditions hold in order to show that it is a subspace of $\R^3$:
+
+\begin{enumerate}
+\item $\{0\} \in \mathbb{U}$
+\item Closed under addition: $\vct{u}, \vct{v} \in \mathbb{U} \implies \vct{u} + \vct{v} \in \mathbb{U}$
+\item Closed under scalar multiplication: $a \in \R, \vct{u} \in \mathbb{U} \implies a\vct{u} \in \mathbb{U}$
+\end{enumerate}
+
+Enumerating each of the four sets:
+\begin{enumerate}
+  \item $\mathbb{U} := \{0\}$: Since $\{0\} \in \{0\},$ and $dim(\{0\}) = 0$ (it is the only element in the set), it is trivially a subspace of $R^3$.
+  \item $\mathbb{U} := $ All lines in $\R^3$ through the origin:
+  \begin{itemize}
+    \item Every line in $\R^3$ is defined by the set of points $\vct{u} = \vct{b} + c\vct{v}$, with $c \in \R, \vct{v} \neq \{0\}$.
+    Since the set only includes lines passing through the origin, $\vct{u} = c\vct{v}$.
+    \item $\{0\} \in \mathbb{U}$ by construction.
+    \item For any $\vct{u} = a\vct{u'}$ and $\vct{v} = b\vct{v'}$, with $\vct{u'}, \vct{v'} \in R^3, \vct{u'}, \vct{v'} \neq \{0\}$ and $a,b \in \R$,
+    \aln{
+      c\vct{u} + d\vct{v} &= ca\vct{u'} + db\vct{v'}\\
+      &= ca(\vct{u'} + \frac{ca}{db}\vct{v'})\\
+      &= c'\vct{w} &(c' \equiv (ca) \in \R, \vct{w} \equiv (\vct{u'} + \frac{ca}{db}\vct{v'}) \in \R^3)
+    }
+    Thus, this set is closed under linear combinations (satisfying conditions 2 and 3). 
+  \end{itemize}
+  \item $\mathbb{U} := $ All planes in $\R^3$ through the origin: We could prove this algebraically using a similar approach to the case of lines through the origin.
+    However, I will avoid repetition by noting that we can extend our proof over lines in $\R^3$ to a proof over planes in $\R^3$ by replacing our scalars ($c, d, a, b$) with 3-vectors (plane normals), without violating linearity.
+    We could also make a geometric argument that multiplying a plane through the origin by a constant creates a new plane through the origin, as does adding together two planes through the origin.
+  \item $\mathbb{U} := \R^3$: Since $\R^3$ is a space, and every space is its own subspace, $\R^3$ is a subspace of $\R^3$.
+\end{enumerate}
+
+Finally, we must show that any subspace in $\R^3$ must itself be a subspace of one of these four subspaces.
+
+First, note that there can exist no subspace $V \subset \R^n$ with $\dim(V) > n$, since any $V$ with $\dim(V) > n$ must have more than $n$ basis vectors, and thus will necessarily have vectors that are not contained in $\R^n$.
+Combining this with the result of $\textit{b}$ above, which holds that for any subspace $U$ of $V \subset \R^n$ with $\dim(U) = \dim(V), U = V$, we can conclude that there must be exactly $n + 1$ unique subspaces of $V \subset \R^n$ - one for each dimension $0, 1, ..., n$.
+
+In this case, $V = \R^3$, so $n = 3$, and thus there are exactly $4$ subspaces of $\R^3$.
+Since we have enumerated proofs for each of these four cases above, we are done.
 
 \section{Norm Equivalencies [25 pts]}
 In a finite-dimensional space, all norms are equivalent. In this problem, you will be asked to verify this theorem for some special norms. Prove the following inequalities. 
@@ -43,8 +118,39 @@ Let $\vct{x} \in \R^n$ be an $n$-dimensional vector. Let $\mtx{A} \in \R^{m \tim
 
 \subsection*{(a) [10 pts]}
 \begin{equation*}
-  \|\vct{x}\|_{\infty} \leq \|x\|_2 \leq \sqrt{n}\|\vct{x}\|_{\infty}.
+  \|\vct{x}\|_{\infty} \leq \|\vct{x}\|_2 \leq \sqrt{n}\|\vct{x}\|_{\infty}.
 \end{equation*}
+
+\textit{Proof:}
+\aln{
+  \|\vct{x}\|_{\infty} &\leq &\|\vct{x}\|_2 &\leq &\sqrt{n}\|\vct{x}\|_{\infty}\\
+  \max_{i}{|x_i|} &\leq &\sqrt{\sum_{i=1}^{n}{{x_i}^2}} &\leq &\sqrt{n}\max_{i}{|x_i|} \s\s &\text{(expanding definitions)}\\
+  (\max_{i}{|x_i|})^2 &\leq &\sum_{i=1}^{n}{{x_i}^2} &\leq &n(\max_{i}{|x_i|})^2 \s\s &\text{(squaring all (positive) terms)}\\
+  {x_m}^2 &\leq &\sum_{i=1}^{n}{{x_i}^2} &\leq &n{x_m}^2 \s\s &\text{(let $x_m \equiv \max_{i}{|x_i|}$)}
+}
+
+Consider the extreme case where $x_i \equiv x_m, \forall{x_i \in \vct{x}}$.
+That is, all elements in $\vct{x}$ are the same element, and so its sum-of-squares is maximally large relative to its maximum absolute element, $x_m$.
+Then,
+
+\aln{
+  {x_m}^2 &\leq &\sum_{i=1}^{n}{{x_m}^2} &\leq &n{x_m}^2 \s\s &\text{(subsituting $x_i = x_m$)}\\
+  {x_m}^2 &\leq &n{x_m}^2 &\leq &n{x_m}^2 \s\s &\text{(QED for this case)}
+}
+
+Now, consider the other extreme, where $x_1 \not\equiv 0, x_i \equiv 0, \forall{i \neq 1}$.
+That is, all elements in $\vct{x}$ are 0, except a single non-zero element, arbitrarily chosen to be at index $i=1$.
+So, the absolute maximum element $x_m = |x_i|$, and the sum-of-squares of $\vct{x}$ is maximally small relative to $x_m$.
+Then,
+
+\aln{
+  {x_m}^2 &\leq &\sum_{i=1}^{n}{{x_m}^2} &\leq &n{x_m}^2 \s\s\\
+  {x_m}^2 &\leq &{x_m}^2 &\leq &n{x_m}^2 \s\s &\text{(QED for this case)}
+}
+
+All other cases will result in a $\sum_{i=1}^{n}{{x_i}^2}$ between these extremes.
+
+QED.
 
 \subsection*{(b) [7.5 pts]}
 \begin{equation*}
