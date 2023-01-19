@@ -21,7 +21,7 @@ Suppose that $\vct{v}_1, \vct{v}_2, \vct{v}_3, \vct{v}_4$ is a basis of the vect
 \end{equation}
 is also a basis of $V$.
 
-We can prove these vectors form a basis of $V$ if we show that they are linearly independent and span the vector space.\\
+We can prove these vectors form a basis of $V$ if we show that they are linearly independent and span the vector space.
 
 \subsubsection*{(a1) Linear independence:}
 
@@ -157,10 +157,30 @@ QED.
   \|\mtx{A}\|_{\infty} \leq \sqrt{n}\|\mtx{A}\|_2.
 \end{equation*}
 
+\textit{
+  NOTE: I used ChatGPT to help me with this and the next problem (c), and (to a lesser extent) the "Perturbing" section.
+  I spent a great deal of time working with my answers, but don't fully understand this material enough to have generated such a proof completely on my own.
+  It's been years since I've taken a full linear algebra course, and I am working very hard to build up my understanding in tandem with this course.
+  I'm confident that I will be able to catch up, but this early in the course I have to admit I feel a bit behind in this theoretical material!
+}
+\aln{
+  \|\mtx{A}\|_{\infty} &=\max_{1 \leq i \leq m}\sum_{j=1}^n |\mtx{A}_{i,j}| &\text{(def. of matrix infinity-norm)}\\
+  &\leq \sqrt{n}\max_{1 \leq i \leq m}\sqrt{\sum_{j=1}^n |\mtx{A}_{i,j}|^2} &\text{(Cauchy-Schwarz inequality)}\\
+  &\leq \sqrt{n}\max_{1 \leq i \leq m}\|\mtx{A}_i\|_{2} &\text{(def. of vector L2 norm)}\\
+  &= \sqrt{n} \|\mtx{A}\|_2 &\text{(def. of matrix 2-norm)}
+}
+
 \subsection*{(c) [7.5 pts]}
 \begin{equation*}
   \|\mtx{A}\|_{2} \leq \sqrt{m}\|\mtx{A}\|_{\infty}.
 \end{equation*}
+
+\aln{
+  \|\mtx{A}\|_2 &= \sqrt{\lambda_{max}(\mtx{A}^T\mtx{A})} & \quad \text{(def. of 2-norm)}\\
+  &\leq \sqrt{\sum_{i=1}^{m}\sum_{j=1}^{n}|a_{ij}|^2} & \quad \text{(def. of 2-norm)}\\
+  &\leq \sqrt{m}\max_{1\leq j \leq n}\left(\sum_{i=1}^{m}|a_{ij}|\right) & \quad \text{(Cauchy-Schwarz inequality)}\\
+  &= \sqrt{m}|\mtx{A}|_{\infty} & \quad \text{(def. of infinity norm)}
+}
 
 \section{Perturbing [25 pts]}
 For $\vct{u}, \vct{v} \in \K^m$, the matrix $\mtx{A} \coloneqq \Id + \vct{u}\vct{v}^{*}$ is called a \emph{rank-one} perturbation of the identity. 
@@ -168,10 +188,68 @@ For $\vct{u}, \vct{v} \in \K^m$, the matrix $\mtx{A} \coloneqq \Id + \vct{u}\vct
 \subsection*{(a) [15 pts]}
 Show that if $\mtx{A}$ is nonsingular, then its inverse has the form $\mtx{A}^{-1} = \Id + \alpha \vct{u}\vct{v}^{*}$ for some scalar $\alpha$, and give an expression for $\alpha$.
 
+\begin{itemize}
+\item Multiply both sides by $\mtx{A}$ to get $\mtx{A}\mtx{A}^{-1} = \mtx{A}(\Id + \alpha \vct{u}\vct{v}^{*})$.
+\item Since $\mtx{A}$ is nonsingular, it has an inverse, so we can substitute $\mtx{A}\mtx{A}^{-1} = \Id$.
+\item This gives us $\Id = \mtx{A}(\Id + \alpha \vct{u}\vct{v}^{*})$.
+\item Substituting $\mtx{A} = \Id + \vct{u}\vct{v}^{*}$, $\s \Id = \Id + \alpha \vct{u}\vct{v}^{*} + \vct{u}\vct{v}^{*}$.
+\item Solving for $\alpha$, we get $\alpha = -1$.
+\end{itemize}
+
+Therefore, the inverse of $\mtx{A} = \Id + \vct{u}\vct{v}^{*}$ is $\mtx{A}^{-1} = \Id + \alpha \vct{u}\vct{v}^{*} = \Id - \vct{u}\vct{v}^{*}$.
+  
 \subsection*{(b) [5 pts]}
 For what $\vct{u}$ and $\vct{v}$ is $\mtx{A}$ nonsingular? 
 
+For $\mtx{A}$ to be nonsingular, $\vct{u}$ and $\vct{v}$ must be linearly independent, so that $\vct{u} \cdot \vct{v} \neq 0$. 
+This guarantees that $\mtx{A}$ has a non-zero determinant, and is thus invertible.
+
 \subsection*{(c) [5 pts]} 
 If $\mtx{A}$ is singular, what is $\mnull(\mtx{A})$?
+
+If $\mtx{A}$ is singular, then $\vct{u}$ and $\vct{v}$ are \textit{not} linearly independent, and so $\mtx{A}\vct{x} = 0$ has non-trivial solutions.
+
+Specifically, let's assume we can express $\vct{u}$ as a scalar multiple of $\vct{v}$, so that $\vct{u} = a\vct{v}$, for some nonzero scalar $a$.
+Then,
+
+$\mtx{A} = \Id + \vct{u}\vct{v}^{*} = \Id + a\vct{v}\vct{v}^{*}$
+
+In this case, the null space will be the one-dimensional subspace spanned by $\vct{v}$.
+
+\subsection*{Julia (e) Optimization [5 pts]} 
+Make sure that your code does not allocate any memory, as evidenced by the \texttt{@btime} calls in \texttt{HW1\_driver.jl} returning \texttt{(0\,allocations:\,0\,bytes)}.
+This is important for performance reasons since allocating memory may be orders of magnitudes slower than floating-point arithmetic. 
+Now try reordering the for-loops in your implementations from parts (a) and (b) and observe the resulting timings provided by \texttt{@btime}. 
+Which order leads to the best and worst performance? 
+What are the corresponding wall-clock times as measured by \texttt{@btime}? 
+
+\subsubsection*{Julia (e) Optimization: \texttt{matvec}}
+
+For \texttt{matvec}, iterating over rows in the outer loop and columns in the inner loop resulted in:
+
+\begin{verbatim}
+Timing the matvec function...
+1.685 ms (0 allocations: 0 bytes)
+\end{verbatim}
+
+Switching the loop order to columns-first resulted in a major speedup:
+
+\begin{verbatim}
+Timing the matvec function...
+274.375 microseconds (0 allocations: 0 bytes)
+\end{verbatim}
+
+\subsubsection*{Julia(e) Optimization: \texttt{matmul}}
+
+For \texttt{matmul}, here are my timing experiments, ordered by fastest to slowest, where e.g. $B_i,B_j,C_j$ means iterating first over $B$'s rows, then $B$'s columns, then $C$'s columns as the innermost loop.
+
+\begin{itemize}
+  \item $C_j,B_j,B_i$: 892.252 ms
+  \item $B_j,C_j,B_i$: 1.117 s
+  \item $C_j,B_i,B_j$: 1.757 s
+  \item $B_i,C_j,B_j$: 1.772 s
+  \item $B_j,B_i,C_j$: 2.628 s
+  \item $B_i,B_j,C_j$: 2.736 s
+\end{itemize}
 
 \end{document}
