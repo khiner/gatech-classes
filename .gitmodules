@@ -2,3 +2,6 @@
 	path = fall-2022/MUSI-8803/humdrum-tools
 	url = https://github.com/humdrum-tools/humdrum-tools
 	ignore = untracked
+[submodule "spring-2023/CSE-6220/notebooks"]
+	path = spring-2023/CSE-6730/notebooks
+	url = git@github.com:modsim-s23/demos.git
