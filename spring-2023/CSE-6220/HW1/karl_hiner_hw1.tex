@@ -17,34 +17,64 @@ Let $S$ be an array containing unordered elements and you are to develop an algo
 Measure the run-time in terms of the number of comparisons required.
 Average case analysis should be done rigorously by computing the average over all possible inputs, taking each input to be equally likely.
 
+\quad Since the elements are unordered, the best we can do is to look through each element $S_i \in S$, comparing each element with $x$.
+That is, we simply compare each element $S_i \in S$ with $x$, in ascending order of $i$, and return the first index $i$ such that $S_i = x$.
+Note that we are told our query element $x$ is in $S$, so we do not need to consider the case in which $x$ is not found.
+
 \begin{enumerate}[label=(\alph*)]
 \item Compute the best case, worst case, and average case run-times of the serial algorithm.
 
-The best case run-time of the serial algorithm is when the element $x$ is found at the first position in the array, in which case only one comparison is required.
-The worst case run-time is when the element $x$ is not found in the array, in which case $n$ comparisons are required.
-To compute the average case run-time, we can assume that each element in the array has an equal probability of being the element $x$ we are searching for.
-Therefore, the average case run-time is $\frac{n+1}{2}$ comparisons.
+\quad The best case run-time of the serial algorithm occurs when $x$ is the first element in $S$, in which case only one comparison is required.
+\eqn{T(n,1)_\text{best} = 1}
+
+\quad In the worst case, $x$ is the last element in $S$, in which case $n$ comparisons are required.
+\eqn{T(n,1)_\text{worst} = n}
+
+\quad For the average case, we are finding the expected value of the number of comparisons $E(C)$ across all possible cases.
+
+\quad Let $P(c)$ be the probability of finding the element $x$ in $c$ comparisons.
+Then we can find the expected value with:
+\aln{
+  E(C) &= \sum_{c = 1}^{n}{c \cdot P(c)} \quad&\text{(def. of expected value)}\\
+  &= \sum_{c = 1}^{n}{c\cdot\dfrac{1}{n}} = \dfrac{1}{n}\sum_{c = 1}^{n}{c} \quad&\text{(assuming all inputs are equally likely)}\\
+  &= \dfrac{1}{n}\cdot\dfrac{n(n+1)}{2} = \dfrac{n+1}{2} \quad&\text{(sum of arithmetic series)}
+}
+\quad Thus, assuming each element in $S$ has an equal probability of being $x$, the average number of comparisons will be
+\eqn{T(n,1)_\text{avg} = \frac{n+1}{2}.}
 
 \item To solve the problem in parallel, $S$ is evenly distributed on $p$ processors.
 For simplicity, only count the number of comparisons required as a measure of the run-time, and assume $p$ divides $n$.
 Compute the best case, worst case, and average case run-times of the parallel algorithm.
 
-In the parallel algorithm, $S$ is evenly distributed on $p$ processors.
-Each processor will perform $\frac{n}{p}$ comparisons.
-The best case run-time is when the element $x$ is found on the first processor, in which case only $\frac{n}{p}$ comparisons are required.
-The worst case run-time is when the element $x$ is not found on any of the processors, in which case $n$ comparisons are required.
-To compute the average case run-time, we can again assume that each element in the array has an equal probability of being the element $x$ we are searching for.
-Therefore, the average case run-time is $\frac{n+1}{2p}$ comparisons.
+\quad Since $S$ is evenly distributed on $p$ processors, and $p$ evenly divides $n$, each processor will be assigned $\frac{n}{p}$ elements, and each parallel comparison step will perform $p$ element comparisons.
+The algorithm returns as soon as one processor has found the element.
+
+\quad The best case occurs when only one comparison step is needed, which is the same as the serial case:
+\eqn{T(n,p)_\text{best} = 1}
+
+\quad In the worst case, $x$ is not found until the last comparison step:
+\eqn{T(n,p)_\text{worst} = \frac{n}{p}}
+\quad To find the average case, observe that the situation in terms of comparison steps is very similar to the serial case - the probability of finding $x$ will be the same for each timestep.
+The difference is only that the maximum number of comparison steps is now $\frac{n}{p}$ instead of $n$.
+
+\quad Specifically, the probability of finding $x$ during any single comparison step $c$ will be
+\eqn{P(c) = \dfrac{1}{\left(\frac{n}{p}\right)} = \dfrac{p}{n}.}
+\quad This means we can use the same result from our serial analysis, substituting $\frac{n}{p}$ for $n$:
+\eqn{T(n,p)_\text{avg} = \dfrac{\frac{n}{p}+1}{2} = \dfrac{n + p}{2p}}
 
 \item Compute the best case speedup, worst case speedup, and average case speedup. State your observations.
+\aln{
+  S(p)_{\text{best}} &= \dfrac{T(n,1)_{\text{best}}}{T(n,p)_{\text{best}}} = \dfrac{1}{1} = 1\\
+  S(p)_{\text{worst}} &= \dfrac{T(n,1)_{\text{worst}}}{T(n,p)_{\text{worst}}} = \dfrac{n}{\left(\frac{n}{p}\right)} = p\\
+  S(p)_{\text{avg}} &= \dfrac{T(n,1)_{\text{avg}}}{T(n,p)_{\text{avg}}} = \dfrac{\left(\frac{n+1}{2}\right)}{\left(\frac{n + p}{2p}\right)} = \dfrac{(n+1)p}{n+p}\\
+}
+\quad Thus, in the best case, the parallel algorithm provides no speedup, and in the worst case, the parallel algorithm is $p$ times faster than the serial algorithm.
 
-To compute the best case speedup, we divide the best case run-time of the serial algorithm by the best case run-time of the parallel algorithm, which is $\frac{n}{1}$ divided by $\frac{n}{p}$ = $p$.
-The worst case speedup is the worst case run-time of the serial algorithm divided by the worst case run-time of the parallel algorithm, which is $n$ divided by $n$ = 1.
-The average case speedup is the average case run-time of the serial algorithm divided by the average case run-time of the parallel algorithm, which is $\frac{n+1}{2}$ divided by $\frac{n+1}{2p}$ = $p$.
-
-Thus, in the best case, the parallel algorithm is $p$ times faster than the serial algorithm.
-In the worst case, the parallel algorithm is equally as fast as the serial algorithm.
-In the average case, the parallel algorithm is $p$ times faster than the serial algorithm.
+\quad Finally, in the average case, the expression for the speedup has $n$ and $p$ in both the numerator and denominator.
+However, observe that in the numerator, $p$ is multplied by a factor of $n$, while in the denominator, $n$ is added.
+Thus, the term in the numerator dominates the speedup asymptotically,
+\eqn{\lim_{n \to \infty}{\dfrac{(n+1)p}{n+p}} = p,}
+and we also have a speedup of $p$ for the average case, asymptotically with respect to the problem size.
 
 \end{enumerate}
 
@@ -54,7 +84,7 @@ The following information is given on a parallel algorithm:
 
 \aln{
   T(n,1) &= n^2\\
-  T(n,p) &= \frac{n^2}{p} + n, \quad p \leq n^2 p
+  T(n,p) &= \frac{n^2}{p} + n, \quad p \leq n^2
 }
 
 Write the expression for speedup.
@@ -66,10 +96,10 @@ What happens to the speedup if $n$ is fixed and $p$ is continually increased?
 
 \quad If we treat $n$ as a constant, then we can express this statement as a limit and evaluate it:
 
-\eqn{\lim_{p \to \infty}{\dfrac{np}{n + p}} = n\lim_{p \to \infty}{\dfrac{p}{n + p}} = n}
+\eqn{\lim_{p \to \infty}{\dfrac{np}{n + p}} = n\cdot \lim_{p \to \infty}{\dfrac{p}{n + p}} = n \cdot 1 = n}
 
 \quad Thus, if $n$ is fixed and $p$ is continually increased, the speedup grows linearly with $n$.
-In other words, if we implement this parallel algorithm using a very large number of processors, the algorithm will theoretically run approximately $n$ times faster than its serial version on a problem of size $n$.
+In other words, if we implement this parallel algorithm using a very large number of processors, the algorithm will run approximately $n$ times faster than its serial version on a problem of size $n$.
 
 \hbox{}
 
@@ -80,12 +110,12 @@ What happens to the speedup if the problem size $n$ is kept proportional to $p$,
 \eqn{S(p) = \dfrac{np}{n + p} = \dfrac{kp^2}{p(k + 1)} = \dfrac{kp}{k + 1} = \dfrac{k}{k + 1}p}
 
 \quad Thus, if we linearly increase the problem size with the number of processors (or vice-versa), we will see a corresponding linear speedup.
-However, we are told that the given speed $T(n, p)$ is only valid for $p \leq n^2p$.
+However, we are told that the given speed $T(n, p)$ is only valid for $p \leq n^2$.
 To verify our result holds for $n = kp$, we can substitute for $n$:
 
-\eqn{p \leq n^2p \implies p \leq k^2p^3}
+\eqn{p \leq n^2 \implies p \leq k^2p^2}
 
-\quad This is clearly true for all positive $k$ and $p$, and so we conclude that if the problem size is kept proportional to the number of processors with constant $k$, the speed of this parallel algorithm will improve at a rate of $\frac{k}{k+1}$ as $p \to \infty$.
+\quad This clearly holds for all positive $k$ and $p$, and so we conclude that if the problem size is kept proportional to the number of processors with constant $k$, the speed of this parallel algorithm will improve at a rate of $\frac{k}{k+1}$ as $p \to \infty$.
 
 \section{}
 
@@ -100,21 +130,44 @@ Which algorithm will run faster on a machine with $p$ processors?
 Do not make any particular assumption on the value of $p$.
 Instead, consider all possible values of $p$.
 
+\hbox{}
+
 \quad From the information provided, it is impossible to say which will run faster if we fix $p$, since we do not know the relationship between the problem size and the number of processors.
 
-\quad To show that we cannot make any comparisons without more information, we can show two potential $T(n,p)$ equations for each $T_n$ that are consistent with the given equations, but with one set giving $T_1 > T_2$ and one set giving $T_2 > T_1$.
+\quad To show that we cannot make any comparisons without more information, we can show two potential $T(n,p)$ equations for each $T_n$ that are consistent with the given instantiations of $p$ in terms of $n$, but with one set giving $T_1 > T_2$ and one set giving $T_2 > T_1$.
 
 \subsection{Case 1: $T_1(n, p) > T_2(n, p)$:}
 
-\quad Hi
+\quad Let $T_1(n, p) = \dfrac{n^2\sqrt{n}}{p}$ and $T_2(n, p) = \dfrac{n^2}{p}$.
+Then,
+
+\aln{
+  T_1(n, n^2) &= \dfrac{n^2\sqrt{n}}{n^2} = \sqrt{n}, \quad \text{and}\\
+  T_2(n, n) &= \dfrac{n^2}{n} = n.
+}
+
+\quad So the performance of both algorithms is consistent with the given instantiations of $p$.
+If we keep $p$ constant and compare the performance of the two algorithms, then $T_1$ grows at a rate of $n^2\sqrt{n}$, while $T_2$ grows at $n^2$.
+So $T_1$ is slower than $T_2$, since $T_1 > T_2$ for any $p > 0$ as $n \to \infty$.
+(In this example, this holds for all $n > 1$, but we are only concerned with arbitrarily large $n$ for the purposes of this proof.)
 
 \subsection{Case 2: $T_2(n, p) > T_1(n, p)$:}
 
-\quad Hi
+\quad Let $T_1(n, p) = \dfrac{n\sqrt{n}}{\sqrt{p}}$ and $T_2(n, p) = \dfrac{n^2\sqrt{n}}{p\sqrt{p}}$.
+Then,
 
-\eqn{T(n, p)}
+\aln{
+  T_1(n, n^2) &= \dfrac{n\sqrt{n}}{n} = \sqrt{n}, \quad \text{and}\\
+  T_2(n, n) &= \dfrac{n^2\sqrt{n}}{n\sqrt{n}} = n.
+}
 
-\quad We have shown that both $T_1(n, p) > T_2(n, p)$ and $T_2(n, p) > T_1(n, p)$ for all $n$ and $p$.
+\quad Again, the performance of both algorithms is consistent with the given instantiations of $p$.
+If we keep $p$ constant and compare the performance of the two algorithms, then $T_1$ grows at a rate of $n\sqrt{n}$, while $T_2$ grows at $n^2\sqrt{n}$.
+So $T_2$ is slower than $T_1$, since $T_2 > T_1$ for any $p > 0$ as $n \to \infty$.
+
+\hbox{}
+
+\quad We have shown that both $T_1(n, p) > T_2(n, p)$ and $T_2(n, p) > T_1(n, p)$ for $p > 0, n \to \infty$.
 Thus, we do not have enough information to say which algorithm is faster.
 
 \section{}
@@ -128,7 +181,32 @@ The following information is given on a parallel algorithm:
 
 \begin{enumerate}[label=(\alph*)]
 \item Find the largest number of processors (as a function of n) that can be used while being optimally efficient.
-\item Assuming that memory available per processor is fixed, can we scale the number of processors as a function of n according to the equation derived above?
+
+\quad Optimal efficiency implies $E(p) = \Theta(1)$:
+
+\aln{
+  E(p) = \dfrac{T(n,1)}{p \cdot T(n, p)} &= \Theta(1) &\quad \text{(definition of efficiency)}\\
+  \implies \dfrac{n^2}{p \cdot \left(\frac{n^2}{p} + pn\right)} &= \Theta(1) &\quad \text{(substitute given execution times)}\\
+  \dfrac{n}{n + p^2} &= \Theta(1) &\quad \text{(simplify)}\\
+  \implies p^2 &= O(n) &\quad \text{(satisfy $\Theta(1)$ condition above)}\\
+  p &= O(\sqrt{n}) &\quad \text{(solve for $p$)}
+}
+
+\quad Thus, the number of processors must be no more than order of $\sqrt{n}$ for optimal efficiency.
+That is, $p = c + d\sqrt{n}$, where $p$ is the number of processors, $c$ and $d$ are constants, and $n$ is the problem size.
+
+\item Assuming that memory available per processor is fixed, can we scale the number of processors as a function of $n$ according to the equation derived above?
+
+\quad Substituting our upper-bound for $p$ in terms of $n$ (found in (4b) above), we can find the required memory per processor, $m$:
+
+\eqn{m = O\left(\dfrac{n}{\sqrt{n}}\right) = O(\sqrt{n})}
+
+\quad Thus, the memory required per processor increases with the problem size at the same rate of $\sqrt{n}$, which is the same rate as our upper bound on processor count for optimal efficiency.
+Since we have fixed memory per processor, but the required memory per processor is increasing at the same rate as the processor count as we increase the increasing problem size $n$, we conclude that we \textit{can not} scale the number of processors as a function of $n$.
+That is, not while maintaining optimal efficiency as $n \to \infty$.
+
+\quad 
+
 \end{enumerate}
 
 \section{}
@@ -140,30 +218,34 @@ A parallel algorithm designed for solving the same problem has a complexity give
 
 Find the maximum number of processors as a function of $n$ that can be used such that the algorithm runs with maximum possible efficiency.
 
-Based on https://gatech.instructure.com/courses/295282/files/folder/Slides?preview=38054495
-pages 30 and 33
+\hbox{}
 
-What $p$ can we use while maintaining $E(p) = \Theta(1)$?
+\quad Again, optimal efficiency implies $E(p) = \Theta(1)$.
 
 \aln{
   E(p) = \dfrac{T(n,1)}{p \cdot T(n, p)} &= \Theta(1) &\quad \text{(definition of efficiency)}\\
-  \implies \dfrac{\Theta(n^2)}{p \cdot \Theta\left(\frac{n^2}{p} + \frac{n}{\sqrt{p}}\log{p}\right)} &= \Theta(1) &\quad \text{(substituting given complexities)}\\
+  \implies \dfrac{\Theta(n^2)}{p \cdot \Theta\left(\frac{n^2}{p} + \frac{n}{\sqrt{p}}\log{p}\right)} &= \Theta(1) &\quad \text{(substitute given execution times)}\\
   \dfrac{n^2}{n^2 + n\sqrt{p}\log{p}} &= \Theta(1) &\quad \text{(simplify)}\\
-  \implies \sqrt{p}\log{p} &= O(n) &\quad \text{(satisfying $\Theta(1)$ condition above)}
+  \implies \sqrt{p}\log{p} &= O(n) &\quad \text{(satisfy $\Theta(1)$ condition above)}
 }
 
-We need to find a value for $p$ in terms of $n$ such that this equality holds, keeping in mind that we can neglect terms with small degrees of $n$, since the equality must only hold asymptotically with respect to $n$ (as $n \to \infty$).
+\quad We need to find a value for $p$ in terms of $n$ such that this equality holds, keeping in mind that we can neglect terms with small degrees of $n$, since the equality must only hold asymptotically with respect to $n$ (as $n \to \infty$).
 
-Since $\log{p}$ is difficult to manipulate algebraically, one approach is to guess at a function $f$ such that if we set $p = O(f(n))$, then $O\left(\sqrt{f(n)}\log{\left(f(n)\right)}\right) = O(n)$ holds.
+\quad Since $\log{p}$ is difficult to manipulate algebraically, one approach is to guess at a function $f$ such that if we set $p = O(f(n))$, then $O\left(\sqrt{f(n)}\log{\left(f(n)\right)}\right) = O(n)$ holds.
 
-Guess: $f(n) = \dfrac{n^\frac{3}{2}}{\log{n}}$.
+\quad Guess: $f(n) = \dfrac{n^2}{\log{n^2}}$.
 Then,
 
 \aln{
   \sqrt{p}\log{p} &= O(n)\\
-  \sqrt{O\left(\frac{n^\frac{3}{2}}{\log{n}}\right)}\log{O\left(\frac{n^\frac{3}{2}}{\log{n}}\right)} &= O(n) &\quad\text{(substitute $p = O(f(n))$)}\\
-  O\left(\dfrac{n^\frac{3}{4}}{\sqrt{\log{n}}}\left(\log{n^\frac{3}{2}} - \log\log{n}\right)\right) &= &\quad\text{(simplify)}\\
-  O\left(\dfrac{n^\frac{3}{4}}{\sqrt{\log{n}}}\left(\log{n^\frac{3}{2}} - \log\log{n}\right)\right) &= &\quad\text{(simplify)}\\
+  p\left(\log{p}\right)^2 &= O(n^2) &\quad\text{(squaring both sides)}\\
+  O\left(\dfrac{n^2}{\log{n^2}}\log{\left(\dfrac{n^2}{\log{n^2}}\right)}\right) &= O(n^2) &\quad\text{(substitute $p = O(f(n))$)}\\
+  \dfrac{n^2}{\log{n^2}}\left(\log{n^2} - \log{\log{n^2}}\right) &= n^2 &\quad\text{(simplify)}\\
+  \dfrac{n^2}{\log{n^2}}\log{n^2} &= n^2 &\quad\text{(removing low-order $\log{\log{n^2}}$ term)}\\
+  n &= n
 }
 
+\quad Thus, an upper bound for the number of processors in terms of $n$ that we can use with this algorithm while maintaining optimal efficiency is:
+
+\eqn{p = O\left(\dfrac{n^2}{\log{n^2}}\right)}
 \end{document}
