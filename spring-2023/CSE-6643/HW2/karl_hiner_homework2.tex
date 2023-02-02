@@ -1,6 +1,8 @@
 \documentclass[twoside,10pt]{article}
 \input{macro.tex}
 
+\newcommand{\q}{\quad?\quad}
+
 \begin{document}
 
 \title{CSE 6643 Homework 2}
@@ -18,6 +20,7 @@
 \end{itemize}
 
 \section{Less positive [12.5 pts]} 
+
 Consider a symmetric positive definite matrix $\mtx{A}$ separated into subblocks according to
 \begin{equation*}
   \mtx{A} = \begin{pmatrix}
@@ -117,7 +120,7 @@ Thus, $\mtx{S} = \mtx{D} - \mtx{C}^T \mtx{B}^{-1} \mtx{C} = \mtx{A}_{2,2} - \mtx
 Consider a matrix $\mtx{A} \in \R^{m \times m}$, with (unpivoted) LU-factorization given by $\mtx{A} = \mtx{L} \mtx{U}$. 
 Propose an algorithm for computing the $(i, j)$-th entry of $\mtx{A}^{-1}$ using only $\mathcal{O}\left(\left(m + 1 - j\right)^2 + \left(m + 1 - i\right)^2\right)$ floating point operations. 
 
-\quad The algorithm for computing the $(i, j)$-th entry of $\mtx{A}^{-1}$ is as follows:
+\quad An algorithm for computing the $(i, j)$-th entry of $\mtx{A}^{-1}$ is as follows:
 
 \begin{enumerate}
 \item Compute the $j$-th column of $\mtx{A}^{-1}$ by solving $\mtx{L} \mtx{y} = \mtx{e}_j$ for $\mtx{y}$, where $\mtx{e}_j$ is the $j$-th standard basis vector.
@@ -154,52 +157,85 @@ TODO must prove Thm. 5.3
   \end{equation*}
 
 \begin{align*}
-  \|\mtx{A}\vct{x}\|_2 &\geq \sigma_{\mathrm{min}}\left(\mtx{A}\right) \|\vct{x}\|_2\\
-  \|\mtx{A}\vct{x}\|_2 &\geq \sqrt{\lambda_{\mathrm{min}}(\mtx{A}^T\mtx{A})} \|\vct{x}\|_2 &\text{(def. of singular values)}\\
-  \|\mtx{A}\vct{x}\|_2^2 &\geq \lambda_{\mathrm{min}}(\mtx{A}^T\mtx{A}) \|\vct{x}\|_2^2 &\text{(square both sides)}\\
-  \lambda_{\mathrm{max}}((\mtx{A}\vct{x})^T(\mtx{A}\vct{x})) &\geq \lambda_{\mathrm{min}}(\mtx{A}^T\mtx{A}) \|\vct{x}\|_2^2 &\text{($\|\mtx{A}\|_2 = \sqrt{\lambda_{\mathrm{max}}(\mtx{A^T}\mtx{A})}$)}\\
-  \lambda_{\mathrm{max}}(\vct{x}^T\mtx{A}^T\mtx{A}\vct{x}) &\geq \lambda_{\mathrm{min}}(\mtx{A}^T\mtx{A}) (\vct{x}^T\vct{x})  &\text{(simplify)}
+  \dfrac{\vct{x}^{*}\mtx{A}^{*}\mtx{A}\vct{x}}{\|\vct{x}\|_2^2} &\geq\inf \limits_{\vct{y} \in \R^m \setminus \{\vct{0}\}} \dfrac{\vct{y}^{*} \mtx{A}^{*}\mtx{A}\vct{y}}{\|\vct{y}\|_2^2} &\text{($\forall\vct{x} \in \R^n$)}\\
+  \vct{x}^{*}\mtx{A}^{*}\mtx{A}\vct{x} &\geq \left(\inf \limits_{\vct{y} \in \R^m \setminus \{\vct{0}\}} \dfrac{\vct{y}^{*} \mtx{A}^{*}\mtx{A}\vct{y}}{\|\vct{y}\|_2^2}\right) \|\vct{x}\|_2^2  &\text{(multiply both sides by $\|\vct{x}\|_2^2$)}\\
+  \vct{x}^{*}\mtx{A}^{*}\mtx{A}\vct{x} &\geq \lambda_{\mathrm{min}}(\mtx{A}^{*}\mtx{A}) \|\vct{x}\|_2^2 &\text{$\left(\lambda_{\mathrm{min}}\left(\mtx{A}\right) = \inf \limits_{\vct{y} \in \R^m \setminus \{\vct{0}\}} \dfrac{\vct{y}^{*} \mtx{A}\vct{y}}{\|\vct{y}\|_2^2}\right)$}\\
+  \|\mtx{A}\vct{x}\|_2^2 &\geq \lambda_{\mathrm{min}}(\mtx{A}^{*}\mtx{A}) \|\vct{x}\|_2^2 &\text{($\|\vct{v}\|_2 = \sqrt{\vct{v}^{*}\vct{v}}$)}\\
+  \|\mtx{A}\vct{x}\|_2 &\geq \sqrt{\lambda_{\mathrm{min}}(\mtx{A}^{*}\mtx{A})} \|\vct{x}\|_2 &\text{(take square root of both sides)}\\
+  &=\sigma_{\mathrm{min}}\left(\mtx{A}\right) \|\vct{x}\|_2 &\text{(def. of singular values)}\\
 \end{align*}
 
-   $\lambda_{\mathrm{min}}\left(\mtx{A}\right) = \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \dfrac{\vct{x}^T \mtx{A}\vct{x}}{\|\vct{x}\|_2^2}$
-
-  Note that the ranks of $A^TA$ and $AA^T$ are different (and thus one of them contains at least one eigenvalue $0$ if $m > n$ or $m < n$.
+  Note that the ranks of $A^TA$ and $AA^T$ are different (and thus one of them contains at least one eigenvalue $0$ if $m > n$ or $m < n$).
 
 \subsection*{(c) [5 pts]}
   \begin{equation*}
     m = n \Rightarrow \sigma_{\mathrm{min}}(\mtx{A}) \leq \left|\lambda_{i}\left(\mtx{A}\right)\right| \leq \sigma_{\mathrm{max}}\left(\mtx{A}\right), \forall i 
   \end{equation*}
 
-  First, we prove $\left|\lambda_{i}(\mtx{A})\right| \leq \sigma_{\mathrm{max}}\left(\mtx{A}\right)$.
-
-  Let $\lambda$ be an eigenvalue of $\mtx{A}$, and let $\vct{x}$ be the corresponding unit eigenvector such that $\mtx{A}\vct{x} = \lambda\vct{x}$. 
+  Let $\lambda_i$ be an eigenvalue of $\mtx{A}$, and let $\vct{v_i}$ be a corresponding unit eigenvector such that $\mtx{A}\vct{v_i} = \lambda_i\vct{v_i}$. 
   Taking the 2-norm of both sides:
   \begin{align*}
-    \|\mtx{A}\vct{x}\|_2 &= \|\lambda \vct{x}\|_2\\
-    &= |\lambda| \|\vct{x}\|_2\\
-    &= |\lambda|\quad\quad\quad\text{(since $\|\vct{x}\|_2 = 1$)}
+    \|\mtx{A}\vct{v_i}\|_2 &= \|\lambda_i \vct{v_i}\|_2\\
+    &= |\lambda_i| \|\vct{v_i}\|_2\\
+    &= |\lambda_i|\quad\quad\quad\text{(since $\|\vct{v_i}\|_2 = 1$)}
   \end{align*}
-  
-  By definition,
- 
-\begin{equation*}
-\sigma_{\mathrm{max}}(\mtx{A}) = \sup_{\|x\|_2 = 1}{\|\mtx{A}\vct{x}\|_2},
-\end{equation*}
 
-and so:
-  
-\begin{equation*}
-  \sigma_{\mathrm{max}}(\mtx{A}) \geq \|\mtx{A}\vct{x}\|_2 = |\lambda_i(\mtx{A})|, \forall i
-\end{equation*}
+  Also, note that since $\mtx{A}$ is square when $m = n$, $\mtx{A}^{*}\mtx{A}$ is positive semidefinite, and can thus be decomposed into $\mtx{U}\mtx{\Lambda}\mtx{U}^{*}$, where $\mtx{\Lambda}$ is an $mxm$ diagonal matrix whose entries are the eigenvalues of $\mtx{A}^{*}\mtx{A}$.
 
-For the other side, $\sigma_{\mathrm{min}}(\mtx{A}) \leq \left|\lambda_{i}\left(\mtx{A}\right)\right|$,
+  So then,
+  \begin{align*}
+    |\lambda_{\mathrm{min}}| &= \|\mtx{A}\vct{v}_{\mathrm{min}}\|_2&\quad\text{(let $\vct{v}_{\mathrm{min}}$ be a unit e.v. of $\mtx{A} \to \lambda_{\mathrm{min}}$)}\\
+    |\lambda_{\mathrm{min}}|^2 &= \|\mtx{A}\vct{v}_{\mathrm{min}}\|_2^2&\quad\text{(squaring both sides)}\\
+    &= \vct{v}_{\mathrm{min}}^{*}\mtx{A}^{*}\mtx{A}\vct{v}_{\mathrm{min}}&\quad\text{(def. of vector 2-norm)}\\
+    &\geq \inf_{\|\vct{x}\| = 1}{\vct{x}^{*}\mtx{A}^{*}\mtx{A}\vct{x}}&\quad\text{(since $\vct{v}_{\mathrm{min}}$ is min. eigenvalue)}\\
+    &= \inf_{\|\vct{x}\| = 1}{\vct{x}^{*}\mtx{U}\mtx{\Lambda}\mtx{U}^{*}\vct{x}}&\quad\text{($\mtx{\Lambda}_{i,i} = \lambda_i(\mtx{A}^{*}\mtx{A})$)}\\
+    &= \inf_{\|\vct{y}\| = 1}{\vct{y}^{*}\mtx{\Lambda}\vct{y}}&\quad\text{(let $\vct{y} \equiv \mtx{U}^{*}\vct{x}$)}\\
+    &= \lambda_{\mathrm{min}}(\mtx{A}^{*}\mtx{A})&\quad\text{(def. of $\lambda_{\mathrm{min}}$ - see (4) below)}\\
+    &= \sigma_{\mathrm{min}}(\mtx{A})^2&\quad\text{(def. of singular value)}\\
+  \end{align*}
 
-... TODO use (d) below. If $\mtx{A}$ is singular, its smallest singular value is zero and the inequality is trivially true.
+  Thus, $|\lambda_{\mathrm{min}}(\mtx{A})|^2 \geq \sigma_{\mathrm{min}}(\mtx{A})^2 \implies |\lambda_{\mathrm{min}}(\mtx{A})| \geq \sigma_{\mathrm{min}}(\mtx{A})$.
 
-\subsection*{(d) [5 pts]
+  The same argument can be applied to show that $|\lambda_{\mathrm{max}}(\mtx{A})| \leq \sigma_{\mathrm{max}}(\mtx{A})$, which shows that
+  \begin{equation*}
+    m = n \Rightarrow \sigma_{\mathrm{min}}(\mtx{A}) \leq \left|\lambda_{i}\left(\mtx{A}\right)\right| \leq \sigma_{\mathrm{max}}\left(\mtx{A}\right), \forall i 
+  \end{equation*}
+
+\subsection*{(d) [5 pts]}
   \begin{equation*}
     \sigma_{\mathrm{max}}\left(\mtx{A}\right) = 1 / \sigma_{\mathrm{min}}\left(\mtx{A}^{-1}\right)\text{, if $\mtx{A}^{-1}$ exists}
   \end{equation*}
+
+  We can decompose any matrix $\mtx{A} \in \R^{mxn}$ into components $\mtx{A} = \mtx{U} \mtx{\Sigma} \mtx{V}^T$, where $\mtx{U}$ and $\mtx{V}^T$ are orthogonal, and $\mtx{\Sigma} \in \R^{mxn}$ is a diagonal matrix whose entries $\mtx{\Sigma}_{i,i}$ contain all of the singular values of $\mtx{A}$.
+  Since $\mtx{A}$ is invertible, all of its singular values will be nonzero, and so $\mtx{\Sigma}_{i,i} \neq 0, \forall i$.
+
+  If we invert both sides of this equality, we get $\mtx{A}^{-1} = \mtx{V} \mtx{\Sigma}^{-1} \mtx{U}^T$, which holds since we are given that $\mtx{A}^{-1}$ exists.
+  $\mtx{\Sigma}^{-1}$ also exists, since it is a diagonal matrix with no zeros on its diagonal.
+  Its (also nonzero) diagonal entries are the singular values of $\mtx{A}^{-1}$, and its inverse can be found by inverting each of its diagonal elements (a property not proven here):
+
+  \begin{align*}
+    \mtx{\Sigma} &=
+    \begin{bmatrix}
+      \sigma_{1}(\mtx{A}) &  & \\ 
+      & \ddots & \\ 
+      &  & \sigma_{n}(\mtx{A})\\
+      & \dots
+    \end{bmatrix}\\
+    \mtx{\Sigma}^{-1} &=
+    \begin{bmatrix}
+      \dfrac{1}{\sigma_{1}(\mtx{A})} &  & \\ 
+      & \ddots & \\ 
+      &  & \dfrac{1}{\sigma_{n}(\mtx{A})}\\
+      & \dots
+    \end{bmatrix}.
+  \end{align*}
+
+  Thus, for any $1 \leq i \leq n$, $\sigma_i(\mtx{A}) = \mtx{\Sigma}_{i,i} = \dfrac{1}{(\mtx{\Sigma}^{-1})_{i,i}} = \dfrac{1}{\sigma_i(\mtx{A}^{-1})}$.
+
+  Finally, let $j = \arg\!\max\limits_{i}{\Sigma_{i,i}}$.
+  Then $\sigma_j(\mtx{A}) = \sigma_{\mathrm{max}}(\mtx{A})$.
+  Since each element in $\Sigma^{-1}$ is inverted, $j = \arg\!\min\limits_{i}{(\Sigma^{-1})_{i,i}}$, and so $\sigma_j(\mtx{A}^{-1}) = \sigma_{\mathrm{min}}(\mtx{A}^{-1})$, and so $\sigma_{\mathrm{max}}\left(\mtx{A}\right) = \dfrac{1}{\sigma_{\mathrm{min}}\left(\mtx{A}^{-1}\right)}$.
+
 \subsection*{(e) [5 pts]}
   \begin{equation*}
     \text{Find the most general conditions on $m$, $n$, and $l$, under which } \sigma_{\mathrm{min}}\left(\mtx{A}\mtx{B}\right) \geq \sigma_{\mathrm{min}}\left(\mtx{A}\right) \sigma_{\mathrm{min}}\left(\mtx{B}\right).
@@ -229,7 +265,7 @@ Show that
   \left\|\mtx{A}^{-1}\right\|_2 &= \left\|\mtx{V} \mtx{\Sigma}^{-1} \mtx{U}^T\right\|_2&\quad\text{(take the 2-norm of both sides)}\\
   &= \sigma_{\mathrm{max}}\left(\mtx{V} \mtx{\Sigma}^{-1} \mtx{U}^T\right)&\quad\text{(since $\left\|\mtx{B}\right\|_2 = \sigma_{\mathrm{max}}\left(\mtx{B}\right)$ for any matrix $\mtx{B}$)}\\
   &= \sigma_{\mathrm{max}}\left(\mtx{\Sigma}^{-1}\right)&\quad\text{(since $\mtx{V}$ and $\mtx{U}$ are orthogonal)}\\
-  &= \frac{1}{\sigma_{\mathrm{min}}\left(\mtx{\Sigma}\right)}&\quad\text{(\textit{3d} above)}\\
+  &= \frac{1}{\sigma_{\mathrm{min}}\left(\mtx{\Sigma}\right)}&\quad\text{((3d) above)}\\
   &= \frac{1}{\sigma_{\mathrm{min}}\left(\mtx{A}\right)}&\quad\text{(def. of $\mtx{\Sigma}$)}\\
   \left\|\mtx{A}^{-1}\right\|_2^{-1} &= \sigma_{\mathrm{min}}\left(\mtx{A}\right)&\quad\text{(invert both sides)}\\
   &=  \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\|\mtx{A}\vct{x}\|_2}{\|\vct{x}\|_2}&\quad\text{(def. of $\sigma_\mathrm{min}$)}
@@ -241,13 +277,12 @@ Show that
   \left\|\mtx{A}^{-1}\right\|_2^{-1} \geq \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{|\vct{x}^T \mtx{A}\vct{x}|}{\|\vct{x}\|_2^2}
 \end{equation}
 
-This follows directly from \textit{3c} and \textit{4a} above, along with the given definition of $\lambda_{\mathrm{min}}(\mtx{A})$:
-
 \begin{align*}
-  \left\|\mtx{A}^{-1}\right\|_2^{-1} &= \sigma_{\mathrm{min}}\left(\mtx{A}\right)&\quad\text{(From \textit{4a})}\\
-  &\geq&\quad\text{(from \textit{3c}, since $\mtx{A}$ is square $m = n \Rightarrow \sigma_{\mathrm{min}}(\mtx{A}) \leq \left|\lambda_{i}\left(\mtx{A}\right)\right|$)}
+  \left\|\mtx{A}^{-1}\right\|_2^{-1} &= \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\|\mtx{A}\vct{x}\|_2}{\|\vct{x}\|_2}&\quad\text{(from above)}\\
+  &= \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\|\mtx{A}\vct{x}\|_2\|\vct{x}\|_2}{\|\vct{x}\|_2^2}&\quad\text{(multiply num. and dem. by $\|\vct{x}\|_2$)}\\
+  &= \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\|\vct{x}^T \mtx{A}\vct{x}\|_2}{\|\vct{x}\|_2^2}&\quad\text{($\|\vct{x}^T \mtx{A}\vct{x}\|_2 = \|\mtx{A}\vct{x}\|_2 \|\vct{x}\|_2$)}\\
+  &\geq \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{|\vct{x}^T \mtx{A}\vct{x}|}{\|\vct{x}\|_2^2}&\quad\text{($|\vct{x}^T \mtx{A}\vct{x}| \le \|\vct{x}^T \mtx{A}\vct{x}\|_2$)}
 \end{align*}
-
 
 \subsection*{(c) [5 pts]}
 
@@ -256,6 +291,27 @@ Show that for symmetric matrices $\mtx{M}, \mtx{N} \in \R^{m \times m}$,
   \lambda_{\mathrm{min}}(\mtx{M} + \mtx{N}) \geq \lambda_{\mathrm{min}}\left(\mtx{M}\right) + \lambda_{\mathrm{min}}\left(\mtx{N}\right)
 \end{equation}
 
+To start, we will substitute the given expression for $\lambda_{\mathrm{min}}$, $\lambda_{\mathrm{min}}\left(\mtx{A}\right) = \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \dfrac{\vct{x}^T \mtx{A}\vct{x}}{\|\vct{x}\|_2^2}$, for the left-side term, $\lambda_{\mathrm{min}}(\mtx{M} + \mtx{N})$:
+
+\begin{align*}
+  \lambda_{\mathrm{min}}(\mtx{M} + \mtx{N}) &= \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \dfrac{\vct{x}^T \left(\mtx{M} + \mtx{N}\right)\vct{x}}{\|\vct{x}\|_2^2}\\
+  &= \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \dfrac{\vct{x}^T \mtx{M}\vct{x} + \vct{x}^T\mtx{N}\vct{x}}{\|\vct{x}\|_2^2}\\
+  &= \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \left(\dfrac{\vct{x}^T \mtx{M}\vct{x} }{\|\vct{x}\|_2^2} + \dfrac{\vct{x}^T\mtx{N}\vct{x}}{\|\vct{x}\|_2^2}\right)\\
+\end{align*}
+
+Next, restate the given left- and right-side terms, using an unknown inequality, "$?$", as a placeholder:
+
+\begin{align*}
+  \lambda_{\mathrm{min}}(\mtx{M} + \mtx{N}) &\q \lambda_{\mathrm{min}}\left(\mtx{M}\right) + \lambda_{\mathrm{min}}\left(\mtx{N}\right)\\
+  \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \left(\dfrac{\vct{x}^T \mtx{M}\vct{x} }{\|\vct{x}\|_2^2} + \dfrac{\vct{x}^T\mtx{N}\vct{x}}{\|\vct{x}\|_2^2}\right) &\q  \inf \limits_{\vct{y} \in \R^m \setminus \{\vct{0}\}} \left(\dfrac{\vct{y}^T \mtx{M}\vct{y}}{\|\vct{y}\|_2^2}\right) + \inf \limits_{\vct{z} \in \R^m \setminus \{\vct{0}\}} \left(\dfrac{\vct{z}^T \mtx{N}\vct{z}}{\|\vct{z}\|_2^2}\right)\\
+\end{align*}
+
+To determine what the unknown inequality, "$?$", must be, we observe that the left side is the \text{same expression} as the right side, except that it is optimizing to find a \textit{single} infimum value for both terms, while the right side is jointly optimizing for \textit{two separate} infimums - one for each term.
+Another way of thinking about this is that the right side is \textit{less constrained} than the left in its "search" for a minimum (real) value - its "search space" is a superset of that of the left side, since it's allowed to test different vectors $\vct{y}$ and $\vct{z}$ on the left and right terms, respectively, rather than being constrained to test the same $\vct{y} = \vct{z}$ as the left side is.
+
+Also, note that this unknown inequality "$?$", must allow for the case of equivalence, for example when $\mtx{M} = \mtx{N}$.
+
+Although this argument is hand wavy, I hope that it is sufficient to convince the reader (grader), that the inequality "$?$" must be "$\geq$".
 
 \subsection*{(d) [5 pts]}
 In the same setting as (c), show that 
@@ -263,6 +319,20 @@ In the same setting as (c), show that
   \lambda_{\mathrm{max}}(\mtx{M} + \mtx{N}) \leq \lambda_{\mathrm{max}}\left(\mtx{M}\right) + \lambda_{\mathrm{max}}\left(\mtx{N}\right)
 \end{equation}
 
+Using the same approach as (c), we substitute the given expression for $\lambda_{\mathrm{max}}$,
+
+\begin{equation*}
+   \lambda_{\mathrm{max}}\left(\mtx{A}\right) = \sup \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{A}\vct{x}}{\|\vct{x}\|_2^2},
+\end{equation*}
+
+and determine the unknown inequality, "$?$":
+
+\begin{align*}
+  \lambda_{\mathrm{max}}(\mtx{M} + \mtx{N}) &\q \lambda_{\mathrm{max}}\left(\mtx{M}\right) + \lambda_{\mathrm{max}}\left(\mtx{N}\right)\\
+  \sup \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \left(\dfrac{\vct{x}^T \mtx{M}\vct{x} }{\|\vct{x}\|_2^2} + \dfrac{\vct{x}^T\mtx{N}\vct{x}}{\|\vct{x}\|_2^2}\right) &\q  \sup \limits_{\vct{y} \in \R^m \setminus \{\vct{0}\}} \left(\dfrac{\vct{y}^T \mtx{M}\vct{y}}{\|\vct{y}\|_2^2}\right) + \sup \limits_{\vct{z} \in \R^m \setminus \{\vct{0}\}} \left(\dfrac{\vct{z}^T \mtx{N}\vct{z}}{\|\vct{z}\|_2^2}\right)\\
+\end{align*}
+
+Using the exact same argument as above, but noting that the functions being optimized here are supremums instead of infimums, this inequality "$?$" must be "$\leq$".
 
 \subsection*{(e) [5 pts]}
 For $\mtx{A}$ symmetric positive definite, show that 
@@ -270,7 +340,7 @@ For $\mtx{A}$ symmetric positive definite, show that
   \|\mtx{A}^{-1}\|_{2}^{-1} = \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{A} \vct{x}}{\|\vct{x}\|^2_2}
 \end{equation*}
 
-In \textit{4a} above, we showed that 
+In (4a) above, we showed that 
 
 \begin{equation*}
   \left\|\mtx{A}^{-1}\right\|_2^{-1} = \sigma_{\mathrm{min}}\left(\mtx{A}\right).
