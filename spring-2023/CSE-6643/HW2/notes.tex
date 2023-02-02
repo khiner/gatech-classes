@@ -1,0 +1,59 @@
+\documentclass[twoside,10pt]{article}
+\input{macro.tex}
+
+\begin{document}
+
+For any symmetric matrix, $\mtx{S} = \mtx{S}^T$.
+
+For any real matrix, $\mtx{A}^T\mtx{A}$ is symmetric.
+
+$\sigma_i(\mtx{A}) = \sqrt{|\lambda_i(\mtx{A}^T\mtx{A})|}$
+
+For any vector, $\|\vct{x}\|^2 = \vct{x}^T\vct{x} = \vct{x} \cdot \vct{x}$.
+
+Triangle inequality (works for both vector and matrix norms): $\|\vct{x} + \vct{y}\| \leq \|\vct{x}\| + \|\vct{y}\|$
+
+Cauchy-Schwarz: $|\vct{u} \cdot \vct{v}| \leq \|\vct{u}\| \|\vct{v}\|$, or $|\vct{u} \cdot \vct{v}|^2 \leq (\vct{u}\cdot\vct{u})(\vct{v}\cdot\vct{v})$
+
+Matrix norms are submultiplicitive: $\|\mtx{A}\mtx{B}\| \leq \|\mtx{A}\|\|\mtx{B}\|$
+
+Eigenvectors of a symmetric matrix, or an orthogonal matrix, are orthogonal.
+
+For orthogonal matrix $\mtx{Q}$, $\mtx{Q}^T\mtx{Q} = \mtx{I}$.
+If $\mtx{Q}$ is square, then $\mtx{Q}\mtx{Q}^T = \mtx{I}$.
+
+The eigenvectors of a real symmetric matrix are real.
+(But an orthogonal matrix may have complex eigenvectors.)
+Furthermore, the eigenvalues of a symmetric matrix are real and can be ordered so that $\lambda_1 \geq \lambda_2 \geq ... \geq \lambda_n$. 
+
+Similar matrices: If $\mtx{B} = \mtx{M}^{-1}\mtx{A}\mtx{M}$, then $\mtx{B}$ and $\mtx{A}$ have the same eigenvalues.
+
+Schur's triangularization theorem: Any square matrix can be transformed into an upper triangular matrix by a similarity transformation.
+
+Orthogonality of eigenvectors: If $\lambda_1$ and $\lambda_2$ are distinct eigenvalues of $\mtx{A}$, and $\vct{v_1}$ and $\vct{v_2}$ are their corresponding eigenvectors, then $\vct{v_1}$ and $\vct{v_2}$ are orthogonal.
+
+Singular value inequality: The singular values of a matrix are always non-negative and satisfy the inequality $\sigma_1 \geq \sigma_2 \geq ... \geq \sigma_n$.
+
+Positive definite matrix: A symmetric matrix $\mtx{A}$ is positive definite if $\vct{v}^T\mtx{A}\vct{v} > 0$ for all non-zero vectors $\vct{v}$.
+
+$\mtx{A}\mtx{B}$ has the same non-zero eigenvalues as $\mtx{B}\mtx{A}.$
+
+Trace: Adding the diagonals of a matrix gives you the sum of the eigenvalues.
+
+Multiply eigenvalues, or singular values, to get determinant.
+
+$\mtx{A}=\mtx{X}\mtx{\Lambda}\mtx{X}$, for any matrix, where the columns of $\mtx{X}$ are the eigenvectors of $\mtx{A}$ and $\mtx{\Lambda}$ is the diagonal matrix of eigenvalues.
+
+If $\mtx{S}, \mtx{T}$ both positive definite, $\mtx{S} + \mtx{T}$ pos. def. as well. And also $\mtx{S}^{-1}$ (since its eigenvalues are $\frac{1}{\lambda}$, so all positive).
+
+If rank is $n$, only $n$ nonzero eigenvalues.
+
+For unitary (orthonormal) matrix $\mtx{Q}$, $(\mtx{Q}\vct{x})^{*}(\mtx{Q}\vct{x}) = x^{*}y$ and $\|\mtx{Q}\vct{x}\|_2 = \|\vct{x}\|_2$.
+
+If $\mtx{D}$ is diagonal, then $\|\mtx{D}\|_P = \max_1\leq i \leq m{|d_i|}$.
+
+  \begin{equation*}
+    \sigma_{\mathrm{max}}(\mtx{A}) = \|\mtx{A}\|_2 = \sqrt{|\lambda_{\mathrm{max}}(\mtx{A}^T\mtx{A})|} = \sup_{x \neq 0, \|x\|_2 = 1}{\|\mtx{A}\vct{x}\|_2}
+  \end{equation*}
+  
+\href{https://en.wikipedia.org/wiki/Matrix_norm#Matrix_norms_induced_by_vector_norms}{Matrix norms wikipedia}
