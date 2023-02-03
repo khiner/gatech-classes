@@ -10,15 +10,6 @@
 \date{}
 \maketitle
 
-\begin{itemize}
-  \item There are 2 sections in grade scope: Homework 2 and Homework 2 Programming. Submit your answers as a PDF file to Homework 2 (report the results that you obtain using programming by using plots, tables, and a description of your implementation like you would when writing a paper.) and also submit your code in a zip file to Homework 2 Programming. 
-  \item Programming questions are posted in Julia. You are allowed to use basic library functions like sorting, plotting, matrix-vector products etc, but nothing that renders the problem itself trivial. Please use your common sense and ask the instructors if you are unsure. 
-  You should never add additional packages to the environment.
-  \item Late homework incurs a penalty of 20\% for every 24 hours that it is late. Thus, right after the deadline, it will only be worth 80\% credit, and after four days, it will not be worth any credit. 
-  \item We recommend the use of LaTeX for typing up your solutions. No credit will be given to unreadable handwriting.
-  \item List explicitly with whom in the class you discussed which problem, if any. Cite all external resources that you were using to complete the homework. For details, consult the collaboration policy in the class syllabus on canvas.
-\end{itemize}
-
 \section{Less positive [12.5 pts]} 
 
 Consider a symmetric positive definite matrix $\mtx{A}$ separated into subblocks according to
@@ -120,12 +111,10 @@ Thus, $\mtx{S} = \mtx{D} - \mtx{C}^T \mtx{B}^{-1} \mtx{C} = \mtx{A}_{2,2} - \mtx
 Consider a matrix $\mtx{A} \in \R^{m \times m}$, with (unpivoted) LU-factorization given by $\mtx{A} = \mtx{L} \mtx{U}$. 
 Propose an algorithm for computing the $(i, j)$-th entry of $\mtx{A}^{-1}$ using only $\mathcal{O}\left(\left(m + 1 - j\right)^2 + \left(m + 1 - i\right)^2\right)$ floating point operations. 
 
-\quad An algorithm for computing the $(i, j)$-th entry of $\mtx{A}^{-1}$ is as follows:
-
 \begin{enumerate}
 \item Compute the $j$-th column of $\mtx{A}^{-1}$ by solving $\mtx{L} \mtx{y} = \mtx{e}_j$ for $\mtx{y}$, where $\mtx{e}_j$ is the $j$-th standard basis vector.
 This step takes $\mathcal{O}(\left(m + 1 - j\right)^2)$ operations.
-\item Compute the $(i, j)$-th entry of $\mtx{A}^{-1}$ by solving $\mtx{U} \mtx{x} = \mtx{y}$ for $\mtx{x}$, where the $i$-th entry of $\mtx{x}$ is the desired entry.
+\item Compute the $(i, j)$-th entry of $\mtx{A}^{-1}$ by solving $\mtx{U} \mtx{x} = \mtx{y}$ for $\mtx{x}$. Then the $i$-th entry of $\mtx{x}$ is the$(i, j)$-th entry of $\mtx{A}^{-1}$.
 This step takes $\mathcal{O}(\left(m + 1 - i\right)^2)$ operations.
 \end{enumerate}
 
@@ -149,8 +138,6 @@ Show that the following results hold
  &= \sigma_{\mathrm{max}}(\mtx{A})\|\vct{x}\|_2 &\quad\text{(Thm. 5.3 in Trefethen \& Bau: $\|\mtx{A}\|_2 = \sigma_{\mathrm{max}}(\mtx{A})$)}
 \end{align*}
 
-TODO must prove Thm. 5.3
-
 \subsection*{(b) [5 pts]}
   \begin{equation*}
     m \geq n \Rightarrow \|\mtx{A}\vct{x}\|_2 \geq \sigma_{\mathrm{min}}\left(\mtx{A}\right) \|\vct{x}\|_2, \forall \vct{x} \in \R^n
@@ -164,8 +151,6 @@ TODO must prove Thm. 5.3
   \|\mtx{A}\vct{x}\|_2 &\geq \sqrt{\lambda_{\mathrm{min}}(\mtx{A}^{*}\mtx{A})} \|\vct{x}\|_2 &\text{(take square root of both sides)}\\
   &=\sigma_{\mathrm{min}}\left(\mtx{A}\right) \|\vct{x}\|_2 &\text{(def. of singular values)}\\
 \end{align*}
-
-  Note that the ranks of $A^TA$ and $AA^T$ are different (and thus one of them contains at least one eigenvalue $0$ if $m > n$ or $m < n$).
 
 \subsection*{(c) [5 pts]}
   \begin{equation*}
@@ -240,6 +225,13 @@ TODO must prove Thm. 5.3
   \begin{equation*}
     \text{Find the most general conditions on $m$, $n$, and $l$, under which } \sigma_{\mathrm{min}}\left(\mtx{A}\mtx{B}\right) \geq \sigma_{\mathrm{min}}\left(\mtx{A}\right) \sigma_{\mathrm{min}}\left(\mtx{B}\right).
   \end{equation*}
+
+  If both $\mtx{A}$ and $\mtx{B}$ are positive semi-definite, then the inequality holds.
+
+  The product of two positive semi-definite matrices is always positive semi-definite, and so its eigenvalues are non-negative.
+  Thus, the smallest eigenvalue of the product is $\geq 0$, and the product of the smallest eigenvalues of the matrices is also $\geq 0$.
+
+  Thus, the smallest eigenvalue of the product is $\geq$ the product of the smallest eigenvalues of the two positive semi-definite matrices.
 
 \section{Inverses [25 pts]}
 We consider $\mtx{A} \in \R^{m \times m}$ and assume that $\mtx{A}^{-1}$ exists. 
@@ -346,32 +338,39 @@ In (4a) above, we showed that
   \left\|\mtx{A}^{-1}\right\|_2^{-1} = \sigma_{\mathrm{min}}\left(\mtx{A}\right).
 \end{equation*}
 
-For symmetric matrices, the singular values are the absolute values of the eigenvalues.
+Since 
+
+\begin{equation*}
+  \lambda_{\mathrm{min}}\left(\mtx(A)\right) = \inf \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{A}\vct{x}}{\|\vct{x}\|_2^2},
+\end{equation*}
+
+and since, for symmetric positive definite matrices, the minimum singular value is equal to the minimum eigenvalue, we are done.
+
+(The singular values are equal to the square roots of the eigenvalues, and the eigenvalues for a symmetric positive definite matrix are all positive.)
 
 \section{Oblivion [25 pts]}
-\subsection*{(a) [5 pts]} 
-Have a look at the function \texttt{add\_to\_A\_B\_times\_C!} in \texttt{HW2\_your\_code.jl}. 
-This function adds the product of the input variables \texttt{B} and \texttt{C} to the input variable \texttt{A}. 
-It is written such as to use the optimal loop order, and employs multiple optimizations by means of the \texttt{@turbo} macro.
-
-Go to section (a) of the file \texttt{HW2\_driver.jl} to see how this function performs when compared to the built-in \texttt{mul!} function. 
-If necessary, adapt the size of the matrix to your system. 
-Hand in the file \texttt{performance\_per\_size.pdf} produced by the code with your homework. 
-
-\subsection*{(b)locked [5 pts]} 
-Now implement a blocked/tiled variant of \texttt{add\_to\_A\_B\_times\_C!} that takes an integer \texttt{bks} as a fourth input.
-This method should perform the matrix multiplication by calling the original \texttt{add\_to\_A\_B\_times\_C!} on blocks of size (roughly) \texttt{bks} times \texttt{bks}.
-Again, your code should be correct and avoid memory allocations as checked by section (b) of \texttt{HW2\_driver.jl}.
-
 \subsection*{(c) [5 pts]}
 Use section \texttt{HW2\_driver.jl} to try the performance of the blocked algorithm for different matrix sizes and block sizes. 
 Describe your results, and for the most interesting set of parameters, hand in the resulting plot with your homework.
 Describe and explain the results.
 
-\subsection*{(d) oblivious [5 pts]}
-We can sometimes obtain better performance by using a hierarchical algorithm. 
-Complete the skeleton for \texttt{oblivious\_add\_to\_A\_B\_times\_C!} to obtain an algorithm that equally divides each of its input matrices into four parts and then recurses on the resulting eight subproblems, until one of the problems reaches a size below \texttt{bks}.
-Again, make sure that your algorithm does not allocate memory and is correct using part (d) \texttt{HW2\_driver.jl}.
+\quad I found that, for the default settings, I found that the block size mattered a great deal, with times increasing as block sizes increased after about 512-1024.
+
+However, I found that the absolute performance for large matrix sizes was relatively poor, and improved a great deal by making all matrix sizes the same size, and making them powers of two.
+This is likely because the matrices are then all evenly divided into the power-of-two block sizes, as well as perhaps allowing for more contiguous memory access if the powewr-of-two blocks fits well inside the cache.
+
+Shown in the plot below in Fig. 1 is an experiment with all matrix sizes equal to 2048.
+Here, we can see that performance first improves with increaes block size, until block size exceeds 512, and then maxes out when the block size equals the matrix size.
+This likely corresponds to the blocks fitting inside the cache evenly at these smaller power-of-two block sizes.
+
+\begin{figure}[htb]
+  \begin{center}
+  \includegraphics[width=150mm]{HW2_code/performance_blocked_2048.jpg}
+  \end{center}
+  \caption{All matrices length 2048}
+  \label{fig:figure1}
+  \end{figure}
+  
 
 \subsection*{(e) [5 pts]} Use part (e) of \texttt{HW2\_driver.jl} to benchmark your new algorithm for different values of \texttt{bks}. 
 Are you able to obtain an improvement over the blocked algorithm? 
@@ -379,6 +378,22 @@ Hand in the figure produced by part (e) of \texttt{HW2\_driver.jl} for what you 
 Algorithms of this type are called ``cache-oblivious.'' 
 Explain why this is the case and what could be the theoretical advantages of this particular cache-oblivious algorithm.
 
+As shown in Fig. 2 below, I was able to obtain a performance improvement for all but the smallest block sizes.
+
+Cache-oblivious methods take advantage of the hierarchical nature of modern memory systems, which have multiple cache levels.
+By working with progressively smaller problem sizes, it allows for taking advantage of the different cache sizes within this memory hierarchy.
+The operating system can potentially better optimize cache utilization and memory access patterns with multiple problem sizes, rather than working with only a single fixed size.
+
+For very small block sizes, the operating system will have fewer opportunities to take advantage of varying problem sizes, which explains my results.
+
+\begin{figure}[htb]
+  \begin{center}
+  \includegraphics[width=150mm]{HW2_code/performance_blocked_and_oblivious.jpg}
+  \end{center}
+  \caption{All matrices length 2048}
+  \label{fig:figure2}
+  \end{figure}
+  
 % 
 % \subsection*{(b) Matrix-vector-multiplication [5 pts]} 
 % Complete the function \texttt{u\_is\_A\_times\_v!(u, A, v)} in \texttt{HW1\_your\_code.jl} that overwrites the input vector \texttt{u} with the product of the input matrix \texttt{A} and the input vector \texttt{v}.

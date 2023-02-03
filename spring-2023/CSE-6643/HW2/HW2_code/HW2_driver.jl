@@ -63,7 +63,7 @@ m = 6011
 n = 6070
 # Modify 
 # sizes suitable for your system
-block_sizes = 2 .^ (2 : 12)
+block_sizes = 2 .^ (2 : 10)
 ########################################
 time_blocked = Float64[]
 for bks in block_sizes
