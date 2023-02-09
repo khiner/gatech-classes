@@ -1,8 +1,9 @@
-\documentclass[twoside,10pt]{article}
+\documentclass{article}
 \input{macro.tex}
 
 \newcommand{\eqn}[1]{\begin{equation*}#1\end{equation*}}
 \newcommand{\aln}[1]{\begin{align*}#1\end{align*}}
+\newcommand{\?}{\stackrel{?}{=}}
 
 \begin{document}
 
@@ -15,12 +16,29 @@
 
 Determine if the parallel prefix algorithm can be used to compute prefix sums of a sequence of $n$ numbers based on the binary operation $\bigoplus$ defined as:
 
+\quad The parallel prefix algorithm can be used to compute the prefix sums of a sequence of $n$ numbers if and only if $\oplus$ is a binary associative operator.
 \begin{enumerate}[label=(\alph*)]
-  \item $a \bigoplus b = 2a + b$
-  \item $a \bigoplus b = \sqrt{a^2 + b^2}$
-\end{enumerate}
+  \item $a \oplus b = 2a + b$
 
-(Hint: Verify if the operation is associative: $(a \bigoplus b) \bigoplus c ?= a \bigoplus (b \bigoplus c)$.)
+  \quad Checking associativity,
+
+  \aln{
+    (a \oplus b) \oplus c &\? a \oplus (b \oplus c)\\
+    2(2a + b) + c &\? 2a + (2b + c)\\
+    4a + 2b + c &\neq 2a + 2b + c\\
+  }
+  This shows the binary operation defined as $a \oplus b = 2a + b$ \textit{is not} associative, and thus \textit{cannot} be used by the parallel prefix algorithm to compute prefix sums.
+
+  \item $a \oplus b = \sqrt{a^2 + b^2}$
+
+  \aln{
+    (a \oplus b) \oplus c &\? a \oplus (b \oplus c)\\
+    \sqrt{\left(\sqrt{a^2 + b^2}\right)^2 + c^2} &\? \sqrt{a^2 + \left(\sqrt{b^2 + c^2}\right)^2}\\
+    \left(\sqrt{a^2 + b^2}\right)^2 + c^2 &\? a^2 + \left(\sqrt{b^2 + c^2}\right)^2\\
+    a^2 + b^2 + c^2 &= a^2 + b^2 + c^2\\
+  }
+  This shows the binary operation defined as $a \oplus b = \sqrt{a^2 + b^2}$ \textit{is} associative, and thus \textit{can} be used by the parallel prefix algorithm to compute prefix sums.
+\end{enumerate}
 
 \section{}
 
@@ -31,6 +49,28 @@ A tree tall enough to get sunlight exposure scores photosynthesis points accordi
 However, a tree can also be blocked from sunlight by an earlier tree \textit{of equal height or taller}, in which case the blocked tree receives no points.
 
 Design a parallel algorithm to compute the total number of points for a configuration given by $A$, and compute its runtime. 
+
+\quad Assume the array $A$ is block-distributed across all nodes.
+Let $p_k$ refer to the node holding the $n/p$ elements $\left[A[\frac{kn}{p}], ..., A[\frac{(k + 1)n}{p} - 1]\right] \equiv A_k$.
+The algorithm can then be performed by the following steps:
+\begin{enumerate}
+  \item Compute the local maximum tree height, $\hat{A}_k = \max{\left(A_k\right)}$ for each node $p_k$. 
+  This takes $O\left(\frac{n}{p}\right)$ time.
+  \item Use a parallel prefix reduction with $\oplus = \max(\hat{A}_i, \hat{A}_j)$.
+  (Note that the $\max$ operation is binary associative, and thus can be used for parallel prefix.)
+  After the reduction, each node $p_k$ holds the maximum tree height, $\hat{A}_{<k}$, of all previous nodes $p_{j<k}$.
+  Parallel prefix takes $O(\log{p})$ time, with communication cost $O(p)$.
+  \item Compute the local total tree score for each node, as follows:
+  \begin{itemize}
+    \item Initialize the running score $s_k = 0$, and running height max $m_k = \hat{A}_{<k}$.
+    \item For each tree height in the local list $A_k$, if $A_k[i] < m_k$, $s_k \mathrel{+}= A_k[i]$, else set $m_k = A_k[i]$.
+  \end{itemize}
+  \item Use the parallel sum algorithm to sum all local tree scores to find the total tree score, $S = \sum \limits_{k} s_k$.
+  This final step takes $O(\log{p})$ time.
+\end{enumerate}
+
+TODO 1 \& 2 can actually be combined into one par prefix.
+TODO add all times
 
 \section{}
 
