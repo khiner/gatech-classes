@@ -6,5 +6,8 @@ __MACOSX
 **/**.fdb_latexmk
 **/**.fls
 **/**.log
+# Using BibTex. See `.bib` files for bibliographies.
+**/**.bbl
+**/**.blg
 **/**.out
 **/**.synctex.gz

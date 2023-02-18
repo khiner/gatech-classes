@@ -51,34 +51,54 @@ However, a tree can also be blocked from sunlight by an earlier tree \textit{of 
 Design a parallel algorithm to compute the total number of points for a configuration given by $A$, and compute its runtime. 
 
 \quad Assume the array $A$ is block-distributed across all nodes.
-Let $p_k$ refer to the node holding the $n/p$ elements $\left[A[\frac{kn}{p}], ..., A[\frac{(k + 1)n}{p} - 1]\right] \equiv A_k$.
-The algorithm can then be performed by the following steps:
+Let $p_k$ refer to the node holding the $n/p$ elements $A_k \equiv \left[A[\frac{kn}{p}], ..., A[\frac{(k + 1)n}{p} - 1]\right]$.
+
 \begin{enumerate}
-  \item Compute the local maximum tree height, $\hat{A}_k = \max{\left(A_k\right)}$ for each node $p_k$. 
-  This takes $O\left(\frac{n}{p}\right)$ time.
-  \item Use a parallel prefix reduction with $\oplus = \max(\hat{A}_i, \hat{A}_j)$.
+  \item Perform parallel prefix with $\oplus = \max$, storing the result in array $M_i$.
   (Note that the $\max$ operation is binary associative, and thus can be used for parallel prefix.)
-  After the reduction, each node $p_k$ holds the maximum tree height, $\hat{A}_{<k}$, of all previous nodes $p_{j<k}$.
-  Parallel prefix takes $O(\log{p})$ time, with communication cost $O(p)$.
+  After parallel prefix, $M_i[j] \geq A[0,1,...,\frac{ni}{p}+j]$.
+  Parallel prefix takes $\Theta(\frac{n}{p} + \log{p})$ time, with communication time $\Theta((\tau + \mu)\log{p})$.
+  \item Use a right-shift to send the last element of $M_{i-1}$ to its right neighbor processor $i$, storing this value in $\hat{m}_i$.
+      This is necessary since each element of $A_i$ will need to be compared with the \textit{previous} max element.
+      Communication cost: $\Theta(\tau + \mu)$
   \item Compute the local total tree score for each node, as follows:
   \begin{itemize}
-    \item Initialize the running score $s_k = 0$, and running height max $m_k = \hat{A}_{<k}$.
-    \item For each tree height in the local list $A_k$, if $A_k[i] < m_k$, $s_k \mathrel{+}= A_k[i]$, else set $m_k = A_k[i]$.
+    \item Initialize the running total local score $s_k \leftarrow 0$.
+    \item For each tree height in the local list $A_i$, if $A_i[j] > M_i[j - 1]$, add the tree height to the total local score, $s_k \mathrel{+}= A_j[j]$.
+    \textit{For $j - 1 = -1$, use} $\hat{m}_i$ instead of (nonexistent) $M_i[-1]$.
   \end{itemize}
+  This step takes $\Theta(\frac{n}{p})$ time.
   \item Use the parallel sum algorithm to sum all local tree scores to find the total tree score, $S = \sum \limits_{k} s_k$.
-  This final step takes $O(\log{p})$ time.
+  This final step takes $\Theta(\log{p})$ time.
 \end{enumerate}
 
-TODO 1 \& 2 can actually be combined into one par prefix.
-TODO add all times
+\quad Computation time: $\Theta(2\left(\frac{n}{p} + \log{p}\right))$.
+
+\quad Communication time: $\Theta(\left(\tau + \mu\right)(\log{p} + 1))$.
 
 \section{}
 
-A sequence of nested parenthesis is said to be well-formed if 1) there are an equal number of left and right parenthesis, and 2) each right parenthesis is matched by a left parenthesis that occurs to its left in the sequence.
+A sequence of nested parenthesis is said to be well-formed if
+\begin{enumerate}
+  \item there are an equal number of left and right parenthesis, and
+  \item each right parenthesis is matched by a left parenthesis that occurs to its left in the sequence.
+\end{enumerate}
 For example, ( ( ( ) ( ) ) ( ) ) is well-formed, but ( ) ) ( is not.
 
 There is a nested parenthesis sequence of length $n$ distributed across $p$ processors using block decomposition.
 Design a parallel algorithm to determine if it is well-formed and specify its run-time.
+
+\begin{enumerate}
+  \item Assign $-1$ to a closed parenthesis, and $1$ to an open parenthesis.
+      Then each processor $i$ has a list of values $A_i \in \left(-1, 1\right)^\frac{n}{p}$.
+  \item Use parallel prefix with $a \oplus b = a + b$ (parallel prefix sum).
+  \item If any (global) prefix sum element is negative, return "not well-formed".
+  \item If all prefix sums are non-negative, and the final prefix sum (the total sum) is equal to $0$, the algorithm returns "well-formed".
+      Otherwise, return "not well-formed".
+\end{enumerate}
+
+The runtime of this algorithm is the same as parallel prefix sum, $\Theta(\frac{n}{p} + \log{p})$.
+Unlike prefix sum, however, the best-case runtime is $\Theta(1)$, since the first processor could return "not well-formed" if its first element is a closed parenthesis ($-1$).
 
 \section{}
 
@@ -95,6 +115,37 @@ Design a parallel algorithm to compute the ranks and specify its run-time.
 Then, all elements with $0$ label receive lower ranks than any element with label $1$.
 Within the same label, ranks are given in left to right order as per array $A$.)
 
+\quad Assume arrays $A$ and $L$ are block-distributed across $p$ processors, such that each processor holds $\frac{n}{p}$ contiguous elements from each array in local arrays $A_i$ and $L_i$.
+
+\begin{enumerate}
+    \item Compute the number of $0$s and $1$s in each node's $L_i$ array, and store in $\vct{n_i} = \begin{bmatrix}\text{num 0s}\\\text{num 1s}\end{bmatrix}.$
+        This step takes $\Theta(\frac{n}{p})$ time.
+  \item Perform a parallel prefix operation across $\vct{n_i}$, using vector sum as the operator, and store the results in $\vct{N_i} = \sum\limits_{j \leq i}{\vct{n_j}}.$
+      (Note that after this step, $\vct{N_i} - \vct{n_i}$ gives the total number of zeros/ones \textit{before} node $i$.)
+      This step takes $\Theta(2\log{p})$ computation time and $\Theta((\tau + 2\mu)\log{p})$ communication time.
+  \item Broadcast the total number of $0$s in $L$ (stored in $\vct{N_p}[0]$, where $p$ is the index of the last processor), to every other node.
+      Store the result as $Z$ in each node.
+      This takes $\Theta((\tau + \mu)\log{p})$ communication time.
+  \item For each node, traverse its $L_i$ and assign ranks to elements in $A$ as follows, storing the result in local rank array $R_i$:
+    $$R_i[j] =
+    \begin{cases*}
+      c_0 + \vct{N_i}[0] - \vct{n_i}[0],&$L_i[j] = 0$\quad\text{($c_0 + $num 0s before me)}\\
+      c_1 + Z + \vct{N_i}[1] - \vct{n_i}[1],&$L_i[j] = 1$\quad\text{($c_1 + $total 0s + num 1s before me)}
+    \end{cases*},$$
+    where $c_0$/$c_1$ are the running count of $0$s/$1$s encountered so far during the traversal.
+    This step takes $\Theta(\frac{n}{p})$ time.
+\end{enumerate}
+
+\quad Computation time: $\Theta(2\left(\frac{n}{p} + \log{p}\right))$.
+
+\quad Communication time: $\Theta(\left(2\tau + 3\mu\right)\log{p})$.
+
+\quad \textit{Note:}
+Instead of using $Z$, the total number of $0$s in $L$, as a rank offset when $L_i[j] = 1$, we could use any $N \geq Z$.
+For example, we could use $n$.
+We would still need to broadcast $n$, as we did for $Z$, but it could be done in the first step.
+Alternatively, if we were allowed to provide $n$ to each processor along with its $L_i$ and $A_i$ (as in PA1), we could skip the broadcast step entirely, resulting in a total communication time of $\Theta(\left(\tau + 2\mu\right)\log{p})$.
+
 \section{}
 
 \textsl{Invent Segmented Parallel Prefix:}
@@ -107,7 +158,7 @@ Formally, we wish to compute array $S$ of size $n$ such that
   S[0] &= X[0]\\
   S[i] &=
     \begin{cases*}
-      s[i-1] + X[i],&\text{if} B[i] = 0\\
+      S[i-1] + X[i],&\text{if} B[i] = 0\\
       X[i],&\text{if} B[i] = 1
     \end{cases*}
 }
@@ -116,6 +167,72 @@ Design parallel segmented prefix algorithm and specify its run-time.
 
 (Hint: The problem can be transformed into a standard prefix sums problem.)
 
-NOTE from Feb. 8 class: Can be solved using matrix raised to power of iteration - see class slides.
+\hbox{}
+
+\quad We are told this can be transformed into a standard prefix sums problem.
+So we must find a binary associative operator that satisfies the given definition for $S$.
+
+Simplifying the $S[i]$ case:
+\aln{
+  S[i] &=
+    \begin{cases*}
+      S[i-1] + X[i],&B[i] = 0\\
+      X[i],&B[i] = 1
+    \end{cases*}\\
+    &=
+    X[i] + \begin{cases*}
+      S[i-1],&B[i] = 0\\
+      0, &B[i] = 1
+    \end{cases*}\\
+    &=
+    X[i] + S[i-1](1 - B[i])
+}
+
+For the case of $i = 1$, we can solve this using the base case of $S[0] = X[0]$ to get rid of the reference to the previous $S$ element on the right:
+\aln{
+  S[1] &= X[1] + S[0](1 - B[1])\\
+  &= X[1] + X[0](1 - B[1])
+}
+
+Our binary operator must act on element types containing all the information needed in this expression.
+Let this element type be defined as $\vct{A_i} \equiv \begin{bmatrix*}X_i\\B_i\end{bmatrix*} \equiv \begin{bmatrix*}X[i]\\B[i]\end{bmatrix*}$.
+That is, $\vct{A_i}$ is the two-element vector formed by combining the $i$th element of $X$ with the $i$th element of $B$.
+Then we can consider the inputs $X$ and $B$ as being provided in a single $2\times n$ matrix $\mtx{A}$, whose columns $\vct{A_i}$ we block-distribute across $p$ processes.
+(We do not actually need to create these elements - this is only a conceptual reformulation with no incurred cost.)
+
+From our solution to $S[1]$ above, we know exactly how to compute the first item (the numeric value) in our binary associative operator $\oplus$, given two consecutive columns of $\mtx{A}$ (since $S[1] \equiv \left(\vct{A_0} \oplus \vct{A_1}\right)_0$).
+We then only need to consider how to compute the secont item (the boolean value).
+I must admit I did this step by trial and error, so I don't provide a derivation here, but found that the logical-or (max) works.
+
+Thus, our boolean operator is:
+
+$$\mtx{A_{i}} \oplus \mtx{A_j} \implies \begin{bmatrix*}X_i\\B_i\end{bmatrix*} \oplus\begin{bmatrix*}X_j\\B_j\end{bmatrix*} = \begin{bmatrix*}X_j + X_i(1-B_j)\\\max(B_i, B_j)\end{bmatrix*}$$
+
+\quad Checking associativity:
+\aln{
+  (\mtx{A_a} \oplus \mtx{A_b}) \oplus \mtx{A_c} &\? \mtx{A_a} \oplus (\mtx{A_b} \oplus \mtx{A_c})\\
+  \left(\begin{bmatrix*}X_a\\B_a\end{bmatrix*} \oplus \begin{bmatrix*}X_b\\B_b\end{bmatrix*}\right) \oplus \begin{bmatrix*}X_c\\B_c\end{bmatrix*} &\? \begin{bmatrix*}X_a\\B_a\end{bmatrix*} \oplus \left(\begin{bmatrix*}X_b\\B_b\end{bmatrix*} \oplus \begin{bmatrix*}X_c\\B_c\end{bmatrix*}\right)\\
+  \left(\begin{bmatrix*}X_b + X_a(1-B_b)\\\max(B_a, B_b)\end{bmatrix*}\right) \oplus \begin{bmatrix*}X_c\\B_c\end{bmatrix*} &\? \begin{bmatrix*}X_a\\B_a\end{bmatrix*} \oplus \left(\begin{bmatrix*}X_c + X_b(1-B_c)\\\max(B_b, B_c)\end{bmatrix*}\right)\\
+  \begin{bmatrix*}X_c + (X_b + X_a(1-B_b))(1-B_c)\\\max(\max(B_a, B_b), B_c) \end{bmatrix*} &\? \begin{bmatrix*}X_c + X_b(1-B_c) + X_a(1 - \max(B_b, B_c))\\\max(B_a, \max(B_b, B_c))\end{bmatrix*}\\
+  \begin{bmatrix*}X_c + X_b(1-B_c) + X_a(1-B_b)(1-B_c)\\\max(B_a, B_b, B_c) \end{bmatrix*} &\? \begin{bmatrix*}X_c + X_b(1-B_c) + X_a(1 - \max(B_b, B_c))\\\max(B_a, B_b, B_c)\end{bmatrix*}
+}
+
+Cancelling out all like terms, we are left with
+\aln{
+  (1-B_b)(1-B_c) &\? 1 - \max(B_b, B_c).\\
+  B_b + B_c - B_bB_c &= \max(B_b, B_c).\\
+}
+This equality can be readily verified with a truth table (not provided here).
+
+Finally, here is the algorithm, assuming $X$ and $B$ are block distributed.
+
+\begin{enumerate}
+  \item Perform parallel prefix using $\begin{bmatrix*}X_i\\B_i\end{bmatrix*} \oplus\begin{bmatrix*}X_j\\B_j\end{bmatrix*} = \begin{bmatrix*}X_j + X_i(1-B_j)\\\max(B_i, B_j)\end{bmatrix*},$ storing the resulting two-element vectors as columns in the $\left(2 \times \frac{n}{p}\right)$ matrix $\mtx{A_i}.$
+  \item The array $S$ can be read directly from the first row of each $\mtx{A_i}$.
+\end{enumerate}
+
+\quad Computation time: $\Theta\left(4\left(\frac{n}{p} + \log{p}\right)\right)$ (parallel prefix with $\approx 4$ flops per op).
+
+\quad Communication time: $\Theta(\left(\tau + 2\mu\right)\log{p})$ (parallel prefix with 2D elements).
 
 \end{document}

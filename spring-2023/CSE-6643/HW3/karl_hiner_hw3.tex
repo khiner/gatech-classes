@@ -1,0 +1,253 @@
+\documentclass[twoside,10pt]{article}
+\input{macro.tex}
+\bibliographystyle{plain}
+
+\begin{document}
+\nocite{*}
+
+\title{CSE 6643 Homework 3}
+\author{Karl Hiner}
+\date{}
+\maketitle
+
+\section{One-upping [25 pts]}
+Let $\mtx{A} \in \R^{m \times m}$ have full rank. Assume that we have already computed the QR decomposition of $\mtx{A}$.
+For $\mtx{u}, \mtx{v} \in \R^m$, we call the matrix $\mtx{B} = \mtx{A} + \mtx{u}\mtx{v}^{T}$ a rank-1 update of $\mtx{A}$. 
+
+\subsection*{(a) [5 pts]}
+Prove that if $\vct{v}^{T} \mtx{A}^{-1} \vct{u} \neq - 1$, then $\mtx{B}$ is invertible.
+
+\quad Let $\vct{x} \in \R^{m}$ be a non-zero vector. Then,
+\begin{align*}
+  \vct{v}^{T} \mtx{A}^{-1} \vct{u} &\neq -1\\
+  1 &\neq -\vct{v}^{T} \mtx{A}^{-1} \vct{u} \\
+  \vct{v}^{T} \vct{x} &\neq -(\vct{v}^{T} \mtx{A}^{-1} \vct{u})(\vct{v}^{T} \vct{x}) \\
+  \vct{x} &\neq -\mtx{A}^{-1} \mtx{u}(\vct{v}^{T} \vct{x}) \\
+  \mtx{A} \vct{x} &\neq -\mtx{u}\vct{v}^{T} \vct{x} \\
+  \left(\mtx{A} + \mtx{u}\vct{v}^{T}\right)\vct{x} &\neq \mtx{0}. \\
+  \mtx{B}\vct{x} &\neq \vct{0}
+\end{align*}
+
+\quad Thus, if $\vct{v}^{T} \mtx{A}^{-1} \vct{u} \neq -1$, there are no nontrivial solutions for $\mtx{B}\vct{x} = \vct{0}$, and so $\mtx{B}$ is invertible.
+
+\subsection*{(b) [10 pts]} 
+Design an algorithm that provably solves the system of equations $\mtx{B} \mtx{x} = \mtx{b}$ in $O(m^2)$ operations. 
+\begin{align*}
+  \vct{x} &= \mtx{B}^{-1}\vct{b}&\text{(assume $\mtx{B}$ is invertible)}\\
+  &= \left(\mtx{A} + \vct{u}\vct{v}^T\right)^{-1}\vct{b}&\text{(since $\mtx{B} = \mtx{A} + \vct{u}\vct{v}^T$)}\\
+  &= \left(\mtx{A}^{-1} - \dfrac{\mtx{A}^{-1}\vct{u}\vct{v}^T\mtx{A}^{-1}}{1+\vct{v}^T\mtx{A}^{-1}\vct{u}}\right)\vct{b}&\text{(Sherman–Morrison formula)}\\
+  &= \mtx{A}^{-1}\vct{b} - \dfrac{\mtx{A}^{-1}\vct{u}\vct{v}^T}{1+\vct{v}^T\mtx{A}^{-1}\vct{u}}\mtx{A}^{-1}\vct{b}&\text{(note: (1a above), $\mtx{B}$ invertible $\implies$ den $\neq 0$)}\\
+  &= \tilde{\vct{x}} - \dfrac{\tilde{\vct{u}}\vct{v}^T}{1+\vct{v}^T\tilde{\vct{u}}}\tilde{\vct{x}}&\text{(let $\tilde{\vct{x}} \equiv \mtx{A}^{-1}\vct{b}, \tilde{\vct{u}} \equiv \mtx{A}^{-1}\vct{u}$)}\\
+  &= \left[\vct{I} + \left(\dfrac{-1}{1+\vct{v}^T\tilde{\vct{u}}}\right)\vct{\tilde{\vct{u}}\vct{v}^T}\right]\tilde{\vct{x}}&\text{(rearrange)}\\
+  &= \left(\vct{I} + \alpha\tilde{\vct{u}}\vct{v}^T\right)\tilde{\vct{x}}&\text{(let $\alpha \equiv \dfrac{-1}{1+\vct{v}^T\tilde{\vct{u}}}$)}
+\end{align*}
+
+\quad Thus, we have derived an expression for $\vct{x}$ in terms of a scalar $\alpha$ and vectors $\tilde{\vct{u}}, \tilde{\vct{x}}$.
+
+\quad Vectors $\tilde{\vct{u}}$ and $\tilde{\vct{x}}$ are both defined in terms of $\mtx{A}^{-1} = \mtx{R}^{-1}\mtx{Q}^T$, where we assume $\mtx{R}$ and $\mtx{Q}$ have already been computed.
+Thus, both vectors can be computed using back substitution in $O(m^2)$.
+$\alpha$ can then be computed in $O(m)$, and the final expression for $\vct{x}$ involves a vector-scalar product, a vector outer product, an identity addition, and a matrix-vector multiplication, for a total of
+$$O(m) + O(m^2) + O(m) + O(m^2) = O(2m) + O(m^2) = O(m^2)$$
+operations.
+
+\quad Here is the algorithm:
+\begin{enumerate}
+  \item Solve $\mtx{R}\tilde{\vct{x}} = \mtx{Q}^T\vct{b}$ for $\tilde{\vct{x}}$ using back substitution. ($O(m^2)$)
+  \item Solve $\mtx{R}\tilde{\vct{u}} = \mtx{Q}^T\vct{u}$ for $\tilde{\vct{u}}$ using back substitution. ($O(m^2)$)
+  \item Compute the scalar $\alpha = \dfrac{-1}{1+\vct{v}^T\tilde{\vct{u}}}.$ ($O(m)$)
+  \item Finally, compute the solution $\vct{x} = \left(\vct{I} + \left(\left(\alpha\tilde{\vct{u}}\right)\vct{v}^T\right)\right)\tilde{\vct{x}}.$ ($O(m^2)$)
+\end{enumerate}
+
+\quad Since the highest-order term across all steps is $O(m^2)$, the total number of operations is thus $O(m^2)$.
+
+\subsection*{(c) r-upping [10 pts]}
+Extend the algorithm from the previous exercise to the case of $\mtx{B} = \mtx{A} + \mtx{U}\mtx{V}^{T}$, for $\mtx{U},\mtx{V} \in \R^{m \times r}$ and $r \ll m$.
+Calculate the asymptotic complexity of the resulting algorithm.
+
+\quad The Sherman-Morrison formula was the key step above.
+Here, we will use the generalization of that formula, the Woodbury matrix identity.
+Given the definitions above, the Woodbury matrix identity states that if $\left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1} \mtx{U}\right)$ is invertible,
+$$\mtx{B}^{-1} = \mtx{A}^{-1} - \mtx{A}^{-1}\mtx{U} \left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1}\mtx{U}\right)^{-1} \mtx{V}^T\mtx{A}^{-1}.$$
+
+Thus, we can express the solution $\vct{x}$ as
+\begin{align*}
+  \vct{x} &= \left(\mtx{A}^{-1} - \mtx{A}^{-1}\mtx{U} \left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1}\mtx{U}\right)^{-1} \mtx{V}^T\mtx{A}^{-1}\right)\vct{b}\\
+  &= \mtx{A}^{-1}\vct{b} - \mtx{A}^{-1}\mtx{U} \left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1}\mtx{U}\right)^{-1} \mtx{V}^T\mtx{A}^{-1}\vct{b}\\
+  &= \tilde{\vct{x}} - \tilde{\mtx{U}} \left(\mtx{I} + \mtx{V}^T\tilde{\mtx{U}}\right)^{-1} \mtx{V}^T\tilde{\vct{x}} &\text{(let $\tilde{\vct{x}} \equiv \mtx{A}^{-1}\vct{b}, \tilde{\mtx{U}} \equiv \mtx{A}^{-1}\mtx{U}$)}\\
+  &= \left[\mtx{I} - \tilde{\mtx{U}} \left(\mtx{I} + \mtx{V}^T\tilde{\mtx{U}}\right)^{-1} \mtx{V}^T\right]\tilde{\vct{x}} &\text{(rearrange)}\\
+  &= \left[\mtx{I} - \left(\mtx{I} + \tilde{\mtx{U}}\mtx{V}^T\right)^{-1}\tilde{\mtx{U}}\mtx{V}^T\right]\tilde{\vct{x}} &\text{("push-through identity"\cite{henderson_deriving_1981})}\\
+  &= \left(\mtx{I} + \mtx{\alpha}\tilde{\mtx{U}}\mtx{V}^T\right)\tilde{\vct{x}} &\text{(let $\mtx{\alpha} =- \left(\mtx{I} + \tilde{\mtx{U}}\mtx{V}^T\right)^{-1}$)}
+\end{align*}
+
+Note that, since $\tilde{\mtx{U}} \in \R^{m \times r}$, and $\mtx{V}^T \in \R^{r \times m}$, we can compute the matrix product $\tilde{\mtx{U}}\mtx{V}^T$ using $O(m^2r)$ operations.
+
+TODO need to finish after step 2.
+https://people.clas.ufl.edu/hager/files/update-1.pdf p224 is close.
+
+\quad Here is the algorithm:
+\begin{enumerate}
+  \item Solve $\mtx{R}\tilde{\vct{x}} = \mtx{Q}^T\vct{b}$ for $\tilde{\vct{x}}$ using back substitution (same as step 1 in (b)). ($O(m^2)$)
+  \item Compute $\tilde{\mtx{U}} = \mtx{A}^{-1}\mtx{U}$ by solving each of the linear systems $\mtx{R}\tilde{\vct{u}}_i = \mtx{Q}^T\vct{u}_i$ for $\tilde{\vct{u}}_i$, where $\tilde{\vct{u}}_i$ is the $i$th column of $\tilde{\mtx{U}}$ and $\vct{u}_i$ is the $i$th column of $\mtx{U}$.
+  This can be done using back substitution (as in step 2 in (b)) for each of the $r$ columns. ($O(m^2r)$)
+  \item Compute the scalar $\alpha = \dfrac{-1}{1+\vct{v}^T\tilde{\vct{u}}}.$ ($O(m)$)
+  \item Finally, compute the solution $\vct{x} = \left(\vct{I} + \left(\left(\alpha\tilde{\vct{u}}\right)\vct{v}^T\right)\right)\tilde{\vct{x}}.$ ($O(m^2)$)
+\end{enumerate}
+
+\section{You Factor [25 pts]}
+In class we have seen that if $\tilde{\vct{x}} \in \R^{m}$ is the solution to the system $\mtx{A}\vct{x} = \vct{b}$, as computed by unpivoted LU factorization, we have  
+\begin{equation}
+  \left(\mtx{A} + \mtx{E}\right)\tilde{\vct{x}} = \vct{b}.  
+\end{equation}
+For $u$ the unit roundoff error and $\tilde{\mtx{L}}, \tilde{\mtx{U}}$ the LU factors computed in finite precision, we have
+\begin{equation}
+  \left|\mtx{E}\right| \leq m u \left(2 \left|\mtx{A}\right| + 4 \left|\tilde{\mtx{L}} \right| \left|\tilde{\mtx{U}}\right|\right) + O(u^2).
+\end{equation}
+Here, $|\cdot|$ signifies the element-wise absolute values and $\leq$ is interpreted element-wise, as well.
+In this problem, we investigate the conclusions from this bound in the case of row-pivoted LU factorization.
+
+Generally useful things:
+\begin{itemize}
+  \item p174: Because each pivot selection involves maximization over a column, this algorithm produces a matrix $L$ with entries of absolute value $\leq 1$ everywhere below the diagonal.
+      This implies $\|L\| = O(1)$ in any norm.
+      ... so the algorithm is backward stable if $\|U\| = O(\|A\|)$.
+\end{itemize}
+
+\subsection*{(a) [7.5 pts]}
+Deduce that under row-pivoted $LU$ factorization and taking $\| \cdot \|_{\infty}$ to signify the vector-infinity norm, we have 
+\begin{equation}
+  \left\|\mtx{E}\right\|_{\infty} \leq m u \left(2 \left\|\mtx{A}\right\|_{\infty} + 4 m \left\|\tilde{\mtx{U}}\right\|_{\infty} \right) + O(u^2).
+\end{equation}
+This prompts us to investigate the growth factor $\rho \coloneqq \frac{\left\| \mtx{U} \right\|_{\infty}}{\left\|\mtx{A}\right\|_{\infty}}$ of row-pivoted LU factorization.
+
+\subsection*{(b) [5 pts]}
+Verify that the rows $\vct{u}_{i}^{T}, \vct{a}_{i}^{T}$ of $\mtx{U}, \mtx{A}$ satisfy 
+\begin{equation}
+  \vct{u}_{i}^{T} = \vct{a}_i^T - \sum \limits_{j = 1}^{i - 1} \mtx{L}_{ij} \vct{u}_{j}^T.
+\end{equation}
+
+Given the definition of row-pivoted LU factorization, we can write the system of linear equations as 
+$\mtx{A} \vct{x} = \vct{b} \implies \mtx{P} \mtx{A} \vct{x} = \mtx{P} \vct{b} \implies \mtx{L} \mtx{U} \vct{x} = \vct{b}$
+Since $\mtx{L}$ is a lower triangular matrix, $\mtx{U}$ is an upper triangular matrix, with the diagonal elements equal to 1.
+So, we can write the i-th row of $\mtx{U}$ as 
+$\vct{u}_{i}^{T} = \vct{a}_i^T - \sum \limits_{j = 1}^{i - 1} \mtx{L}_{ij} \vct{u}_{j}^T$
+which satisfies the equation (3).
+
+\subsection*{(c) [5 pts]}
+Use part (b) to show that $\left\|\tilde{\mtx{U}}\right\|_{\infty} \leq 2^{m - 1} \left\| \mtx{A}\right\|_{\infty}$. 
+
+
+This is the same as asking to prove that $\max{\rho} = 2^{m-1}$ for an $mxm$ matrix $\mtx{A}$ (Exercise 22.1 in the book).
+Note that (d) below is an example of this worst case.
+Useful here: p174: Because each pivot selection involves maximization over a column, this algorithm produces a matrix $L$ with entries of absolute value $\leq 1$ everywhere below the diagonal.
+Probably want in our proof that there are no pivots in this worst case (as in the example below).
+
+From canvas: We can first bound each element of $u_1^T$ using (b), and then bound each element of $u_2^T$ using (b) and the bound for each element of $u_1^T$, and then bound each element of $u_3^T$ using (b) and the bounds for $u_1^T, u_2^T$, and so on...
+
+\subsection*{(d) [7.5 pts]} Consider matrices of the form 
+\begin{equation}
+  \mtx{A} = 
+  \begin{pmatrix}
+    1  &    &   &       & 1 \\
+    -1 & 1  &   &       & 1 \\
+    -1 & -1 & 1 &       & 1 \\
+    -1 & -1 & -1 &    1 & 1 \\
+    -1 & -1 & -1 &  - 1 & 1 
+  \end{pmatrix}.
+\end{equation}
+Derive the growth factor in this case as a function of $m$.
+
+The $\mtx{P}\mtx{A} = \mtx{L}\mtx{U}$ factorization for $\mtx{A}$ is:
+\begin{equation}
+  \begin{pmatrix}
+    1  &    &   &       & 1 \\
+    -1 & 1  &   &       & 1 \\
+    -1 & -1 & 1 &       & 1 \\
+    -1 & -1 & -1 &    1 & 1 \\
+    -1 & -1 & -1 &  - 1 & 1 
+  \end{pmatrix}
+  =
+  \begin{pmatrix}
+    1  &    &   &        \\
+    -1 & 1  &   &        \\
+    -1 & -1 & 1 &        \\
+    -1 & -1 & -1 &    1  \\
+    -1 & -1 & -1 &  - 1 & 1 
+  \end{pmatrix}
+  \begin{pmatrix}
+    1  &   &   &   & 1 \\
+       & 1 &   &   & 2 \\
+       &   & 1 &   & 4 \\
+       &   &   & 1 & 8 \\
+       &   &   &   & 16 
+  \end{pmatrix}
+\end{equation}
+
+The growth factor is then
+
+$$\rho = \dfrac{\left\| \mtx{U} \right\|_{\infty}}{\left\|\mtx{A}\right\|_{\infty}} = \dfrac{16}{1} = 16 = 2^4 = 2^{m - 1}.$$
+
+How does this relate to part (c)? 
+
+\section{[25 pts]}
+Suppose that $\mtx{A} \in \K^{m \times m}$ is strictly column diagonally dominant, meaning that for all $1 \leq k \leq m$, 
+\begin{equation}
+  \left|\mtx{A}_{kk}\right| > \sum \limits_{j \neq k} \left|\mtx{A}_{jk}\right|.
+\end{equation}
+Show that if LU factorization with row pivoting is applied to $\mtx{A}$, no row interchange takes place.
+
+\quad To show that no row interchange occurs, we'll show that $P=I$.
+
+Assume $P \neq I$.
+Then either $P_{ii} \neq 1$, or $P_{kj} \neq 0, k \neq j$.
+\begin{itemize}
+  \item Assume $P_{ii} \neq 1$, then the pivot for row $i$ is not $A_{ii}$.
+  This contradicts $A$ being strictly column diagonally dominant.
+  \item assume $\exists k \neq j$ such that $P_{kj} \neq 0$.
+  This implies that during some step $k$, there was a $j \neq k$ s.t. $|A_{kj}| < |A_{jj}|.$
+  Thus, $A_{jj}$ cannot be chosen as the pivot element in column $j$, which again contradicts the fact that $A$ is strictly column diagonally dominant.
+\end{itemize}
+
+Therefore, we must have $P=I$, and no row interchange takes place during the factorization.
+
+
+\begin{align*}
+    |A_{kk}| &> \sum_{j \neq k} |A_{jk}| \\
+    |A_{kk}| &\geq |A_{kj}| \\
+    |A_{kj}| &\geq |A_{ij}| \\
+    |A_{ij}| &\geq |A_{jj}|
+\end{align*}
+
+Combining these inequalities, we get $|A_{kk}| > \sum_{j \neq k} |A_{jk}| + |A_{jj}|$, which contradicts the assumption that $A$ is strictly column diagonally dominant. Therefore, we must have $P=I$, and no row interchange takes place during the factorization.
+
+\section{Pivoting [25 pts]}
+\subsection*{(a) [5 pts]} 
+Go to section (a) of the file \texttt{HW3\_your\_code.jl} and implement a function that takes in a matrix $\mathtt{LU} \in \K^{m \times m}$ containing the upper triangular part of $\mtx{U}$ as well as the strict lower triangular part of $\mtx{L}$, as well as an array $\mathtt{P} \in \{1, \ldots m\}^{m}$ that encodes the permutation matrix $\mtx{P}$ by $\mathtt{P}[j] = i \Leftrightarrow \mtx{P_{ij}} = 1$.
+Your function should not allocate any memory. 
+
+
+\subsection*{(b) [5 pts]} 
+Go to section (b) of the file \texttt{HW3\_your\_code.jl} and implement the unpivoted LU factorization. 
+Check your code by ensuring that the assertions in section a + b of \texttt{HW3\_driver.jl} do not produce any errors.
+
+\subsection*{(c) [5 pts]}
+Generate families of random $m \times m$ matrices and vectors of length $m$. 
+Plot as a function of the size $m$, the relative error of the solution obtained from your code in parts (a,b) and the growth factor introduced in problem 2.
+Report the floating point type used by your program.
+You can use the code provided in the second homework as a starting point for creating and saving plots.
+
+\subsection*{(d) [5 pts]}
+Go to section (d) of the file \texttt{HW3\_your\_code.jl} and implement the unpivoted LU factorization. 
+Your code should pass the assertions in section (c) of \texttt{HW3\_driver.jl}.
+Your function should take the matrix $A$ as an input to modify in place, and return an integer array $P$ according to the specifications of (a).
+Repeat the experiment of (c) using the pivoted LU factorization. 
+
+
+\subsection*{(e) [5 pts]}
+Go to section (e) of the file \texttt{HW3\_driver.jl} and implement a function that takes an integer $m$ as an input and returns an $m \times m$ matrix as introduced in problem 2 (d).
+Plot the error of the solution when solving equations in this matrix as a function of $m$. 
+Compare the error to the built-in solution (the $\backslash$ operator). 
+Draw your conclusions from this comparison. 
+
+\bibliography{refs}
+
+\end{document}

@@ -13,3 +13,11 @@ GH: https://github.com/GATech-CSE-6730-Spring-2023-Project/mesh2audio
   - State import/export only
   - (State management remains a FlowGrid focus.
     It can use this as a mesh editor library later.)
+
+
+## Mesh viewer
+
+Got a fork of [mesh-viewer](https://github.com/amanshenoy/mesh-viewer) working on my machine here: https://github.com/khiner/mesh-viewer
+
+* Would be nice to decouple from GLFW, and work with sdl3.
+* Port things over one by one?
