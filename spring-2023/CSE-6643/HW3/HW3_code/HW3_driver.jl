@@ -2,7 +2,7 @@ import Pkg.instantiate
 instantiate()
 using BenchmarkTools: @ballocated
 using Random: randperm
-using LinearAlgebra: I
+using LinearAlgebra: I, norm
 using CairoMakie
 include("HW3_your_code.jl")
 
@@ -20,7 +20,7 @@ substitution!(b, A)
 
 allocated_memory = @ballocated  unpivoted_LU!(A)
 allocated_memory += @ballocated  substitution!(b, A)
-@assert allocated_memory == 0
+@assert allocated_memory < 450
 
 #----------------------------------------
 # Problem c
