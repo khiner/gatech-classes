@@ -1,5 +1,8 @@
 \documentclass[twoside,10pt]{article}
 \input{macro.tex}
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+
 \bibliographystyle{plain}
 
 \begin{document}
@@ -195,29 +198,65 @@ Suppose that $\mtx{A} \in \K^{m \times m}$ is strictly column diagonally dominan
 \end{equation}
 Show that if LU factorization with row pivoting is applied to $\mtx{A}$, no row interchange takes place.
 
-\quad To show that no row interchange occurs, we'll show that $P=I$.
+To show that now row interchange takes place, we can show the following:
+\begin{enumerate}
+  \item Show that $\mtx{A}$'s strict column diagonal property implies no row interchange takes place during the first factorization $k = 1$.
+    Then the first permutation matrix $\mtx{P}^1 = \mtx{I}$, and we have $\mtx{L}^1\mtx{P}^1\mtx{A} = \mtx{L}^1\mtx{A} = \mtx{U}^1$, with $\mtx{U}^1$ being the first intermediate matrix on the way to $\mtx{U}$ after completing factorization step $k=1$.
+    Express $\mtx{U}^1$ as
+    $$\mtx{U}^1 = \begin{bmatrix}\mtx{A}_{1 1} & \mtx{A}_{1 j>1}\\\hbox{}\\\mtx{0} & \mtx{A}^{1}\end{bmatrix},$$
+    with $\mtx{A}^1 = \mtx{A}_{2:m,2:m} \in \K^{m-1 \times m-1}$.
+  \item Given (1), show that $\mtx{A}^{1}$ is also strictly diagonally dominant.
+    Then, apply LU facorization with row pivoting to $\mtx{A}^1$, with $\hat{\mtx{P}}\mtx{A}^1 = \hat{\mtx{L}}\hat{\mtx{U}}$.
+    We conclude from (1) that $\hat{\mtx{P}}^1 = \mtx{I}$, and we have $\hat{\mtx{L}}^1\mtx{A}^1 = \hat{\mtx{U}}^1$, where
+    $$\hat{\mtx{U}}^1 = \begin{bmatrix}\mtx{A}^1_{1 1} & \mtx{A}^1_{1,j>1}\\\hbox{}\\\mtx{0} & \mtx{A}^{2}\end{bmatrix},$$
+    with $\mtx{A}^2 = \mtx{A}^1_{2:,2:} \in \K^{m-2 \times m-2}$.
+\end{enumerate}
 
-Assume $P \neq I$.
-Then either $P_{ii} \neq 1$, or $P_{kj} \neq 0, k \neq j$.
-\begin{itemize}
-  \item Assume $P_{ii} \neq 1$, then the pivot for row $i$ is not $A_{ii}$.
-  This contradicts $A$ being strictly column diagonally dominant.
-  \item assume $\exists k \neq j$ such that $P_{kj} \neq 0$.
-  This implies that during some step $k$, there was a $j \neq k$ s.t. $|A_{kj}| < |A_{jj}|.$
-  Thus, $A_{jj}$ cannot be chosen as the pivot element in column $j$, which again contradicts the fact that $A$ is strictly column diagonally dominant.
-\end{itemize}
+If we show (1) and (2) hold, then we can apply step (1) again to matrix $\mtx{A}^2$ to show that no row interchange takes place at step $k = 2$.
+Then we can apply step again (2) to show $\mtx{A}^3$ is also strictly diagonally dominant, etc.
+Thus, if we show (1) and (2), we can inductively infer that no row interchanges take place during all factorization steps $1 \leq k \leq m - 1$.
 
-Therefore, we must have $P=I$, and no row interchange takes place during the factorization.
+\begin{enumerate}
+  \item Show that $\left|\mtx{A}_{kk}\right| > \sum \limits_{j \neq k} \left|\mtx{A}_{jk}\right| \implies \mtx{P}^1 = \mtx{I}$:
+  
+  During the first factorization step, we choose a pivot row $j_1 = \argmax\limits_{j}{\left|\mtx{A}_{j 1}\right|}$.
+  \begin{align*}
+    \left|\mtx{A}_{kk}\right| &> \sum \limits_{j \neq k} \left|\mtx{A}_{jk}\right| > \max\limits_{j \neq k} \left|\mtx{A}_{jk}\right| \implies\\
+    \left|\mtx{A}_{kk}\right| &= \max\limits_{j} \left|\mtx{A}_{jk}\right| \implies\\
+    \left|\mtx{A}_{1 1}\right| &= \max\limits_{j} \left|\mtx{A}_{j 1}\right| \implies\\
+    1 &= \argmax\limits_{j}{\left|\mtx{A}_{j 1}\right|},
+  \end{align*}
+  and so we choose the first pivot row $j_1 = 1$.
+  In other words, no rows are swapped during this first step, and $\mtx{P}^1 = \mtx{I}$.
+  \item Show that $\mtx{A}^{1}$ is also strictly diagonally dominant.
 
-
-\begin{align*}
-    |A_{kk}| &> \sum_{j \neq k} |A_{jk}| \\
-    |A_{kk}| &\geq |A_{kj}| \\
-    |A_{kj}| &\geq |A_{ij}| \\
-    |A_{ij}| &\geq |A_{jj}|
-\end{align*}
-
-Combining these inequalities, we get $|A_{kk}| > \sum_{j \neq k} |A_{jk}| + |A_{jj}|$, which contradicts the assumption that $A$ is strictly column diagonally dominant. Therefore, we must have $P=I$, and no row interchange takes place during the factorization.
+  Let $\alpha \equiv \dfrac{\mtx{A}_{1 j}}{\mtx{A}_{1 1}}$.
+  Here is what the $j$th column of $\mtx{A}^1$ looks like:
+  $$\begin{bmatrix*}
+    \mtx{A}_{2 j}-\alpha\mtx{A}_{2 1}\\
+    \cdots\\
+    \mtx{A}_{j j}-\alpha\mtx{A}_{j 1}\\
+    \cdots\\
+    \mtx{A}_{m j}-\alpha\mtx{A}_{m 1}
+  \end{bmatrix*}$$
+  Thus, for $\mtx{A}^1$ to be strictly diagonally dominant, we must have
+  \begin{align*}
+    \left|\mtx{A}^1_{kk}\right| &> \sum \limits_{j \neq k} \left|\mtx{A}^1_{jk}\right| \implies\\
+    \left|\mtx{A}_{j j}-\alpha\mtx{A}_{j 1}\right| &> \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}-\alpha\mtx{A}_{i 1}\right|.
+  \end{align*}
+  Starting with the LHS:
+  \begin{align*}
+    \left|\mtx{A}_{j j}-\alpha\mtx{A}_{j 1}\right| &\geq \left|\mtx{A}_{j j}\right|-\left|\alpha\mtx{A}_{j 1}\right|\\
+    &> \sum_{i \neq j}\left|\mtx{A}_{i j}\right|-\left|\alpha\mtx{A}_{j 1}\right|&\text{($\mtx{A}$ is SDD)}\\
+    &= \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}\right|-\left|\mtx{A}_{1 j}\right| -\left|\alpha\mtx{A}_{j 1}\right|&\text{(move $i = 1$ out of sum)}\\
+    &= \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}\right|-\left|\alpha\mtx{A}_{1 1}\right| -\left|\alpha\mtx{A}_{j 1}\right|&\text{(using def. of $\alpha$)}\\
+    &> \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}\right|-\sum_{i \neq 1}\left|\alpha\mtx{A}_{i 1}\right| -\left|\alpha\mtx{A}_{j 1}\right|&\text{($\mtx{A}$ is SDD)}\\
+    &= \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}\right|-\sum_{i \geq 2, i \neq j}\left|\alpha\mtx{A}_{i 1}\right|&\text{(combine right two terms)}\\
+    &= \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}-\alpha\mtx{A}_{i 1}\right|&\text{(QED)}
+  \end{align*}
+  \begin{align*}
+  \end{align*}
+\end{enumerate}
 
 \section{Pivoting [25 pts]}
 \subsection*{(a) [5 pts]} 
