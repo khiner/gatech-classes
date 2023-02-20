@@ -44,7 +44,6 @@ Design an algorithm that provably solves the system of equations $\mtx{B} \mtx{x
   &= \left[\vct{I} + \left(\dfrac{-1}{1+\vct{v}^T\tilde{\vct{u}}}\right)\vct{\tilde{\vct{u}}\vct{v}^T}\right]\tilde{\vct{x}}&\text{(rearrange)}\\
   &= \left(\vct{I} + \alpha\tilde{\vct{u}}\vct{v}^T\right)\tilde{\vct{x}}&\text{(let $\alpha \equiv \dfrac{-1}{1+\vct{v}^T\tilde{\vct{u}}}$)}
 \end{align*}
-
 \quad Thus, we have derived an expression for $\vct{x}$ in terms of a scalar $\alpha$ and vectors $\tilde{\vct{u}}, \tilde{\vct{x}}$.
 
 \quad Vectors $\tilde{\vct{u}}$ and $\tilde{\vct{x}}$ are both defined in terms of $\mtx{A}^{-1} = \mtx{R}^{-1}\mtx{Q}^T$, where we assume $\mtx{R}$ and $\mtx{Q}$ have already been computed.
@@ -61,7 +60,7 @@ operations.
   \item Finally, compute the solution $\vct{x} = \left(\vct{I} + \left(\left(\alpha\tilde{\vct{u}}\right)\vct{v}^T\right)\right)\tilde{\vct{x}}.$ ($O(m^2)$)
 \end{enumerate}
 
-\quad Since the highest-order term across all steps is $O(m^2)$, the total number of operations is thus $O(m^2)$.
+\quad Since the highest-order term across all steps is $O(m^2)$, the total number of operations is $O(m^2)$.
 
 \subsection*{(c) r-upping [10 pts]}
 Extend the algorithm from the previous exercise to the case of $\mtx{B} = \mtx{A} + \mtx{U}\mtx{V}^{T}$, for $\mtx{U},\mtx{V} \in \R^{m \times r}$ and $r \ll m$.
@@ -71,7 +70,6 @@ Calculate the asymptotic complexity of the resulting algorithm.
 Here, we will use the generalization of that formula, the Woodbury matrix identity.
 Given the definitions above, the Woodbury matrix identity states that if $\left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1} \mtx{U}\right)$ is invertible,
 $$\mtx{B}^{-1} = \mtx{A}^{-1} - \mtx{A}^{-1}\mtx{U} \left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1}\mtx{U}\right)^{-1} \mtx{V}^T\mtx{A}^{-1}.$$
-
 Thus, we can express the solution $\vct{x}$ as
 \begin{align*}
   \vct{x} &= \left(\mtx{A}^{-1} - \mtx{A}^{-1}\mtx{U} \left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1}\mtx{U}\right)^{-1} \mtx{V}^T\mtx{A}^{-1}\right)\vct{b}\\
@@ -81,7 +79,6 @@ Thus, we can express the solution $\vct{x}$ as
   &= \left[\mtx{I} - \left(\mtx{I} + \tilde{\mtx{U}}\mtx{V}^T\right)^{-1}\tilde{\mtx{U}}\mtx{V}^T\right]\tilde{\vct{x}} &\text{("push-through identity"\cite{henderson_deriving_1981})}\\
   &= \left(\mtx{I} + \mtx{\alpha}\tilde{\mtx{U}}\mtx{V}^T\right)\tilde{\vct{x}} &\text{(let $\mtx{\alpha} =- \left(\mtx{I} + \tilde{\mtx{U}}\mtx{V}^T\right)^{-1}$)}
 \end{align*}
-
 Note that, since $\tilde{\mtx{U}} \in \R^{m \times r}$, and $\mtx{V}^T \in \R^{r \times m}$, we can compute the matrix product $\tilde{\mtx{U}}\mtx{V}^T$ using $O(m^2r)$ operations.
 
 TODO need to finish after step 2.
@@ -108,13 +105,6 @@ For $u$ the unit roundoff error and $\tilde{\mtx{L}}, \tilde{\mtx{U}}$ the LU fa
 Here, $|\cdot|$ signifies the element-wise absolute values and $\leq$ is interpreted element-wise, as well.
 In this problem, we investigate the conclusions from this bound in the case of row-pivoted LU factorization.
 
-Generally useful things:
-\begin{itemize}
-  \item p174: Because each pivot selection involves maximization over a column, this algorithm produces a matrix $L$ with entries of absolute value $\leq 1$ everywhere below the diagonal.
-      This implies $\|L\| = O(1)$ in any norm.
-      ... so the algorithm is backward stable if $\|U\| = O(\|A\|)$.
-\end{itemize}
-
 \subsection*{(a) [7.5 pts]}
 Deduce that under row-pivoted $LU$ factorization and taking $\| \cdot \|_{\infty}$ to signify the vector-infinity norm, we have 
 \begin{equation}
@@ -122,29 +112,97 @@ Deduce that under row-pivoted $LU$ factorization and taking $\| \cdot \|_{\infty
 \end{equation}
 This prompts us to investigate the growth factor $\rho \coloneqq \frac{\left\| \mtx{U} \right\|_{\infty}}{\left\|\mtx{A}\right\|_{\infty}}$ of row-pivoted LU factorization.
 
+\quad During row-pivoted LU factorization, we pick the maximum value over a column during pivot selection.
+Thus, every element of $\tilde{\mtx{L}}$ has magnitude $\leq 1$, by construction.
+So we have
+$$\|\tilde{\mtx{L}}\|_{\infty} = \max\limits_{1\leq i\leq m}{\sum\limits_{j=1}^{m}{\left|\mtx{A}_{ij}\right|}} \leq \sum\limits_{j=1}^{m}{1} = m.$$
+\quad Putting it together:
+\begin{align*}
+  \left|\mtx{E}\right| &\leq m u \left(2 \left|\mtx{A}\right| + 4 \left|\tilde{\mtx{L}} \right| \left|\tilde{\mtx{U}}\right|\right) + O(u^2)&\text{(given)}\\
+  &= 2 m u \left|\mtx{A}\right| + 4 m u \left|\tilde{\mtx{L}} \right| \left|\tilde{\mtx{U}}\right| + O(u^2)&\text{(distribute $mu$)}\\
+  \left\|\mtx{E}\right\|_{\infty} &\leq 2 m u \left\|\mtx{A}\right\|_{\infty} + 4 m u \left\|\tilde{\mtx{L}}\right\|_{\infty} \left\|\tilde{\mtx{U}}\right\|_{\infty} + O(u^2)&\text{(TODO justify)}\\
+  &= m u \left(2 \left\|\mtx{A}\right\|_{\infty} + 4 \left\|\tilde{\mtx{L}}\right\|_{\infty} \left\|\tilde{\mtx{U}}\right\|_{\infty} \right) + O(u^2)&\text{(factor $mu$)}\\
+  &\leq m u \left(2 \left\|\mtx{A}\right\|_{\infty} + 4 m \left\|\tilde{\mtx{U}}\right\|_{\infty} \right) + O(u^2)&\text{($\left\|\tilde{\mtx{L}}\right\|_{\infty} \leq m$)}\\
+\end{align*}
+  
 \subsection*{(b) [5 pts]}
 Verify that the rows $\vct{u}_{i}^{T}, \vct{a}_{i}^{T}$ of $\mtx{U}, \mtx{A}$ satisfy 
 \begin{equation}
   \vct{u}_{i}^{T} = \vct{a}_i^T - \sum \limits_{j = 1}^{i - 1} \mtx{L}_{ij} \vct{u}_{j}^T.
 \end{equation}
+\quad Expressing the $LU$ factorization of $\mtx{A}$ in terms of rows and columns:
+\begin{align*}
+  \mtx{A} &= \mtx{L}\mtx{U}\\
+  \begin{bmatrix*}
+    \vct{a}_1^T\\\\
+    \vct{a}_2^T\\\\
+    \cdots\\\\
+    \vct{a}_m^T
+  \end{bmatrix*}
+  &=
+  \mtx{L} 
+  \begin{bmatrix*}
+    \vct{u}_{1}^{T}\\\\
+    \vct{u}_{2}^{T}\\\\
+    \cdots\\\\\vct{u}_{m}^{T}
+  \end{bmatrix*}
+\end{align*}
 
-Given the definition of row-pivoted LU factorization, we can write the system of linear equations as 
-$\mtx{A} \vct{x} = \vct{b} \implies \mtx{P} \mtx{A} \vct{x} = \mtx{P} \vct{b} \implies \mtx{L} \mtx{U} \vct{x} = \vct{b}$
-Since $\mtx{L}$ is a lower triangular matrix, $\mtx{U}$ is an upper triangular matrix, with the diagonal elements equal to 1.
-So, we can write the i-th row of $\mtx{U}$ as 
-$\vct{u}_{i}^{T} = \vct{a}_i^T - \sum \limits_{j = 1}^{i - 1} \mtx{L}_{ij} \vct{u}_{j}^T$
-which satisfies the equation (3).
+By the definition of matrix multiplication, with $\mtx{X}_i$ denoting the $i$th row of matrix $\mtx{X},$
+$$\mtx{A}_{ij} = \mtx{L}_i\cdot\left(\mtx{U}^T\right)_j = \sum_{k=1}^m \mtx{L}_{ik}\mtx{U}_{kj}.$$
 
+Since $\mtx{L}$ is lower-triangular and $\mtx{U}$ is upper-triangular, $\mtx{L}_{ij} = \mtx{U}_{ji} = 0$ for $i < j.$
+Thus, we have
+\begin{align*}
+  \mtx{A}_{ij} &= \sum_{k=1}^{i} \mtx{L}_{ik}\mtx{U}_{kj}\\
+  \mtx{A}_{ij} &= \sum_{k=1}^{i-1} \mtx{L}_{ik}\mtx{U}_{kj} + \mtx{L}_{ii}\mtx{U}_{ij}\\
+  &= \sum_{k=1}^{i-1} \mtx{L}_{ik}\mtx{U}_{kj} + \mtx{U}_{ij}&\text{(since $\mtx{L}_{ii} = 1$)}\\
+  \mtx{U}_{ij} &= \mtx{A}_{ij} - \sum_{k=1}^{i-1} \mtx{L}_{ik}\mtx{U}_{kj}&\text{(rearranging terms)}\\
+  \vct{u}^T_{i} &= \mtx{a}^T_{i} - \sum_{k=1}^{i-1} \mtx{L}_{ik}\mtx{u}^T_{k}&\text{(restate in terms of rows. QED)}
+\end{align*}
 \subsection*{(c) [5 pts]}
-Use part (b) to show that $\left\|\tilde{\mtx{U}}\right\|_{\infty} \leq 2^{m - 1} \left\| \mtx{A}\right\|_{\infty}$. 
+Use part (b) to show that $\left\|\mtx{U}\right\|_{\infty} \leq 2^{m - 1} \left\| \mtx{A}\right\|_{\infty}$. 
 
+\quad Note: I got some guidance from fellow student Samuel Talkington about this problem.
 
-This is the same as asking to prove that $\max{\rho} = 2^{m-1}$ for an $mxm$ matrix $\mtx{A}$ (Exercise 22.1 in the book).
-Note that (d) below is an example of this worst case.
-Useful here: p174: Because each pivot selection involves maximization over a column, this algorithm produces a matrix $L$ with entries of absolute value $\leq 1$ everywhere below the diagonal.
-Probably want in our proof that there are no pivots in this worst case (as in the example below).
-
-From canvas: We can first bound each element of $u_1^T$ using (b), and then bound each element of $u_2^T$ using (b) and the bound for each element of $u_1^T$, and then bound each element of $u_3^T$ using (b) and the bounds for $u_1^T, u_2^T$, and so on...
+First, we can use the result from (b) to find the max value of the first row of $\mtx{U}$:
+\begin{align*}
+  \left\|\vct{u}_1^T\right\|_{\infty} &= \left\|\mtx{a}^T_{1} - \sum_{j=1}^{0} \mtx{L}_{ij}\mtx{u}^T_{j}\right\|_{\infty}\\
+  &= \left\|\vct{a}_1^T\right\|_{\infty}.
+\end{align*}
+We can use this result to find a bound on the second row:
+\begin{align*}
+  \left\|\vct{u}_2^T\right\|_{\infty} &= \left\|\mtx{a}^T_{2} - \sum_{j=1}^{1} \mtx{L}_{2j}\mtx{u}^T_{j}\right\|_{\infty}&\text{(from (b))}\\
+  &\leq \left\|\mtx{a}^T_{2}\right\|_{\infty} + \left\|\sum_{j=1}^{1} \mtx{L}_{2j}\mtx{u}^T_{j}\right\|_{\infty}&\text{(triangle inequality, def. of $\infty$-norm)}\\
+  &= \left\|\mtx{a}^T_{2}\right\|_{\infty} + \left\|\mtx{L}_{21}\mtx{u}^T_{1}\right\|_{\infty}&\text{(only one element in sum)}\\
+  &\leq \left\|\mtx{a}^T_{2}\right\|_{\infty} + \left\|\mtx{u}^T_{1}\right\|_{\infty}&\text{(since $\max{\left|\mtx{L}_{ij}\right|} \leq 1$)}\\
+  &= \left\|\mtx{a}^T_{2}\right\|_{\infty} + \left\|\mtx{a}^T_{1}\right\|_{\infty}&\text{(from above result for row 1)}\\
+\end{align*}
+Continuing to the third row:
+\begin{align*}
+  \left\|\vct{u}_3^T\right\|_{\infty} &\leq \left\|\mtx{a}^T_{3}\right\|_{\infty} + \left\|\sum_{j=1}^{2} \mtx{L}_{3j}\mtx{u}^T_{j}\right\|_{\infty}\\
+  &\leq \left\|\mtx{a}^T_{3}\right\|_{\infty} + \left\|\mtx{L}_{32}\mtx{u}^T_{2}\right\|_{\infty} + \left\|\mtx{L}_{31}\mtx{u}^T_{1}\right\|_{\infty}&\text{(expand sum, triangle inequality)}\\
+  &\leq \left\|\mtx{a}^T_{3}\right\|_{\infty} + \left\|\mtx{u}^T_{2}\right\|_{\infty} + \left\|\mtx{u}^T_{1}\right\|_{\infty} &\text{(since $\max{\left|\mtx{L}_{ij}\right|} \leq 1$)}\\
+  &= \left\|\mtx{a}^T_{3}\right\|_{\infty} + \left\|\mtx{a}^T_{2}\right\|_{\infty} + 2\left\|\mtx{a}^T_{1}\right\|_{\infty}&\text{(from above results for rows 1/2)}\\
+\end{align*}
+and the fourth:
+\begin{align*}
+  \left\|\vct{u}_4^T\right\|_{\infty} &\leq \left\|\mtx{a}^T_{4}\right\|_{\infty} + \left\|\mtx{u}^T_{3}\right\|_{\infty} + \left\|\mtx{u}^T_{2}\right\|_{\infty} + \left\|\mtx{u}^T_{1}\right\|_{\infty}\\
+  &=\left\|\mtx{a}^T_{4}\right\|_{\infty} + \left\|\mtx{a}^T_{3}\right\|_{\infty} + 2\left\|\mtx{a}^T_{2}\right\|_{\infty} + 4\left\|\mtx{a}^T_{1}\right\|_{\infty}\\
+\end{align*}
+We can see the pattern emerging:
+\begin{align*}
+\left\|\vct{u}_i^T\right\|_{\infty} &\leq \left\|\mtx{a}^T_{i}\right\|_{\infty} +\sum_{j=1}^{i-1} \left\|\mtx{u}^T_{j}\right\|_{\infty}\\
+&= \left\|\mtx{a}^T_{i}\right\|_{\infty} + \sum_{j=1}^{i-1}{2^{(j-1)}\left\|\mtx{a}^T_{i-j}\right\|_{\infty}}\\
+\end{align*}
+Thus, the bound for the $m$th row is
+\begin{align*}
+  \left\|\vct{u}_m^T\right\|_{\infty} &\leq \left\|\mtx{a}^T_{m}\right\|_{\infty} + \sum_{j=1}^{m-1}{2^{(j-1)}\left\|\mtx{a}^T_{m-j}\right\|_{\infty}}\\
+  &\leq 2^{m - 1}\left(\max_i{\left\|\mtx{a}^T_{i}\right\|_{\infty}}\right)\\
+  &=2^{m - 1}\left\| \mtx{A}\right\|_{\infty},
+\end{align*}
+where the last equality is from the definition of the vector $\infty$-norm applied to matrices.
+This last row, $\vct{u}_m^T,$ has the largest $\infty$-norm of all rows, and thus will contain the largest element in the matrix, and so we have shown that $\left\|\mtx{U}\right\|_{\infty} \leq 2^{m - 1} \left\| \mtx{A}\right\|_{\infty}.$
 
 \subsection*{(d) [7.5 pts]} Consider matrices of the form 
 \begin{equation}
@@ -158,8 +216,10 @@ From canvas: We can first bound each element of $u_1^T$ using (b), and then boun
   \end{pmatrix}.
 \end{equation}
 Derive the growth factor in this case as a function of $m$.
+How does this relate to part (c)? 
 
 The $\mtx{P}\mtx{A} = \mtx{L}\mtx{U}$ factorization for $\mtx{A}$ is:
+
 \begin{equation}
   \begin{pmatrix}
     1  &    &   &       & 1 \\
@@ -186,10 +246,12 @@ The $\mtx{P}\mtx{A} = \mtx{L}\mtx{U}$ factorization for $\mtx{A}$ is:
 \end{equation}
 
 The growth factor is then
-
 $$\rho = \dfrac{\left\| \mtx{U} \right\|_{\infty}}{\left\|\mtx{A}\right\|_{\infty}} = \dfrac{16}{1} = 16 = 2^4 = 2^{m - 1}.$$
-
-How does this relate to part (c)? 
+In part (c), we showed that an upper bound for the maximum value of $\mtx{U}$ can be related to the matrix dimension and the maximum value of a matrix $\mtx{A}$, with
+$$\left\|\mtx{U}\right\|_{\infty} \leq 2^{m - 1} \left\| \mtx{A}\right\|_{\infty}.$$
+Rearranging terms, we can see that this also provides an upper bound for the growth factor of an $m \times m$ matrix $\mtx{A}$:
+$$\dfrac{\left\|\mtx{U}\right\|_{\infty}}{\left\| \mtx{A}\right\|_{\infty}} \leq 2^{m - 1}.$$
+Since $\rho = 2^{m-1}$ for $\mtx{A}$, we can conclude that $\mtx{A}$ exemplifies a worst-case growth factor for a square matrix of its size.
 
 \section{[25 pts]}
 Suppose that $\mtx{A} \in \K^{m \times m}$ is strictly column diagonally dominant, meaning that for all $1 \leq k \leq m$, 
@@ -198,61 +260,96 @@ Suppose that $\mtx{A} \in \K^{m \times m}$ is strictly column diagonally dominan
 \end{equation}
 Show that if LU factorization with row pivoting is applied to $\mtx{A}$, no row interchange takes place.
 
-To show that now row interchange takes place, we can show the following:
+\quad To show that no row interchange takes place, we can show the following:
 \begin{enumerate}
-  \item Show that $\mtx{A}$'s strict column diagonal property implies no row interchange takes place during the first factorization $k = 1$.
+  \item Show that $\mtx{A}$'s strict column diagonal property implies no row interchange takes place during the first factorization step.
     Then the first permutation matrix $\mtx{P}^1 = \mtx{I}$, and we have $\mtx{L}^1\mtx{P}^1\mtx{A} = \mtx{L}^1\mtx{A} = \mtx{U}^1$, with $\mtx{U}^1$ being the first intermediate matrix on the way to $\mtx{U}$ after completing factorization step $k=1$.
     Express $\mtx{U}^1$ as
-    $$\mtx{U}^1 = \begin{bmatrix}\mtx{A}_{1 1} & \mtx{A}_{1 j>1}\\\hbox{}\\\mtx{0} & \mtx{A}^{1}\end{bmatrix},$$
+    $$\mtx{U}^1 = \begin{bmatrix}\mtx{A}_{1 1} & \mtx{A}_{1 k>1}\\\hbox{}\\\mtx{0} & \mtx{A}^{1}\end{bmatrix},$$
     with $\mtx{A}^1 = \mtx{A}_{2:m,2:m} \in \K^{m-1 \times m-1}$.
   \item Given (1), show that $\mtx{A}^{1}$ is also strictly diagonally dominant.
     Then, apply LU facorization with row pivoting to $\mtx{A}^1$, with $\hat{\mtx{P}}\mtx{A}^1 = \hat{\mtx{L}}\hat{\mtx{U}}$.
     We conclude from (1) that $\hat{\mtx{P}}^1 = \mtx{I}$, and we have $\hat{\mtx{L}}^1\mtx{A}^1 = \hat{\mtx{U}}^1$, where
-    $$\hat{\mtx{U}}^1 = \begin{bmatrix}\mtx{A}^1_{1 1} & \mtx{A}^1_{1,j>1}\\\hbox{}\\\mtx{0} & \mtx{A}^{2}\end{bmatrix},$$
-    with $\mtx{A}^2 = \mtx{A}^1_{2:,2:} \in \K^{m-2 \times m-2}$.
+    $$\hat{\mtx{U}}^1 = \begin{bmatrix}\mtx{A}^1_{1 1} & \mtx{A}^1_{1,2:m}\\\hbox{}\\\mtx{0} & \mtx{A}^{2}\end{bmatrix},$$
+    with $\mtx{A}^2 = \mtx{A}^1_{2:m,2:m} \in \K^{m-2 \times m-2}$.
 \end{enumerate}
 
-If we show (1) and (2) hold, then we can apply step (1) again to matrix $\mtx{A}^2$ to show that no row interchange takes place at step $k = 2$.
-Then we can apply step again (2) to show $\mtx{A}^3$ is also strictly diagonally dominant, etc.
-Thus, if we show (1) and (2), we can inductively infer that no row interchanges take place during all factorization steps $1 \leq k \leq m - 1$.
+\quad If we show (1) and (2) hold, then we could apply step (1) again to matrix $\mtx{A}^2$ to show that no row interchange takes place at step $k = 2$, and again apply step (2) to show $\mtx{A}^3$ is also strictly diagonally dominant, etc.
+Thus, if we show that (1) and (2) hold, we can inductively infer that no row interchanges take place during all factorization steps $1 \leq k \leq m - 1$.
+
+\newcommand*{\J}{\hat{\jmath}}
+\newcommand*{\Y}{\hat{k}}
 
 \begin{enumerate}
   \item Show that $\left|\mtx{A}_{kk}\right| > \sum \limits_{j \neq k} \left|\mtx{A}_{jk}\right| \implies \mtx{P}^1 = \mtx{I}$:
-  
   During the first factorization step, we choose a pivot row $j_1 = \argmax\limits_{j}{\left|\mtx{A}_{j 1}\right|}$.
   \begin{align*}
-    \left|\mtx{A}_{kk}\right| &> \sum \limits_{j \neq k} \left|\mtx{A}_{jk}\right| > \max\limits_{j \neq k} \left|\mtx{A}_{jk}\right| \implies\\
+    \left|\mtx{A}_{kk}\right| &> \sum \limits_{j \neq k} \left|\mtx{A}_{jk}\right| \geq \max\limits_{j \neq k} \left|\mtx{A}_{jk}\right| \implies\\
     \left|\mtx{A}_{kk}\right| &= \max\limits_{j} \left|\mtx{A}_{jk}\right| \implies\\
     \left|\mtx{A}_{1 1}\right| &= \max\limits_{j} \left|\mtx{A}_{j 1}\right| \implies\\
     1 &= \argmax\limits_{j}{\left|\mtx{A}_{j 1}\right|},
   \end{align*}
-  and so we choose the first pivot row $j_1 = 1$.
+  and so we choose $j_1 = 1$.
   In other words, no rows are swapped during this first step, and $\mtx{P}^1 = \mtx{I}$.
   \item Show that $\mtx{A}^{1}$ is also strictly diagonally dominant.
 
-  Let $\alpha \equiv \dfrac{\mtx{A}_{1 j}}{\mtx{A}_{1 1}}$.
-  Here is what the $j$th column of $\mtx{A}^1$ looks like:
-  $$\begin{bmatrix*}
-    \mtx{A}_{2 j}-\alpha\mtx{A}_{2 1}\\
-    \cdots\\
-    \mtx{A}_{j j}-\alpha\mtx{A}_{j 1}\\
-    \cdots\\
-    \mtx{A}_{m j}-\alpha\mtx{A}_{m 1}
-  \end{bmatrix*}$$
+  For brevity, let $\J \equiv j + 1$ and $\Y = k + 1$ for $j, k \in \N$, and let $\alpha_k \equiv \dfrac{\mtx{A}_{1k}}{\mtx{A}_{1 1}}.$
+  Then, after the first factorization step, the $k$th column of $\mtx{A}^1$ can be defined in terms of $\mtx{A}$ as:
+  \[
+    \begin{bmatrix*}
+      \mtx{A}^1_{1 k}\\
+      \\
+      \mtx{A}^1_{2 k}\\
+      \\
+      \cdots\\
+      \\
+      \mtx{A}^1_{k k}\\
+      \cdots\\
+      \mtx{A}^1_{(m-1), k}
+    \end{bmatrix*}
+    =
+    \begin{bmatrix*}
+      \mtx{A}_{2\Y} - \dfrac{\mtx{A}_{2 1}}{\mtx{A}_{1 1}}\mtx{A}_{1\Y}\\
+      \\
+      \mtx{A}_{3\Y} - \dfrac{\mtx{A}_{3 1}}{\mtx{A}_{1 1}}\mtx{A}_{1\Y}\\
+      \\
+      \cdots\\
+      \\
+      \mtx{A}_{\Y\Y} - \dfrac{\mtx{A}_{\Y 1}}{\mtx{A}_{1 1}}\mtx{A}_{1\Y}\\
+      \cdots\\
+      \mtx{A}_{m\Y} - \dfrac{\mtx{A}_{m 1}}{\mtx{A}_{1 1}}\mtx{A}_{1\Y}
+    \end{bmatrix*}
+    =
+    \begin{bmatrix*}
+      \mtx{A}_{2\Y} - \alpha_{\Y}\mtx{A}_{2 1}\\
+      \\
+      \mtx{A}_{3\Y} - \alpha_{\Y}\mtx{A}_{3 1}\\
+      \\
+      \cdots\\
+      \\
+      \mtx{A}_{\Y\Y} - \alpha_{\Y}\mtx{A}_{\Y1}\\
+      \cdots\\
+      \mtx{A}_{m\Y} - \alpha_{\Y}\mtx{A}_{m1}
+    \end{bmatrix*}
+  \]
+  So we can express any element of $\mtx{A}^1$ in terms of $\mtx{A}$ as
+  $$\mtx{A}^1_{jk} = \mtx{A}_{(j+1),(k+1)} + \dfrac{\mtx{A}_{1,(k+1)}}{\mtx{A}_{1 1}}\mtx{A}_{(j+1),1} \equiv \mtx{A}_{\J\Y} - \alpha_{\Y} \mtx{A}_{\J 1}.$$
   Thus, for $\mtx{A}^1$ to be strictly diagonally dominant, we must have
   \begin{align*}
-    \left|\mtx{A}^1_{kk}\right| &> \sum \limits_{j \neq k} \left|\mtx{A}^1_{jk}\right| \implies\\
-    \left|\mtx{A}_{j j}-\alpha\mtx{A}_{j 1}\right| &> \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}-\alpha\mtx{A}_{i 1}\right|.
+    \left|\mtx{A}^1_{kk}\right| &> \sum \limits_{j \neq k}^{m-1} \left|\mtx{A}^1_{jk}\right|\\
+    \left|\mtx{A}_{\Y\Y} - \alpha_{\Y}\mtx{A}_{\Y1}\right| &> \sum_{j \neq k}^{m-1}\left|\mtx{A}_{\J\Y} - \alpha_{\Y} \mtx{A}_{\J 1}\right|\\
+    \left|\mtx{A}_{kk} - \alpha_{k}\mtx{A}_{k1}\right| &> \sum_{j > 1, j \neq k}^{m}\left|\mtx{A}_{jk} - \alpha_{k} \mtx{A}_{j 1}\right|, k > 1.
   \end{align*}
-  Starting with the LHS:
+  Starting with the LHS, with $k > 1$:
   \begin{align*}
-    \left|\mtx{A}_{j j}-\alpha\mtx{A}_{j 1}\right| &\geq \left|\mtx{A}_{j j}\right|-\left|\alpha\mtx{A}_{j 1}\right|\\
-    &> \sum_{i \neq j}\left|\mtx{A}_{i j}\right|-\left|\alpha\mtx{A}_{j 1}\right|&\text{($\mtx{A}$ is SDD)}\\
-    &= \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}\right|-\left|\mtx{A}_{1 j}\right| -\left|\alpha\mtx{A}_{j 1}\right|&\text{(move $i = 1$ out of sum)}\\
-    &= \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}\right|-\left|\alpha\mtx{A}_{1 1}\right| -\left|\alpha\mtx{A}_{j 1}\right|&\text{(using def. of $\alpha$)}\\
-    &> \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}\right|-\sum_{i \neq 1}\left|\alpha\mtx{A}_{i 1}\right| -\left|\alpha\mtx{A}_{j 1}\right|&\text{($\mtx{A}$ is SDD)}\\
-    &= \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}\right|-\sum_{i \geq 2, i \neq j}\left|\alpha\mtx{A}_{i 1}\right|&\text{(combine right two terms)}\\
-    &= \sum_{i \geq 2, i \neq j}\left|\mtx{A}_{i j}-\alpha\mtx{A}_{i 1}\right|&\text{(QED)}
+    \left|\mtx{A}_{k k} - \alpha_k \mtx{A}_{k 1}\right| &\geq \left|\mtx{A}_{kk}\right| - \left|\alpha_k\mtx{A}_{k1}\right|&\text{($\mtx{A}$ SDD $\to \mtx{A}_{kk}\mtx{A}_{11} \geq \mtx{A}_{k1}\mtx{A}_{1k}$)}\\
+    &> \sum_{j \neq k}\left|\mtx{A}_{j k}\right| - \left|\alpha_k\mtx{A}_{k 1}\right|&\text{($\mtx{A}$ is SDD)}\\
+    &= \sum_{j > 1, j \neq k}\left|\mtx{A}_{j k}\right|+\left|\mtx{A}_{1 k}\right| - \left|\alpha_k\mtx{A}_{k 1}\right|&\text{(move $j = 1$ out of sum)}\\
+    &= \sum_{j > 1, j \neq k}\left|\mtx{A}_{j k}\right|+\left|\alpha_k\mtx{A}_{1 1}\right| - \left|\alpha_k\mtx{A}_{k 1}\right|&\text{(sub for $\mtx{A}_{1k}$ using def. of $\alpha$)}\\
+    &> \sum_{j > 1, j \neq k}\left|\mtx{A}_{j k}\right|+\sum_{j > 1}\left|\alpha_k\mtx{A}_{j 1}\right| - \left|\alpha_k\mtx{A}_{k 1}\right|&\text{($\mtx{A}$ is SDD)}\\
+    &= \sum_{j > 1, j \neq k}\left|\mtx{A}_{j k}\right|+\sum_{j > 1, j \neq k}\left|\alpha_k\mtx{A}_{j 1}\right|&\text{(combine right two terms)}\\
+    &= \sum_{j > 1, j \neq k}\left(\left|\mtx{A}_{j k}\right| + \left|\alpha_k\mtx{A}_{j 1}\right|\right)&\text{(combine sums)}\\
+    &\geq \sum_{j > 1, j \neq k}\left|\mtx{A}_{j k} - \alpha_k\mtx{A}_{j 1}\right|&\text{(triangle inequality. QED)}
   \end{align*}
   \begin{align*}
   \end{align*}
