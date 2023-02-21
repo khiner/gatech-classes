@@ -38,7 +38,7 @@ Design an algorithm that provably solves the system of equations $\mtx{B} \mtx{x
 \begin{align*}
   \vct{x} &= \mtx{B}^{-1}\vct{b}&\text{(assume $\mtx{B}$ is invertible)}\\
   &= \left(\mtx{A} + \vct{u}\vct{v}^T\right)^{-1}\vct{b}&\text{(since $\mtx{B} = \mtx{A} + \vct{u}\vct{v}^T$)}\\
-  &= \left(\mtx{A}^{-1} - \dfrac{\mtx{A}^{-1}\vct{u}\vct{v}^T\mtx{A}^{-1}}{1+\vct{v}^T\mtx{A}^{-1}\vct{u}}\right)\vct{b}&\text{(Sherman–Morrison formula)}\\
+  &= \left(\mtx{A}^{-1} - \dfrac{\mtx{A}^{-1}\vct{u}\vct{v}^T\mtx{A}^{-1}}{1+\vct{v}^T\mtx{A}^{-1}\vct{u}}\right)\vct{b}&\text{(Sherman–Morrison formula \cite{sherman_adjustment_1950})}\\
   &= \mtx{A}^{-1}\vct{b} - \dfrac{\mtx{A}^{-1}\vct{u}\vct{v}^T}{1+\vct{v}^T\mtx{A}^{-1}\vct{u}}\mtx{A}^{-1}\vct{b}&\text{(note: (1a above), $\mtx{B}$ invertible $\implies$ den $\neq 0$)}\\
   &= \tilde{\vct{x}} - \dfrac{\tilde{\vct{u}}\vct{v}^T}{1+\vct{v}^T\tilde{\vct{u}}}\tilde{\vct{x}}&\text{(let $\tilde{\vct{x}} \equiv \mtx{A}^{-1}\vct{b}, \tilde{\vct{u}} \equiv \mtx{A}^{-1}\vct{u}$)}\\
   &= \left[\vct{I} + \left(\dfrac{-1}{1+\vct{v}^T\tilde{\vct{u}}}\right)\vct{\tilde{\vct{u}}\vct{v}^T}\right]\tilde{\vct{x}}&\text{(rearrange)}\\
@@ -67,7 +67,7 @@ Extend the algorithm from the previous exercise to the case of $\mtx{B} = \mtx{A
 Calculate the asymptotic complexity of the resulting algorithm.
 
 \quad The Sherman-Morrison formula was the key step above.
-Here, we will use the generalization of that formula, the Woodbury matrix identity.
+Here, we will use the generalization of that formula, the Woodbury matrix identity \cite{woodbury_1950}.
 Given the definitions above, the Woodbury matrix identity states that if $\left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1} \mtx{U}\right)$ is invertible,
 $$\mtx{B}^{-1} = \mtx{A}^{-1} - \mtx{A}^{-1}\mtx{U} \left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1}\mtx{U}\right)^{-1} \mtx{V}^T\mtx{A}^{-1}.$$
 Thus, we can express the solution $\vct{x}$ as
@@ -75,23 +75,19 @@ Thus, we can express the solution $\vct{x}$ as
   \vct{x} &= \left(\mtx{A}^{-1} - \mtx{A}^{-1}\mtx{U} \left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1}\mtx{U}\right)^{-1} \mtx{V}^T\mtx{A}^{-1}\right)\vct{b}\\
   &= \mtx{A}^{-1}\vct{b} - \mtx{A}^{-1}\mtx{U} \left(\mtx{I} + \mtx{V}^T\mtx{A}^{-1}\mtx{U}\right)^{-1} \mtx{V}^T\mtx{A}^{-1}\vct{b}\\
   &= \tilde{\vct{x}} - \tilde{\mtx{U}} \left(\mtx{I} + \mtx{V}^T\tilde{\mtx{U}}\right)^{-1} \mtx{V}^T\tilde{\vct{x}} &\text{(let $\tilde{\vct{x}} \equiv \mtx{A}^{-1}\vct{b}, \tilde{\mtx{U}} \equiv \mtx{A}^{-1}\mtx{U}$)}\\
-  &= \left[\mtx{I} - \tilde{\mtx{U}} \left(\mtx{I} + \mtx{V}^T\tilde{\mtx{U}}\right)^{-1} \mtx{V}^T\right]\tilde{\vct{x}} &\text{(rearrange)}\\
-  &= \left[\mtx{I} - \left(\mtx{I} + \tilde{\mtx{U}}\mtx{V}^T\right)^{-1}\tilde{\mtx{U}}\mtx{V}^T\right]\tilde{\vct{x}} &\text{("push-through identity"\cite{henderson_deriving_1981})}\\
-  &= \left(\mtx{I} + \mtx{\alpha}\tilde{\mtx{U}}\mtx{V}^T\right)\tilde{\vct{x}} &\text{(let $\mtx{\alpha} =- \left(\mtx{I} + \tilde{\mtx{U}}\mtx{V}^T\right)^{-1}$)}
+  &= \tilde{\vct{x}} - \tilde{\mtx{U}} \mtx{C}^{-1}\mtx{V}^T\tilde{\vct{x}} &\text{(let $\mtx{C} = \mtx{I} + \mtx{V}^T\tilde{\mtx{U}}$)}
 \end{align*}
 Note that, since $\tilde{\mtx{U}} \in \R^{m \times r}$, and $\mtx{V}^T \in \R^{r \times m}$, we can compute the matrix product $\tilde{\mtx{U}}\mtx{V}^T$ using $O(m^2r)$ operations.
-
-TODO need to finish after step 2.
-https://people.clas.ufl.edu/hager/files/update-1.pdf p224 is close.
 
 \quad Here is the algorithm:
 \begin{enumerate}
   \item Solve $\mtx{R}\tilde{\vct{x}} = \mtx{Q}^T\vct{b}$ for $\tilde{\vct{x}}$ using back substitution (same as step 1 in (b)). ($O(m^2)$)
   \item Compute $\tilde{\mtx{U}} = \mtx{A}^{-1}\mtx{U}$ by solving each of the linear systems $\mtx{R}\tilde{\vct{u}}_i = \mtx{Q}^T\vct{u}_i$ for $\tilde{\vct{u}}_i$, where $\tilde{\vct{u}}_i$ is the $i$th column of $\tilde{\mtx{U}}$ and $\vct{u}_i$ is the $i$th column of $\mtx{U}$.
   This can be done using back substitution (as in step 2 in (b)) for each of the $r$ columns. ($O(m^2r)$)
-  \item Compute the scalar $\alpha = \dfrac{-1}{1+\vct{v}^T\tilde{\vct{u}}}.$ ($O(m)$)
-  \item Finally, compute the solution $\vct{x} = \left(\vct{I} + \left(\left(\alpha\tilde{\vct{u}}\right)\vct{v}^T\right)\right)\tilde{\vct{x}}.$ ($O(m^2)$)
+  \item \textit{I was unable to complete this.} I feel that this is very close. Finding $\mtx{C}^{-1}$ should be possible using another linear system, similarly in $O(m^2r)$ time, and I think it can be done in a way that actually avoids an expensive final computation step by the correct formulation of this linear system (ideally using only $O(mr)$ matrix-vector/vector-vector multiplications).
 \end{enumerate}
+
+This solution should be computable in $O(m^2r)$ time.
 
 \section{You Factor [25 pts]}
 In class we have seen that if $\tilde{\vct{x}} \in \R^{m}$ is the solution to the system $\mtx{A}\vct{x} = \vct{b}$, as computed by unpivoted LU factorization, we have  
@@ -114,17 +110,17 @@ This prompts us to investigate the growth factor $\rho \coloneqq \frac{\left\| \
 
 \quad During row-pivoted LU factorization, we pick the maximum value over a column during pivot selection.
 Thus, every element of $\tilde{\mtx{L}}$ has magnitude $\leq 1$, by construction.
-So we have
-$$\|\tilde{\mtx{L}}\|_{\infty} = \max\limits_{1\leq i\leq m}{\sum\limits_{j=1}^{m}{\left|\mtx{A}_{ij}\right|}} \leq \sum\limits_{j=1}^{m}{1} = m.$$
-\quad Putting it together:
+This leads to the following inequality:
+\begin{equation}
+  \left(\left|\tilde{\mtx{L}} \right| \left|\tilde{\mtx{U}}\right|\right)_{ij} = \sum_{k=1}^{m}{\left|\tilde{\mtx{L}}_{ik} \right| \left|\tilde{\mtx{U}}_{kj}\right|} \leq m\left|\tilde{\mtx{U}}\right|_{ij}
+\end{equation}
+Thus, we have
 \begin{align*}
-  \left|\mtx{E}\right| &\leq m u \left(2 \left|\mtx{A}\right| + 4 \left|\tilde{\mtx{L}} \right| \left|\tilde{\mtx{U}}\right|\right) + O(u^2)&\text{(given)}\\
-  &= 2 m u \left|\mtx{A}\right| + 4 m u \left|\tilde{\mtx{L}} \right| \left|\tilde{\mtx{U}}\right| + O(u^2)&\text{(distribute $mu$)}\\
-  \left\|\mtx{E}\right\|_{\infty} &\leq 2 m u \left\|\mtx{A}\right\|_{\infty} + 4 m u \left\|\tilde{\mtx{L}}\right\|_{\infty} \left\|\tilde{\mtx{U}}\right\|_{\infty} + O(u^2)&\text{(TODO justify)}\\
-  &= m u \left(2 \left\|\mtx{A}\right\|_{\infty} + 4 \left\|\tilde{\mtx{L}}\right\|_{\infty} \left\|\tilde{\mtx{U}}\right\|_{\infty} \right) + O(u^2)&\text{(factor $mu$)}\\
-  &\leq m u \left(2 \left\|\mtx{A}\right\|_{\infty} + 4 m \left\|\tilde{\mtx{U}}\right\|_{\infty} \right) + O(u^2)&\text{($\left\|\tilde{\mtx{L}}\right\|_{\infty} \leq m$)}\\
+  \left|\mtx{E}\right| &\leq m u \left(2 \left|\mtx{A}\right| + 4 \left|\tilde{\mtx{L}} \right| \left|\tilde{\mtx{U}}\right|\right) + O(u^2)\\
+  &\leq m u \left(2 \left|\mtx{A}\right| + 4 m \left|\tilde{\mtx{U}}\right|\right) + O(u^2).
 \end{align*}
-  
+Since all operators here apply element-wise, the desired result then follows immediately, by the definition of the vector-infinity norm applied to matrices, which applies an element-wise maximum.
+
 \subsection*{(b) [5 pts]}
 Verify that the rows $\vct{u}_{i}^{T}, \vct{a}_{i}^{T}$ of $\mtx{U}, \mtx{A}$ satisfy 
 \begin{equation}
@@ -371,18 +367,61 @@ Plot as a function of the size $m$, the relative error of the solution obtained 
 Report the floating point type used by your program.
 You can use the code provided in the second homework as a starting point for creating and saving plots.
 
+\begin{figure}[htb]
+  \begin{center}
+  \includegraphics[width=120mm]{HW3_code/rel_error_and_growth_no_pivot.png}
+  \end{center}
+  \caption{Relative errors and growth factors, without pivoting}
+  \label{fig:figure1}
+\end{figure}
+
+\quad See Fig. 1.
+The floating point type used by my program is \verb|Float64|.
+All tested matrices are normally distributed with a mean of $0$ and a standard deviation of $1$, with a unit diagonal offset (to help unpivoted factorization not get stuck), and no row permutations.
+Relative error was computed as
+$$\dfrac{\|\tilde{\vct{b}}-\vct{b}\|_2}{\|\vct{b}\|_2}.$$
+
 \subsection*{(d) [5 pts]}
 Go to section (d) of the file \texttt{HW3\_your\_code.jl} and implement the unpivoted LU factorization. 
 Your code should pass the assertions in section (c) of \texttt{HW3\_driver.jl}.
 Your function should take the matrix $A$ as an input to modify in place, and return an integer array $P$ according to the specifications of (a).
 Repeat the experiment of (c) using the pivoted LU factorization. 
 
+\begin{figure}[htb]
+  \begin{center}
+  \includegraphics[width=120mm]{HW3_code/rel_error_and_growth_pivot.png}
+  \end{center}
+  \caption{Relative errors and growth factors, with pivoting}
+  \label{fig:figure2}
+\end{figure}
+
+\quad See Fig. 2.
+Note that, as expected, row pivoting results in a dramatic reduction in the growth factor, bringing it down from a max of $\approx2\cdot10^4$ to a max of $\approx 30$!
+Also, the relative errors are consistently reduced by 2-4 decimal places (varying across experiments).
+
+\textit{Note that the two experiements were run with different random matrices,} so we can't make an exact 1:1 comparison.
 
 \subsection*{(e) [5 pts]}
 Go to section (e) of the file \texttt{HW3\_driver.jl} and implement a function that takes an integer $m$ as an input and returns an $m \times m$ matrix as introduced in problem 2 (d).
 Plot the error of the solution when solving equations in this matrix as a function of $m$. 
 Compare the error to the built-in solution (the $\backslash$ operator). 
 Draw your conclusions from this comparison. 
+
+\begin{figure}[htb]
+  \begin{center}
+  \includegraphics[width=120mm]{HW3_code/rel_error_and_growth_no_pivot_gm.png}
+  \end{center}
+  \caption{Relative errors and growth factors, with pivoting\\Using growth matrix}
+  \label{fig:figure3}
+\end{figure}
+
+\quad See Fig. 3.
+For this special kind of maximum-growth matrix, we can see that there is \textit{no difference} between our solution and the built-in $\backslash$ operator.
+
+When I print out the resulting $LU$ factorization, the results look exactly accurate, so I have convinced myself this is not an error.
+I suppose this results in part from all numbers in the input matrix and the $LU$ matrices being represented exactly by floating point representations of natural numbers.
+Beyond this, I am not sure, and I look forward to learning more about this phenomenon!
+(I have a feeling there's a simple explanation I'm missing...)
 
 \bibliography{refs}
 

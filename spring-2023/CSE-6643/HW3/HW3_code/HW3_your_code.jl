@@ -82,7 +82,10 @@ function growth_matrix(m)
     A = zeros(m, m)
     for i = 1:m
         for j = 1:m
-            A[i,j] = i == j ? 1 : i > j ? 10^(-6) : 10^6
+            A[i,j] =
+                i == j || j == m ? 1.0 :
+                i > j ? -1.0 :
+                0.0
         end
     end
     return A
