@@ -18,6 +18,12 @@ Label the comparison operations as $\uparrow$ or $\downarrow$ where the directio
 the destination of the smaller element.
 Illustrate how the input 15, 2, 7, 4, 17, 3, 9, 1 is sorted using the diagram.
 
+\begin{figure}[htb]
+  \begin{center}
+  \includegraphics[width=120mm]{bitonic_sort_reversed.pdf}
+  \end{center}
+\end{figure}
+
 \section{}
 The \textit{Bitonic Split} operation defined in class assumes that the bitonic sequence has
 an even length.
@@ -45,7 +51,7 @@ Determine which algorithm runs faster asymptotically as a function of the messag
 Consider a tree of $n$ nodes and having a bounded degree (i.e., the number of children per node is bounded by a constant).
 The tree is stored in an array $A$ of size $n$.
 Each node also contains the indices at which its parent and children are stored in the array.
-The array is distributed among processors using block decomposition, i.e., $P_i$ contains $A[i\frac{n}{p}],A[i\frac{n}{p} + 1, \dots, A[(i + 1)\frac{n}{p} - 1]].$
+The array is distributed among processors using block decomposition, i.e., $P_i$ contains $A[i\frac{n}{p}],A[i\frac{n}{p} + 1], \dots, A[(i + 1)\frac{n}{p} - 1].$
 For each of the following operations, which communication primitive will you use and what is the runtime?
 
 \begin{enumerate}[label=(\alph*)]
