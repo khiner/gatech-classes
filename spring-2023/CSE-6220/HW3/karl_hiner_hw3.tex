@@ -1,8 +1,8 @@
 \documentclass{article}
 \input{macro.tex}
 
-\newcommand{\eqn}[1]{\begin{equation*}#1\end{equation*}}
-\newcommand{\aln}[1]{\begin{align*}#1\end{align*}}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
 
 \begin{document}
 
@@ -33,24 +33,20 @@ Extend this operation to bitonic sequences of odd length.
 Now, show how the bitonic sequence 5, 3, 4, 7, 10, 14, 17, 13, 8 can be converted into a sorted sequence using
 repeated bitonic split operations.
 
-\quad Here is the operation defined in class: A Bitonic Split of a bitonic sequence $l = x_0, x_1, \cdots, x_{n-1}$ is defined as a decomposition of $l$ into
-\begin{itemize}
-  \item $l_{min} = \min{(x_0, x_{\frac{n}{2}})}, \min{(x_1, x_{\frac{n}{2} + 1})}, \cdots, \min{(x_{\frac{n}{2} - 1}, x_{n-1})}$
-  \item $l_{max} = \max{(x_0, x_{\frac{n}{2}})}, \max{(x_1, x_{\frac{n}{2} + 1})}, \cdots, \max{(x_{\frac{n}{2} - 1}, x_{n-1})}.$
-\end{itemize}
-
+\quad Ordinary Bitonic Split works by decomposing a bitonic sequence $l = x_0, x_1, \cdots, x_{n-1}$ into
+$$l^{-}_i \equiv \min{(x_i, x_{i + \frac{n}{2}})},\quad l^{+}_i \equiv \max{(x_i, x_{i + \frac{n}{2}})},\quad 0 \leq i \leq \frac{n}{2} - 1.$$
 One way to extend this operation to bitonic sequences of odd length is to use a similar strategy to the one we used to extend parallel prefix to non-power-of-two numbers of processors.
 In that case, we kept the exact same algorithm, "pretending" that there were $p = 2^{m}$ processors, and ignored them during communication.
 Similarly, we can "pretend" the given sequence $l$ has length $2m$, by appending a "dummy" element if $l$ has odd length.
 Then, after completion of the split, we can remove the dummy element.
 
 Let $\tilde{l} \equiv l + \{D\}$ refer to the sequence obtained by appending the element $D$ to the sequence $l$.
-Then as long as we choose $D$ such that $\tilde{l}$ is also bitonic, after we apply the usual split operation we will have bitonic split sequences $\tilde{l}_{min}$ and $\tilde{l}_{max}$, and we will also have $\max{(\tilde{l}_{min})} \leq \min{(\tilde{l}_{max})}.$
+Then as long as we choose $D$ such that $\tilde{l}$ is also bitonic, after we apply the usual split operation we will have bitonic split sequences $\tilde{l}^{-} \equiv \tilde{l}_{min}$ and $\tilde{l}^{+} \equiv \tilde{l}_{max}$, and we will also have $\max{(\tilde{l}^{-})} \leq \min{(\tilde{l}^{+})}.$
 
-When we later \textit{remove} the appended element $D$, we must remove it from either $\tilde{l}_{min}$ or $\tilde{l}_{max}.$
-If $D$ was in $\tilde{l}_{min}$, removing it will clearly maintain $\max{\left(\tilde{l}_{min} - \{D\}\right)} \leq \max{\left(\tilde{l}_{min}\right)}$.
-Likewise, removing $D$ from $\tilde{l}_{max}$ will maintain $\min{\left(\tilde{l}_{max} - \{D\}\right)} \geq \min{\left(\tilde{l}_{max}\right)}$.
-So we have $\max{\left(\tilde{l}_{min} - \{D\}\right)} \leq \min{\left(\tilde{l}_{max} - \{D\}\right)}.$
+When we later \textit{remove} the appended element $D$, we must remove it from either $\tilde{l}^{-}$ or $\tilde{l}^{+}.$
+If $D$ was in $\tilde{l}^{-}$, removing it will clearly maintain $\max\left(\tilde{l}^{-} - \{D\}\right) \leq \max\left(\tilde{l}^{-}\right)$.
+Likewise, removing $D$ from $\tilde{l}^{+}$ will maintain $\min\left(\tilde{l}^{+} - \{D\}\right) \geq \min\left(\tilde{l}^{+}\right)$.
+So we have $\max\left(\tilde{l}^{-} - \{D\}\right) \leq \min\left(\tilde{l}^{+} - \{D\}\right).$
 Finally, note that by the definition of bitonic sequences, removing \textit{any} single element from a bitonic sequence results in another bitonic sequence.
 
 Thus, if we append an element that produces another bitonic sequence, then perform the usual split operation on the resulting sequence, and finally remove the appended element, we maintain all properties required for the Bitonic Split operation.
@@ -61,12 +57,13 @@ Here is our algorithm:
 
 \begin{itemize}
   \item If $l$ has length $1$ or $2$, there is nothing to do.
-  \item Otherwise, if $l$ has even length greater than $2$, perform ordinary bitonic split.
-  \item Otherwise, if $l = x_0, x_1, \cdots, x_{n-1},$ has odd length greater than $1$, 
+  \item Otherwise, if $l$ has even length, perform ordinary bitonic split.
+  \item Otherwise, if $l = x_0, x_1, \cdots, x_{n-1},$ has odd length, 
   \begin{itemize}
     \item Append a new element $D = l_{n-1}$ to create $\tilde{l} =x_0, x_1, \cdots, x_{n-1}, x_{n-1}.$
     \item Perform ordinary bitonic split on $\tilde{l},$ marking the new position of the element $D$ during its compare-exchange.
-    \item Create split sequences $l_{min} \equiv \tilde{l}_{min} - \{D\},\quad l_{max} \equiv \tilde{l}_{max} - \{D\}.$
+    \item Create split sequences $l^{-} \equiv \tilde{l}^{-} - \{D\},\quad l^{+} \equiv \tilde{l}^{+} - \{D\}.$
+    (To be clear, only one of $\tilde{l}^{-}$ or $\tilde{l}^{+}$ will contain $D$.)
   \end{itemize}
 \end{itemize}
 
@@ -80,15 +77,39 @@ You may assume that the input is an array of length $m+n$ with one sequence foll
 What are the computation and communication times for your algorithm?
 (You may assume the use of any permutation-style communication, not necessarily hypercubic.)
 
+\quad Observe that for any two consecutive sorted sequences, we can reverse the second sequence to obtain a single bitonic sequence.
+
+First, let's restrict ourselves to the case where $m + n = p$, so that each processor gets one element.
+Then, we can reverse the last $n$ elements by exchanging every pair
+$$\left(m, m + n - 1\right), \left(m + 1, m + n - 2\right), \dots, \left(m +\frac{n}{2} - 1, m + \frac{n}{2}\right).$$
+This takes $O((\tau + \mu)m)$ communication time.
+However, each processor does not know what the value of $m$ is.
+We can determine $m$ by finding the first processor whose element is \textit{less than} the previous processor's element.
+This can be accomplished with a right-shift communication and a comparison on each processor ($O(\tau + \mu)$ communication time, $O(1)$ computation time).
+
+After finding $m$ and reversing the last $n$ elements, we can perform a single Bitonic Merge, with computation time $O(\log{p})$ and communication time $O((\tau + \mu)\log{p})$.
+
+Thus, when $m + n = p$, we can merge the two sorted sequences with:
+
+Computation time: $O(1 + \log{p})$\\
+Communication time: $O((\tau + \mu)m + \tau + \mu + (\tau + \mu)\log{p})$ TODO clarify comm time for bitonic merge w/ $n = p$. And also make sure thinking about shift operator time correctly. Then generalize to each processor holding $\frac{m+n}{p}$ elements.
+
 \section{}
 Two algorithms are designed for the All-to-all communication primitive, and have
 the following runtimes:
+\begin{align*}
+  \text{Algorithm 1} &:\Theta\left(\tau\log{p} + \mu m p \log{p}\right)\\
+  \text{Algorithm 2} &:\Theta\left(\tau p + \mu m p\right)
+\end{align*}
 
-\aln{
-  \text{Algorithm 1} &:&\Theta\left(\tau\log{p} + \mu m p \log{p}\right)\\
-  \text{Algorithm 2} &:&\Theta\left(\tau p + \mu m p\right)
-}
 Determine which algorithm runs faster asymptotically as a function of the message size.
+
+\quad As mentioned in class, we can simplify this problem by comparing the dominating terms.
+Since $\tau p$ dominates $\tau \log{p}$, and $\mu m p \log{p}$ dominates $\mu m p$, we can simply compare these two terms.
+
+Asymptotically with respect to $m$, Algorithm 1 will run faster roughly when
+$$\Theta(\mu mp \log{p}) < \Theta(\tau p) \implies m < \dfrac{\tau}{\mu\log{p}}.$$
+For messages sizes beyond this threshold, Algorithm 2 will run faster.
 
 \section{}
 Consider a tree of $n$ nodes and having a bounded degree (i.e., the number of children per node is bounded by a constant).
@@ -101,5 +122,21 @@ For each of the following operations, which communication primitive will you use
   \item Each node in the tree has $O(1)$ sized data that should be sent to its parent.
   \item Each node in the tree has $O(1)$ sized data that should be sent to all its children.
 \end{enumerate}
+
+\quad Since each node's parent and/or children may each be located in a different processor, we must either use the All-to-All or Many-to-Many communication primitive for both operations.
+
+For (a), the size of each sent message will be constant, since each node apart from the root has exactly one parent.
+This would indicate using All-to-All.
+However, we can improve the runtime using Many-to-Many by observing that each \textit{received} message size can be variable (since each parent may have a different number of children) and bounded (by the tree degree).
+
+The runtime for Many-to-Many can be derived by replacing the message size $m$ in the All-to-All runtime $\Theta(\tau p + \mu m p)$ with the sum of the maximum sent and received message sizes.
+
+Let $D$ denote the tree degree, and $R$ and $S$ denote the maximum received and sent message sizes for a single processor.
+Then we have
+$$m \leq (R + S) = \left(D\dfrac{n}{p} + \dfrac{n}{p}\right) = \dfrac{n}{p}(D+1),$$
+giving a runtime for (a) of
+$$\Theta(\tau p + \mu m p) = \Theta(\tau p + \mu \dfrac{n}{p}(D+1) p) = \Theta(\tau p + \mu n(D+1)) = \Theta(\tau p + \mu n).$$
+For (b), the upper bound for the received and sent message sizes are flipped, but this will not change the value of $R + S$.
+So the runtime for both (assuming we have a network allowing arbitrary permutations) will be $\Theta(\tau p + \mu n)$.
 
 \end{document}
