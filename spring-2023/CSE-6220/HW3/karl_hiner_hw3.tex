@@ -24,12 +24,55 @@ Illustrate how the input 15, 2, 7, 4, 17, 3, 9, 1 is sorted using the diagram.
   \end{center}
 \end{figure}
 
+\quad The only modification needed to the bitonic sort algorithm to sort elements in \textit{non-increasing} order, instead of \textit{non-decreasing} order, is to flip the \verb|Compare_Exchange| directions.
+
 \section{}
 The \textit{Bitonic Split} operation defined in class assumes that the bitonic sequence has
 an even length.
 Extend this operation to bitonic sequences of odd length.
 Now, show how the bitonic sequence 5, 3, 4, 7, 10, 14, 17, 13, 8 can be converted into a sorted sequence using
 repeated bitonic split operations.
+
+\quad Here is the operation defined in class: A Bitonic Split of a bitonic sequence $l = x_0, x_1, \cdots, x_{n-1}$ is defined as a decomposition of $l$ into
+\begin{itemize}
+  \item $l_{min} = \min{(x_0, x_{\frac{n}{2}})}, \min{(x_1, x_{\frac{n}{2} + 1})}, \cdots, \min{(x_{\frac{n}{2} - 1}, x_{n-1})}$
+  \item $l_{max} = \max{(x_0, x_{\frac{n}{2}})}, \max{(x_1, x_{\frac{n}{2} + 1})}, \cdots, \max{(x_{\frac{n}{2} - 1}, x_{n-1})}.$
+\end{itemize}
+
+One way to extend this operation to bitonic sequences of odd length is to use a similar strategy to the one we used to extend parallel prefix to non-power-of-two numbers of processors.
+In that case, we kept the exact same algorithm, "pretending" that there were $p = 2^{m}$ processors, and ignored them during communication.
+Similarly, we can "pretend" the given sequence $l$ has length $2m$, by appending a "dummy" element if $l$ has odd length.
+Then, after completion of the split, we can remove the dummy element.
+
+Let $\tilde{l} \equiv l + \{D\}$ refer to the sequence obtained by appending the element $D$ to the sequence $l$.
+Then as long as we choose $D$ such that $\tilde{l}$ is also bitonic, after we apply the usual split operation we will have bitonic split sequences $\tilde{l}_{min}$ and $\tilde{l}_{max}$, and we will also have $\max{(\tilde{l}_{min})} \leq \min{(\tilde{l}_{max})}.$
+
+When we later \textit{remove} the appended element $D$, we must remove it from either $\tilde{l}_{min}$ or $\tilde{l}_{max}.$
+If $D$ was in $\tilde{l}_{min}$, removing it will clearly maintain $\max{\left(\tilde{l}_{min} - \{D\}\right)} \leq \max{\left(\tilde{l}_{min}\right)}$.
+Likewise, removing $D$ from $\tilde{l}_{max}$ will maintain $\min{\left(\tilde{l}_{max} - \{D\}\right)} \geq \min{\left(\tilde{l}_{max}\right)}$.
+So we have $\max{\left(\tilde{l}_{min} - \{D\}\right)} \leq \min{\left(\tilde{l}_{max} - \{D\}\right)}.$
+Finally, note that by the definition of bitonic sequences, removing \textit{any} single element from a bitonic sequence results in another bitonic sequence.
+
+Thus, if we append an element that produces another bitonic sequence, then perform the usual split operation on the resulting sequence, and finally remove the appended element, we maintain all properties required for the Bitonic Split operation.
+A simple choice for $D$ which guarantees $\tilde{l}$ is bitonic is to \textit{duplicate the last element}.
+(We could also \textit{prepend} the first element.)
+
+Here is our algorithm:
+
+\begin{itemize}
+  \item If $l$ has length $1$ or $2$, there is nothing to do.
+  \item Otherwise, if $l$ has even length greater than $2$, perform ordinary bitonic split.
+  \item Otherwise, if $l = x_0, x_1, \cdots, x_{n-1},$ has odd length greater than $1$, 
+  \begin{itemize}
+    \item Append a new element $D = l_{n-1}$ to create $\tilde{l} =x_0, x_1, \cdots, x_{n-1}, x_{n-1}.$
+    \item Perform ordinary bitonic split on $\tilde{l},$ marking the new position of the element $D$ during its compare-exchange.
+    \item Create split sequences $l_{min} \equiv \tilde{l}_{min} - \{D\},\quad l_{max} \equiv \tilde{l}_{max} - \{D\}.$
+  \end{itemize}
+\end{itemize}
+
+\begin{center}
+  \includegraphics[width=100mm]{odd_length_bitonic_sort.pdf}
+\end{center}
 
 \section{}
 Give an algorithm to merge two sorted sequences of lengths $m$ and $n$, respectively.
