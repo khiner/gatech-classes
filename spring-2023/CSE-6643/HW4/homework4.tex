@@ -1,0 +1,183 @@
+\documentclass[twoside,10pt]{article}
+\input{macro.tex}
+
+\begin{document}
+
+\title{CSE 6643 Homework 4}
+\author{Sch{\"a}fer, Spring 2023}
+\date{Deadline: March 7 Tuesday, 8:00 am}
+\maketitle
+
+\begin{itemize}
+  \item There are 2 sections in grade scope: Homework 4 and Homework 4 Programming. Submit your answers as a PDF file to Homework 4 (report the results that you obtain using programming by using plots, tables, and a description of your implementation like you would when writing a paper.) and also submit your code in a zip file to Homework 4 Programming. 
+  \item Programming questions are posted in Julia. You are allowed to use basic library functions like sorting, plotting, matrix-vector products etc, but nothing that renders the problem itself trivial. Please use your common sense and ask the instructors if you are unsure. 
+  You should never add additional packages to the environment.
+  \item Late homework incurs a penalty of 20\% for every 24 hours that it is late. Thus, right after the deadline, it will only be worth 80\% credit, and after four days, it will not be worth any credit. 
+  \item We recommend the use of LaTeX for typing up your solutions. No credit will be given to unreadable handwriting.
+  \item List explicitly with whom in the class you discussed which problem, if any. Cite all external resources that you were using to complete the homework. For details, consult the collaboration policy in the class syllabus on canvas.
+\end{itemize}
+
+
+\section{Schur Complements I [25 pts]}
+Consider the matrix 
+\begin{equation}
+  \mtx{M}
+  \coloneqq
+  \begin{pmatrix}
+    \mtx{A} & \mtx{B}\\
+    \mtx{C} & \mtx{D}
+  \end{pmatrix}, 
+\end{equation}
+where $\mtx{A} \in \K^{m \times m}$ and $\mtx{D} \in \K^{n \times n}$ are square matrices.
+The matrix $\mtx{M}/\mtx{A} \coloneqq \mtx{D} - \mtx{C} \mtx{A}^{-1} \mtx{B}$ is called the Schur complement of $\mtx{A}$ in $\mtx{M}$.    
+
+\subsection*{(a) [5 pts]} 
+  Relate the Schur complement $\mtx{M} / \mtx{A}$ to the block LU factorization of $\mtx{M}$.
+
+\subsection*{(b) [5 pts]} 
+  Show that the determinant of $\mtx{M}$ is given by $\det\left(\mtx{A}\right) \det\left(\mtx{M} / \mtx{A}\right)$.
+
+\subsection*{(c) [7.5 pts]}
+  Let $\mtx{M} = \mtx{L} \mtx{U}$ be the LU factorization of $\mtx{M}$. 
+  Split its factors into block matrices 
+  \begin{equation} 
+    \mtx{L} = 
+    \begin{pmatrix}
+      \mtx{L}_{1, 1} & \mtx{0} \\
+      \mtx{L}_{2, 1} & \mtx{L}_{2, 2}
+    \end{pmatrix},
+    \quad 
+    \mtx{U} = 
+    \begin{pmatrix}
+      \mtx{U}_{1, 1} & \mtx{U}_{1, 2} \\
+      \mtx{0} & \mtx{U}_{2, 2}
+    \end{pmatrix}
+  \end{equation}
+  according to the same blocking as $\mtx{M}$.
+  Show that $\mtx{M} / \mtx{A} = \mtx{L}_{2, 2} \mtx{U}_{2, 2}$. 
+
+\subsection*{(d) [7.5 pts]}
+Now consider the $3 \times 3$ block matrix 
+\begin{equation}
+  \mtx{N} = 
+  \begin{pmatrix}
+    \mtx{N}_{1, 1} & \mtx{N}_{1, 2} & \mtx{N}_{1, 3} \\
+    \mtx{N}_{2, 1} & \mtx{N}_{2, 2} & \mtx{N}_{2, 3} \\
+    \mtx{N}_{3, 1} & \mtx{N}_{3, 2} & \mtx{N}_{3, 3}
+  \end{pmatrix}.
+\end{equation}
+Prove the \emph{Quotient Property} of Schur complements
+\begin{equation}
+  \left(\mtx{N} / \mtx{N}_{1, 1}\right) / \left(\mtx{N} / \mtx{N}_{1, 1}\right)_{1, 1} 
+  = 
+  \mtx{N} \Big / 
+  \begin{pmatrix}
+    \mtx{N}_{1, 1} & \mtx{N}_{1, 2} \\
+    \mtx{N}_{2, 1} & \mtx{N}_{2, 2} 
+  \end{pmatrix}.
+\end{equation}
+Here, $\left(\mtx{N} / \mtx{N}_{1, 1}\right)_{1, 1}$ is the top left block of $\mtx{N} / \mtx{N}_{1, 1}$. 
+
+
+
+\section{Schur Complements II [25 pts + 10 bonus]}
+Let $\mtx{M}$ be as in the previous problem. 
+
+\subsection*{(a) [5 pts]}
+Divide the inverse of $\mtx{M}$ into blocks (of the same size as those of $\mtx{M}$) as
+\begin{equation}
+  \mtx{M}^{-1} = 
+  \begin{pmatrix}
+    \mtx{\alpha} & \mtx{\beta} \\
+    \mtx{\gamma} & \mtx{\delta}
+  \end{pmatrix}.
+\end{equation}
+Show that the Schur complement $\mtx{M} / \mtx{A}$ is the inverse of $\mtx{\delta}$.
+
+\subsection*{(b) [5 pts]} 
+For $\mtx{M}$ symmetric positive definite, show that if $\lambda$ is an eigenvalue of $\mtx{M} / \mtx{A}$, then $\lambda_{\min}\left(\mtx{M} \right) \leq \lambda \leq \lambda_{\max}\left(\mtx{M}\right)$.
+
+\subsection*{(c) [7.5 pts]} 
+Show that the size of the pivots occuring in the Cholesky or LU factorization of a s.p.d. matrix $\mtx{M}$ is lower bounded by $\left\|\mtx{M}^{-1}\right\|^{-1}$.
+
+\subsection*{(d) [7.5 pts]}
+For $\mtx{M}$ s.p.d, show that 
+\begin{equation} 
+  \vct{y}^* \left(\mtx{M} / \mtx{A}\right) \vct{y} = \min \limits_{x \in \K^{m}} 
+  \begin{pmatrix}
+    \vct{x}\\
+    \vct{y} 
+  \end{pmatrix}^* 
+  \mtx{M}
+  \begin{pmatrix}
+    \vct{x}\\
+    \vct{y} 
+  \end{pmatrix}.
+\end{equation}
+
+\subsection*{(e) [10 bonus pts]} 
+By replacing the $\min$ with a $\min \max$ over suitable variables, derive a version of the results of (d) that is valid for general $\mtx{M}$.
+
+
+
+
+\section{Cholesky and QR [25 pts]}
+
+\subsection*{(a) [5 pts]}
+Assume that the invertible matrix $\mtx{A} \in \K^{m \times m}$ satisfies $\mtx{A} = \mtx{L} \mtx{U}$.   
+Derive a way to write $\mtx{A}$ as the sum of rank-one matrices in outer product form. 
+
+\subsection*{(b) [5 pts]}
+Show that the LU factorization of an invertible matrix $\mtx{A} \in \K^{m \times m}$ is unique. 
+
+\subsection*{(c) [5 pts]}
+Assume that we factor $\mtx{A} \in \K^{m \times m}$ as $\mtx{A} = \mtx{L} \mtx{L}^{*}$ for lower triangular $\mtx{L}$.  
+Up to which choices is this factorization unique? 
+Prove your results (as always) and make sure to treat the case $\K = \C$. 
+
+\subsection*{(d) [5 pts]} 
+Using these results, prove and explain the relationship between the Cholesky factor of $\mtx{B}^* \mtx{B}$ and the QR factorization of $\mtx{B}$, for $\mtx{B} \in \K^{m \times n}$ and $m \geq n$.
+
+\subsection*{(e) [5 pts]} 
+For $\mtx{A} = \mtx{B}^* \mtx{B}$ and $\mtx{B}$ as in (d), write 
+\begin{equation}
+\mtx{A} = 
+\begin{pmatrix}
+ \mtx{A}_{1,1}& \mtx{A}_{1,2} \\
+ \mtx{A}_{2,1}& \mtx{A}_{2,2} 
+\end{pmatrix}, 
+\quad 
+\mtx{B} = 
+\begin{pmatrix}
+ \mtx{B}_{1} &  \mtx{B}_{2} 
+\end{pmatrix}. 
+\end{equation}
+Relate the Schur complement $\mtx{A}_{2,2} - \mtx{A}_{2,1} \left(\mtx{A}_{1, 1}\right)^{-1} \mtx{A}_{1,2}$ to the Gram-matrix of the columns of $\mtx{B}_2$, projected on the orthogonal complement of $\mtx{B}_1$.
+Use this result to refine your comment in (d) on the relationship of Cholesky and QR factorization. 
+
+\section{QRs [25 pts]}
+\subsection*{(a) [5 pts]} 
+Go to section (a) of the file \texttt{HW4\_your\_code.jl} and implement a function that uses the classical Gram-Schmidt algorithm for computing a reduced QR factorization. 
+
+\subsection*{(b) [5 pts]} 
+Go to section (b) of the file \texttt{HW4\_your\_code.jl} and implement a function that uses the modified Gram-Schmidt algorithm for computing a reduced QR factorization. 
+
+
+\subsection*{(c) [5 pts]}
+Go to section (c) of the file \texttt{HW4\_your\_code.jl} and implement a function that computes the QR factorization using Householder reflections. 
+Your algorithm should operate in place, overwriting the input matrix and not allocating additional memory. 
+
+
+\subsection*{(d) [5 pts]}
+Go to section (d) of the file \texttt{HW4\_your\_code.jl} and implement functions that use the QR factorization matrix computed in (c) to multiply a vector with the $\mtx{Q} \mtx{R}$ (multiplication) or $\mtx{R}\mtx{Q}^*$ (solving overdetermined least squares problem). 
+Your functions should take a preallocated output vector as input in which to store the result. 
+No additional allocation should be performed. 
+
+
+\subsection*{(e) [5 pts]}
+Using what you learned in class, design an experiment that compares the numerical stability of the different methods. 
+For instance, compute the accuracy of the different approaches over matrices of increasing size or condition number and provide a plot of your results.
+Using what you learned in class to make sure that you include examples highlighting the lack of stability of classical Gram-Schmidt.
+
+
+\end{document}
