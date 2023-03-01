@@ -24,8 +24,123 @@ The matrix $\mtx{M}/\mtx{A} \coloneqq \mtx{D} - \mtx{C} \mtx{A}^{-1} \mtx{B}$ is
 \subsection*{(a) [5 pts]} 
   Relate the Schur complement $\mtx{M} / \mtx{A}$ to the block LU factorization of $\mtx{M}$.
 
+  \quad The block LU factorization of $\mtx{M}$ is given by 
+  \begin{equation}
+    \mtx{M} = 
+    \begin{pmatrix}
+      \mtx{I} & \mtx{0} \\
+      \mtx{C} \mtx{A}^{-1} & \mtx{I}
+    \end{pmatrix}
+    \begin{pmatrix}
+      \mtx{A} & \mtx{0} \\
+      \mtx{0} & \mtx{M} / \mtx{A}
+    \end{pmatrix}
+    \begin{pmatrix}
+      \mtx{I} & \mtx{A}^{-1} \mtx{B} \\
+      \mtx{0} & \mtx{I}
+    \end{pmatrix}.
+  \end{equation}
+  \quad We can verify this by multiplying the terms and verifying we end up with $\mtx{M}$:
+  \begin{align*}
+    &\begin{pmatrix}
+      \mtx{I} & \mtx{0} \\
+      \mtx{C} \mtx{A}^{-1} & \mtx{I}
+    \end{pmatrix}
+    \begin{pmatrix}
+      \mtx{A} & \mtx{0} \\
+      \mtx{0} &\mtx{M} / \mtx{A}
+    \end{pmatrix}
+    \begin{pmatrix}
+      \mtx{I} & \mtx{A}^{-1} \mtx{B} \\
+      \mtx{0} & \mtx{I}
+    \end{pmatrix}\\
+    &= 
+    \begin{pmatrix}
+      \mtx{I} & \mtx{0} \\
+      \mtx{C} \mtx{A}^{-1} & \mtx{I}
+    \end{pmatrix}
+    \begin{pmatrix}
+      \mtx{A} & \mtx{A} \mtx{A}^{-1} \mtx{B} \\
+      \mtx{0} & \mtx{M} / \mtx{A}
+    \end{pmatrix}\\
+    &= 
+    \begin{pmatrix}
+      \mtx{I} & \mtx{0} \\
+      \mtx{C} \mtx{A}^{-1} & \mtx{I}
+    \end{pmatrix}
+    \begin{pmatrix}
+      \mtx{A} & \mtx{B} \\
+      \mtx{0} & \mtx{M} / \mtx{A}
+    \end{pmatrix}\\
+    &=
+    \begin{pmatrix}
+      \mtx{A} & \mtx{B}\\
+      \mtx{C}\mtx{A}^{-1}\mtx{A} & \mtx{C}\mtx{A}^{-1}\mtx{B} + \mtx{M} / \mtx{A}
+    \end{pmatrix}\\
+    &=
+    \begin{pmatrix}
+      \mtx{A} & \mtx{B}\\
+      \mtx{C} & \mtx{C}\mtx{A}^{-1}\mtx{B} + \mtx{D} - \mtx{C} \mtx{A}^{-1} \mtx{B}
+    \end{pmatrix}\\
+    &=
+    \begin{pmatrix}
+      \mtx{A} & \mtx{B}\\
+      \mtx{C} & \mtx{D}
+    \end{pmatrix} = \mtx{M}
+  \end{align*}
+
 \subsection*{(b) [5 pts]} 
   Show that the determinant of $\mtx{M}$ is given by $\det\left(\mtx{A}\right) \det\left(\mtx{M} / \mtx{A}\right)$.
+
+  \quad Expressing $\mtx{M}$ as its block LU factorization:
+\begin{align*}
+  \mtx{M} &= 
+  \begin{pmatrix}
+    \mtx{I} & \mtx{0} \\
+    \mtx{C} \mtx{A}^{-1} & \mtx{I}
+  \end{pmatrix}
+  \begin{pmatrix}
+    \mtx{A} & \mtx{0} \\
+    \mtx{0} & \mtx{M} / \mtx{A}
+  \end{pmatrix}
+  \begin{pmatrix}
+    \mtx{I} & \mtx{A}^{-1} \mtx{B} \\
+    \mtx{0} & \mtx{I}
+  \end{pmatrix}\\
+  \det(\mtx{M}) &= 
+  \det\left(\begin{pmatrix}
+    \mtx{I} & \mtx{0} \\
+    \mtx{C} \mtx{A}^{-1} & \mtx{I}
+  \end{pmatrix}
+  \begin{pmatrix}
+    \mtx{A} & \mtx{0} \\
+    \mtx{0} & \mtx{M} / \mtx{A}
+  \end{pmatrix}
+  \begin{pmatrix}
+    \mtx{I} & \mtx{A}^{-1} \mtx{B} \\
+    \mtx{0} & \mtx{I}
+  \end{pmatrix}\right)\\
+  &= \det\left(\begin{pmatrix}
+    \mtx{I} & \mtx{0} \\
+    \mtx{C} \mtx{A}^{-1} & \mtx{I}
+  \end{pmatrix}\right)
+  \det\left(\begin{pmatrix}
+    \mtx{A} & \mtx{0} \\
+    \mtx{0} & \mtx{M} / \mtx{A}
+  \end{pmatrix}\right)
+  \det\left(\begin{pmatrix}
+    \mtx{I} & \mtx{A}^{-1} \mtx{B} \\
+    \mtx{0} & \mtx{I}
+  \end{pmatrix}\right)\\
+  &= 1 \cdot 
+  \det\left(\begin{pmatrix}
+    \mtx{A} & \mtx{0} \\
+    \mtx{0} & \mtx{M} / \mtx{A}
+  \end{pmatrix}\right)
+  \cdot 1\\
+  &= 
+  \det\left(\mtx{A}\right)\det\left(\mtx{M} / \mtx{A}\right)\\
+\end{align*}
 
 \subsection*{(c) [7.5 pts]}
   Let $\mtx{M} = \mtx{L} \mtx{U}$ be the LU factorization of $\mtx{M}$. 
@@ -45,6 +160,33 @@ The matrix $\mtx{M}/\mtx{A} \coloneqq \mtx{D} - \mtx{C} \mtx{A}^{-1} \mtx{B}$ is
   \end{equation}
   according to the same blocking as $\mtx{M}$.
   Show that $\mtx{M} / \mtx{A} = \mtx{L}_{2, 2} \mtx{U}_{2, 2}$. 
+
+  \begin{align*}
+    \mtx{M}=\mtx{L}\mtx{U}&= \begin{pmatrix}
+    \mtx{L}_{1,1} & \mtx{0} \\
+    \mtx{L}_{2,1} & \mtx{L}_{2,2}
+  \end{pmatrix}
+  \begin{pmatrix}
+    \mtx{U}_{1,1} & \mtx{U}_{1,2} \\
+    \mtx{0} & \mtx{U}_{2,2}
+  \end{pmatrix}\\
+  \begin{pmatrix}
+    \mtx{A} & \mtx{B}\\
+    \mtx{C} & \mtx{D}
+  \end{pmatrix} &= \begin{pmatrix}
+      \mtx{L}_{1,1}\mtx{U}_{1,1} & \mtx{L}_{1,1}\mtx{U}_{1,2} \\
+      \mtx{L}_{2,1}\mtx{U}_{1,1} & \mtx{L}_{2,1}\mtx{U}_{1,2}+\mtx{L}_{2,2}\mtx{U}_{2,2}
+    \end{pmatrix}
+  \end{align*}
+  Equating the lower-right subblocks:
+  \begin{align*}
+    \mtx{D} &= \mtx{L}_{2,1}\mtx{U}_{1,2}+\mtx{L}_{2,2}\mtx{U}_{2,2}\\
+    \mtx{L}_{2,2}\mtx{U}_{2,2} &= \mtx{D} - \mtx{L}_{2,1}\mtx{U}_{1,2}\\
+    &= \mtx{D} - \left(\mtx{C}\mtx{U}_{1,1}^{-1}\right)\left(\mtx{L}_{1,1}^{-1}\mtx{B}\right)&\text{(solve for $ \mtx{L}_{2,1}$ and $\mtx{U}_{1,2}$ by equating subblocks)}\\
+    &= \mtx{D} -\mtx{C}\left(\mtx{U}_{1,1}^{-1}\mtx{L}_{1,1}^{-1}\right)\mtx{B}&\text{(changing parenthesis)}\\
+    &= \mtx{D} - \mtx{C} \mtx{A}^{-1} \mtx{B}&\text{($\mtx{A} = \mtx{L}_{1,1}\mtx{U}_{1,1}$, $\mtx{A}$ invertible)}\\
+    &= \mtx{M} / \mtx{A}
+  \end{align*}
 
 \subsection*{(d) [7.5 pts]}
 Now consider the $3 \times 3$ block matrix 
@@ -67,7 +209,6 @@ Prove the \emph{Quotient Property} of Schur complements
   \end{pmatrix}.
 \end{equation}
 Here, $\left(\mtx{N} / \mtx{N}_{1, 1}\right)_{1, 1}$ is the top left block of $\mtx{N} / \mtx{N}_{1, 1}$. 
-
 
 
 \section{Schur Complements II [25 pts + 10 bonus]}
