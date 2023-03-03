@@ -52,13 +52,16 @@ end
 function householder_QR!(A)
     m, n = size(A)
     for k = 1:n
+        x_norm = norm(view(A, k:m, k))
         v = A[k:m, k]
-        v[1] += sign(A[k,k]) * norm(v)
-        v /= norm(v)
+        v[1] += sign(A[k,k]) * x_norm
+        v /= v[1]
+        v_dot = v' * v
+
         # Perform `A[k:m, k:n] -= 2 * v * (v' * A[k:m, k:n])`,
         # one column at a time to avoid slicing, which allocates memory.
         for j = k:n
-            inner_product = v' * view(A, k:m, j)
+            inner_product = v' * view(A, k:m, j) / v_dot
             for i = k:m
                 A[i,j] -= 2 * v[i-k+1] * inner_product
             end
