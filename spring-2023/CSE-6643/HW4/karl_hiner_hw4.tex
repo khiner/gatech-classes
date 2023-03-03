@@ -1,6 +1,8 @@
 \documentclass[twoside,10pt]{article}
 \input{macro.tex}
 
+\newcommand{\Z}{\mathbbm{Z}}
+
 \begin{document}
 
 \title{CSE 6643 Homework 4}
@@ -25,7 +27,7 @@ The matrix $\mtx{M}/\mtx{A} \coloneqq \mtx{D} - \mtx{C} \mtx{A}^{-1} \mtx{B}$ is
   Relate the Schur complement $\mtx{M} / \mtx{A}$ to the block LU factorization of $\mtx{M}$.
 
   \quad The block LU factorization of $\mtx{M}$ is given by 
-  \begin{equation}
+  \begin{equation*}
     \mtx{M} = 
     \begin{pmatrix}
       \mtx{I} & \mtx{0} \\
@@ -39,7 +41,7 @@ The matrix $\mtx{M}/\mtx{A} \coloneqq \mtx{D} - \mtx{C} \mtx{A}^{-1} \mtx{B}$ is
       \mtx{I} & \mtx{A}^{-1} \mtx{B} \\
       \mtx{0} & \mtx{I}
     \end{pmatrix}.
-  \end{equation}
+  \end{equation*}
   \quad We can verify this by multiplying the terms and verifying we end up with $\mtx{M}$:
   \begin{align*}
     &\begin{pmatrix}
@@ -210,6 +212,15 @@ Prove the \emph{Quotient Property} of Schur complements
 \end{equation}
 Here, $\left(\mtx{N} / \mtx{N}_{1, 1}\right)_{1, 1}$ is the top left block of $\mtx{N} / \mtx{N}_{1, 1}$. 
 
+Let $\mtx{N_A} =\begin{pmatrix}
+  \mtx{N}_{1, 1} & \mtx{N}_{1, 2} \\
+  \mtx{N}_{2, 1} & \mtx{N}_{2, 2} 
+\end{pmatrix}.$
+
+Observe that $\mtx{N} / \mtx{N_A}$ is the Schur complement of $\mtx{N_A}$ in $\mtx{N}$.
+
+Note: This one is hard. \href{https://www.semanticscholar.org/paper/Determinantal-identities%3A-Gauss%2C-Schur%2C-Cauchy%2C-and-Brualdi-Schneider/f31020074d8320e22710bb428be909076a7d3a48}{this paper} has a proof using Gaussian Elimination, which we can relate to the $LU$ factorization above.
+$\mtx{M} / \mtx{A} = \mtx{L}_{2, 2} \mtx{U}_{2, 2}$.
 
 \section{Schur Complements II [25 pts + 10 bonus]}
 Let $\mtx{M}$ be as in the previous problem. 
@@ -225,11 +236,114 @@ Divide the inverse of $\mtx{M}$ into blocks (of the same size as those of $\mtx{
 \end{equation}
 Show that the Schur complement $\mtx{M} / \mtx{A}$ is the inverse of $\mtx{\delta}$.
 
+Cite https://www.statlect.com/matrix-algebra/Schur-complement
+
+\begin{align*}
+  \mtx{M}\mtx{M}^{-1} &= \mtx{I}&\text{(def. of matrix inversion, $\mtx{M}$ invertible)}\\
+  \begin{pmatrix}
+    \mtx{A} & \mtx{B}\\
+    \mtx{C} & \mtx{D}
+  \end{pmatrix}
+  \begin{pmatrix}
+    \mtx{\alpha} & \mtx{\beta} \\
+    \mtx{\gamma} & \mtx{\delta}
+  \end{pmatrix} &= \mtx{I}&\text{(substitute given $\mtx{M}$ and $\mtx{M}^{-1}$)}\\
+  \begin{pmatrix}
+    \mtx{A}\mtx{\alpha} +\mtx{B}\mtx{\gamma} & \mtx{A}\mtx{\beta} +\mtx{B}\mtx{\delta}\\
+    \mtx{C}\mtx{\alpha} +\mtx{D}\mtx{\gamma} & \mtx{C}\mtx{\beta} +\mtx{D}\mtx{\delta}
+  \end{pmatrix} &=
+  \begin{pmatrix}
+    \mtx{I}_m & \mtx{0}\\
+    \mtx{0} & \mtx{I}_n
+  \end{pmatrix}&\text{($\dim(\mtx{I}_m) = \dim(\mtx{A}) = m$, $\dim(\mtx{I}_n) = \dim(\mtx{D}) = n$)}\\
+  \mtx{C}\mtx{\beta} +\mtx{D}\mtx{\delta} &=\mtx{I}_n&\text{(equate lower-right blocks)}\\
+  \mtx{C}\left(-\mtx{A}^{-1}\mtx{B}\mtx{\delta}\right) + \mtx{D}\mtx{\delta} &=\mtx{I}_n&\text{(equate upper-right blocks, solve for $\mtx{\beta}$, substitute)}\\
+  \left(\mtx{D} - \mtx{C}\mtx{A}^{-1}\mtx{B}\right)\mtx{\delta} &=\mtx{I}_n&\text{(factor $\mtx{\delta}$)}\\
+  \left(\mtx{M} / \mtx{A}\right)\mtx{\delta} &=\mtx{I}_n&\text{(def. of $\mtx{M} / \mtx{A}$)}\\
+  \mtx{M} / \mtx{A} &=\mtx{\delta}^{-1}&\text{(solve for $\mtx{M} / \mtx{A}$. QED)}\\
+\end{align*}
+
+\textit{Some generally useful things for probs. below, from HW2}
+
+We consider $\mtx{A} \in \R^{m \times m}$ and assume that $\mtx{A}^{-1}$ exists. 
+You may use without proof that if $\mtx{A}$ is symmetric, its largest and smallest eigenvalues are characterized as 
+\begin{equation*}
+   \lambda_{\mathrm{max}}\left(\mtx(A)\right) = \max \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{A}\vct{x}}{\|\vct{x}\|_2^2}
+\end{equation*}
+and 
+\begin{equation*}
+   \lambda_{\mathrm{min}}\left(\mtx(A)\right) = \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{A}\vct{x}}{\|\vct{x}\|_2^2}
+\end{equation*}
+\begin{equation}
+  \left\|\mtx{A}^{-1}\right\|_2^{-1} \geq \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{|\vct{x}^T \mtx{A}\vct{x}|}{\|\vct{x}\|_2^2}
+\end{equation}
+\begin{equation}
+  \left\|\mtx{A}^{-1}\right\|_2^{-1} = \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\|\mtx{A}\vct{x}\|_2}{\|\vct{x}\|_2}
+\end{equation}
+
+Show that for symmetric matrices $\mtx{M}, \mtx{N} \in \R^{m \times m}$, 
+\begin{equation}
+  \lambda_{\mathrm{min}}(\mtx{M} + \mtx{N}) \geq \lambda_{\mathrm{min}}\left(\mtx{M}\right) + \lambda_{\mathrm{min}}\left(\mtx{N}\right)
+\end{equation}
+In the same setting as (c), show that 
+\begin{equation}
+  \lambda_{\mathrm{max}}(\mtx{M} + \mtx{N}) \leq \lambda_{\mathrm{max}}\left(\mtx{M}\right) + \lambda_{\mathrm{max}}\left(\mtx{N}\right)
+\end{equation}
+For $\mtx{A}$ symmetric positive definite, show that 
+\begin{equation*}
+  \|\mtx{A}^{-1}\|_{2}^{-1} = \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{A} \vct{x}}{\|\vct{x}\|^2_2}
+\end{equation*}
+
+For any matrix,
+\begin{equation*}
+  \sigma_{\mathrm{max}}\left(\mtx{A}\right) = 1 / \sigma_{\mathrm{min}}\left(\mtx{A}^{-1}\right)\text{, if $\mtx{A}^{-1}$ exists}
+\end{equation*}
+
+For a square matrix,
+\begin{equation*}
+  \sigma_{\mathrm{min}}(\mtx{A}) \leq \left|\lambda_{i}\left(\mtx{A}\right)\right| \leq \sigma_{\mathrm{max}}\left(\mtx{A}\right), \forall i 
+\end{equation*}
+
 \subsection*{(b) [5 pts]} 
 For $\mtx{M}$ symmetric positive definite, show that if $\lambda$ is an eigenvalue of $\mtx{M} / \mtx{A}$, then $\lambda_{\min}\left(\mtx{M} \right) \leq \lambda \leq \lambda_{\max}\left(\mtx{M}\right)$.
 
+\textit{This answer is based on (cite) https://math.stackexchange.com/a/1994997}
+
+$\mtx{M}$ is symmetric, so we can express it as $\mtx{M} = \begin{pmatrix}
+  \mtx{A} & \mtx{B}\\
+  \mtx{B}^{*} & \mtx{D}
+\end{pmatrix}.$ Let $\mtx{Q} \coloneqq \begin{pmatrix}
+  \mtx{I} & \mtx{A}^{-1} \mtx{B} \\
+  \mtx{0} & \mtx{I}
+\end{pmatrix},$
+
+Then we can express the block LU factorization (1a) of $\mtx{M}$ as
+\begin{equation*}
+  \mtx{M} = 
+  \mtx{Q}^{*} 
+  \begin{pmatrix}
+    \mtx{A} & \mtx{0} \\
+    \mtx{0} & \mtx{M} / \mtx{A}
+  \end{pmatrix}
+  \mtx{Q}. 
+\end{equation*}
+Let $\Z$ be the set of vectors $\vct{z} \coloneqq \begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix}$ satisfying $\vct{x} + \mtx{A}^{-1}\mtx{B}\vct{y} = \vct{0}.$ 
+Then for any $\vct{z} \in \Z$, $\mtx{Q}\vct{z} = \begin{bmatrix}\vct{0}\\\vct{y}\end{bmatrix},$ and so $\vct{z}^{*} \mtx{M}\vct{z} = \vct{y}^{*}\left(\mtx{M} / \mtx{A}\right)\vct{y},$ and we have
+$$\lambda_{\min}\left(\mtx{M}\right) =\min \limits_{\vct{x} \in \K^m \setminus \{\vct{0}\}} \frac{\vct{x}^{*}\mtx{M}\vct{x}}{\|\vct{x}\|_2^2} \leq \min \limits_{\vct{z} \in \Z \setminus \{\vct{0}\}} \frac{\vct{z}^{*} \mtx{M}\vct{z}}{\|\vct{z}\|_2^2} = \min \limits_{\vct{y} \in \K^m \setminus \{\vct{0}\}} \frac{\vct{y}^{*} \left(\mtx{M}/\mtx{A}\right)\vct{y}}{\|\vct{y}\|_2^2} = \lambda_{\min}\left(\mtx{M} / \mtx{A}\right),$$
+and similarly
+$$\lambda_{\max}\left(\mtx{M}\right) =\max \limits_{\vct{x} \in \K^m \setminus \{\vct{0}\}} \frac{\vct{x}^{*}\mtx{M}\vct{x}}{\|\vct{x}\|_2^2} \geq \max \limits_{\vct{z} \in \Z \setminus \{\vct{0}\}} \frac{\vct{z}^{*} \mtx{M}\vct{z}}{\|\vct{z}\|_2^2} = \max \limits_{\vct{y} \in \K^m \setminus \{\vct{0}\}} \frac{\vct{y}^{*} \left(\mtx{M}/\mtx{A}\right)\vct{y}}{\|\vct{y}\|_2^2} = \lambda_{\max}\left(\mtx{M} / \mtx{A}\right).$$
+ 
 \subsection*{(c) [7.5 pts]} 
 Show that the size of the pivots occuring in the Cholesky or LU factorization of a s.p.d. matrix $\mtx{M}$ is lower bounded by $\left\|\mtx{M}^{-1}\right\|^{-1}$.
+
+See 02-21-2023 video ~56:20 for partial proof.
+
+Since $\mtx{M}$ is s.p.d., then by (4e) in HW2,
+\begin{equation*}
+  \|\mtx{M}^{-1}\|_{2}^{-1} = \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{M} \vct{x}}{\|\vct{x}\|^2_2}
+\end{equation*}
+
+$\left\|\mtx{M}^{-1}\right\|^{-1} = \sigma_{\max}(\mtx{M})^{-1} = \lambda_{\max}(\mtx{M})^{-1}$
 
 \subsection*{(d) [7.5 pts]}
 For $\mtx{M}$ s.p.d, show that 
@@ -246,10 +360,66 @@ For $\mtx{M}$ s.p.d, show that
   \end{pmatrix}.
 \end{equation}
 
+Proof: Assume there exests a vector $\vct{x} \in \K^{m}$ such that $\begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix}^{*}\mtx{M}\begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix} < \vct{y}^* \left(\mtx{M} / \mtx{A}\right) \vct{y}.$
+
+Let $\vct{\alpha} = \vct{x} + \mtx{A}^{-1}\mtx{B}\vct{y}.$
+We showed in (b) above that if $\vct{\alpha} = \vct{0}$, then
+$$\begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix}^{*}\mtx{M}\begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix} = \vct{y}^{*}\left(\mtx{M} / \mtx{A}\right)\vct{y}.$$
+So we must have $\vct{\alpha} \neq \vct{0}.$
+
+As in (b) above, express $\mtx{M}$ as
+$\begin{pmatrix}
+  \mtx{A} & \mtx{B}\\
+  \mtx{B}^{*} & \mtx{D}
+\end{pmatrix},$ and let $\mtx{Q} \coloneqq \begin{pmatrix}
+  \mtx{I} & \mtx{A}^{-1} \mtx{B} \\
+  \mtx{0} & \mtx{I}
+\end{pmatrix}.$ Then we can factorize $\mtx{M}$ as
+\begin{equation*}
+  \mtx{M} = 
+  \mtx{Q}^{*} 
+  \begin{pmatrix}
+    \mtx{A} & \mtx{0} \\
+    \mtx{0} & \mtx{M} / \mtx{A}
+  \end{pmatrix}
+  \mtx{Q},
+\end{equation*}
+and we have
+\begin{equation*}
+  \begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix}^{*}\mtx{M}\begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix} =
+\end{equation*}
+\begin{equation*}
+ \begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix}^{*}
+  \mtx{Q}^{*} 
+  \begin{pmatrix}
+    \mtx{A} & \mtx{0} \\
+    \mtx{0} & \mtx{M} / \mtx{A}
+  \end{pmatrix}
+  \mtx{Q}
+ \begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix} =
+\end{equation*}
+\begin{equation*}
+ \begin{bmatrix}\vct{\alpha}\\\vct{y}\end{bmatrix}^{*}
+  \begin{pmatrix}
+    \mtx{A} & \mtx{0} \\
+    \mtx{0} & \mtx{M} / \mtx{A}
+  \end{pmatrix}
+ \begin{bmatrix}\vct{\alpha}\\\vct{y}\end{bmatrix} =
+\end{equation*}
+\begin{equation*}
+  \vct{\alpha}^{*}\mtx{A}\vct{\alpha} + \vct{y}^{*}\left(\mtx{M} / \mtx{A}\right)\vct{y}.
+\end{equation*}
+Since $\begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix}^{*}\mtx{M}\begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix} < \vct{y}^* \left(\mtx{M} / \mtx{A}\right) \vct{y},$ we have
+\begin{align*}
+  \vct{\alpha}^{*}\mtx{A}\vct{\alpha} + \vct{y}^{*}\left(\mtx{M} / \mtx{A}\right)\vct{y} &< \vct{y}^* \left(\mtx{M} / \mtx{A}\right) \vct{y}\\
+  \vct{\alpha}^{*}\mtx{A}\vct{\alpha} &< 0
+\end{align*}
+
+However, since $\mtx{M}$ is s.p.d., and $\mtx{A}$ is a principle submatrix of $\mtx{M}$, then $\mtx{A}$ is also s.p.d., and since $\vct{\alpha} \neq \vct{0}$, we must have $\vct{\alpha}^{*}\mtx{A}\vct{\alpha} > 0$, which contradicts our original assumption, and so we must have
+$\begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix}^{*}\mtx{M}\begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix} \geq \vct{y}^* \left(\mtx{M} / \mtx{A}\right) \vct{y}, \forall \vct{x} \in \K^{m}.$
+
 \subsection*{(e) [10 bonus pts]} 
 By replacing the $\min$ with a $\min \max$ over suitable variables, derive a version of the results of (d) that is valid for general $\mtx{M}$.
-
-
 
 \section{Cholesky and QR [25 pts]}
 
@@ -257,16 +427,67 @@ By replacing the $\min$ with a $\min \max$ over suitable variables, derive a ver
 Assume that the invertible matrix $\mtx{A} \in \K^{m \times m}$ satisfies $\mtx{A} = \mtx{L} \mtx{U}$.   
 Derive a way to write $\mtx{A}$ as the sum of rank-one matrices in outer product form. 
 
+\begin{verbatim}
+  def LUfactorizeB(A):
+    lA = len(A)
+    for k in range (0, lA-1):
+        A[k+1:, k] = A[k+1:, k]/A[k, k]
+        A[k+1:, k+1:] -= np.outer(A[k+1:,k],A[k, k+1:])
+\end{verbatim}
+
 \subsection*{(b) [5 pts]}
 Show that the LU factorization of an invertible matrix $\mtx{A} \in \K^{m \times m}$ is unique. 
+
+\href{https://www2.umbc.edu/photonics/Menyuk/ENEE605/menyuk_ENEE605_lecture4_130908n.pdf}{Cite}
+
+Suppose the LU factorization of $\mtx{A}$ is not unique.
+Then $\mtx{A}$ can be factorized into two distinct choices of $\mtx{L}$ and $\mtx{U}$:
+
+\begin{align*}
+\mtx{A} = \mtx{L}_1\mtx{U}_1 &= \mtx{L}_2\mtx{U}_2\\
+\mtx{L}_2^{-1}\mtx{L}_1 &= \mtx{U}_2\mtx{U}_1^{-1}
+\end{align*}
+
+Since the inverse of a non-singular lower triangular matrix is lower triangular, and the product of two lower triangular matrices is also lower triangular, the left side is lower triangular.
+By similar reasoning, the right side must be upper triangular.
+
+For a lower triangular matrix to be equal to an upper triangular matrix, they must both be diagonal.
+By construction, both $\mtx{L}_1$ and $\mtx{L}_2$, have all diagonal elements equal to $1$, and so the product $\mtx{L}_2^{-1}\mtx{L}_1$ also has diagonal elements equal to $1$.
+
+Thus, $\mtx{L}_2^{-1}\mtx{L}_1 = \mtx{U}_2\mtx{U}_1^{-1} = \mtx{I}$, implying $\mtx{L}_1 = \mtx{L}_2$ and $\mtx{U}_1 = \mtx{U}_2,$ and so the LU factorization is unique.
 
 \subsection*{(c) [5 pts]}
 Assume that we factor $\mtx{A} \in \K^{m \times m}$ as $\mtx{A} = \mtx{L} \mtx{L}^{*}$ for lower triangular $\mtx{L}$.  
 Up to which choices is this factorization unique? 
 Prove your results (as always) and make sure to treat the case $\K = \C$. 
 
+\href{https://math.stackexchange.com/a/2520957}{Cite}
+
+Proceeding similarly to (b), suppose the factorization of $\mtx{A} = \mtx{L} \mtx{L}^{*}$ is not unique.
+Then $\mtx{A}$ can be factorized into two distinct choices of $\mtx{L}$:
+
+\begin{align*}
+\mtx{A} = \mtx{L}_1\mtx{L}_1^{*} &= \mtx{L}_2\mtx{L}_2^{*}\\
+\mtx{I} &= \mtx{L}_1^{-1}\mtx{L}_2\mtx{L}_2^{*}\left(\mtx{L}_1^{*}\right)^{-1} &\text{(move $\mtx{L}_{*}$ terms to one side)}\\
+\mtx{I} &= \left(\mtx{L}_1^{-1}\mtx{L}_2\right)\left(\mtx{L}_1^{-1}\mtx{L}_2\right)^{*} &\text{(combine conj. transposes, group terms)}\\
+\mtx{I} &= \mtx{D}\mtx{D}^{*} &\text{($\mtx{D} \coloneqq \mtx{L}_1^{-1}\mtx{L}_2$)}\\
+\mtx{D}^{-1} &= \mtx{D}^{*}\\
+\end{align*}
+
+By the same argument as (b) above, $\mtx{D} \coloneqq \mtx{L}_1^{-1}\mtx{L}_2$ is lower triangular, and its inverse is also lower triangular.
+Since $\mtx{D}^{-1} = \mtx{D}^{*}$, and the congugate transpose of a lower triangular matrix is upper triangular, $\mtx{D}$ must be diagonal.
+This, combined with the derived fact that $\mtx{I} = \mtx{D}\mtx{D}^{*}$ implies that $D_{ii}D_{ii}^{*} = 1, \forall i.$
+
+Two Cholesky factors of $\mtx{A}$ differ by the signs of their columns.
+
+Can happen when positive \textit{semi}-definite, but not when positive definite.
+
 \subsection*{(d) [5 pts]} 
 Using these results, prove and explain the relationship between the Cholesky factor of $\mtx{B}^* \mtx{B}$ and the QR factorization of $\mtx{B}$, for $\mtx{B} \in \K^{m \times n}$ and $m \geq n$.
+
+See 02-21-2023 video for relevant lecture. ~1:05:45
+
+1:13:20 "A QR factorization is like a Cholesky factorization, but operating on only half of the matrix."
 
 \subsection*{(e) [5 pts]} 
 For $\mtx{A} = \mtx{B}^* \mtx{B}$ and $\mtx{B}$ as in (d), write 
@@ -284,6 +505,10 @@ For $\mtx{A} = \mtx{B}^* \mtx{B}$ and $\mtx{B}$ as in (d), write
 \end{equation}
 Relate the Schur complement $\mtx{A}_{2,2} - \mtx{A}_{2,1} \left(\mtx{A}_{1, 1}\right)^{-1} \mtx{A}_{1,2}$ to the Gram-matrix of the columns of $\mtx{B}_2$, projected on the orthogonal complement of $\mtx{B}_1$.
 Use this result to refine your comment in (d) on the relationship of Cholesky and QR factorization. 
+
+Copilot: "The Schur complement is the Gram matrix of the columns of $\mtx{B}_2$ projected on the orthogonal complement of $\mtx{B}_1$."
+
+02-21-2023 1:14:00: The QR factorization is a way of orthogonalizing a given set of vectors, and the gram matrix is a way of measuring the orthogonality of a set of vectors only keeping track of the inner products instead of the vectors themselves.
 
 \section{QRs [25 pts]}
 \subsection*{(a) [5 pts]} 
