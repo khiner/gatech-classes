@@ -52,21 +52,11 @@ end
 function householder_QR!(A)
     m, n = size(A)
     for k = 1:n
-        v = A[k:m, k]
-        v[1] += sign(A[k,k]) * norm(v)
-        v /= norm(v)
-        # Perform `A[k:m, k:n] -= 2 * v * (v' * A[k:m, k:n])`,
-        # one column at a time to avoid slicing, which allocates memory.
-        for j = k:n
-            inner_product = v' * view(A, k:m, j)
-            for i = k:m
-                A[i,j] -= 2 * v[i-k+1] * inner_product
-            end
-        end
-        # Perform `A[k+1:m, k] = v[2:end]`, without slicing.
-        for i = k+1:m
-            A[i,k] = v[i-k+1]
-        end
+        x = A[k:m, k]
+        v = sign(x[1]) * norm(x) * [j == 1 ? 1.0 : 0.0 for j in 1:length(x)] + x
+        v /= v[1]
+        A[k:m, k:n] -= 2 * v * (v' * A[k:m, k:n]) / (v' * v)
+        A[k+1:m, k] = v[2:end]
     end
 end
 
@@ -80,37 +70,32 @@ end
 # They should not allocate any memory and instead
 # use the preallocated output vector to record the result. 
 function householder_QR_mul!(out, x, QR)
+    # We want out_mul=$QRx$
     m, n = size(QR)
-    out .= x
-    for j = 1:n
-        v = zeros(m)
-        v[j] = 1
-        v[j+1:m] = QR[j+1:m, j]
-        out[j:m] -= 2 * v[j:m] * (v[j:m]' * out[j:m])
+    
+    # Compute Rx.
+    out .= triu(A) * x
+    # Compute QRx using algorithm from slide 7
+    for k = n:-1:1
+        v = QR[k:m, k]
+        v[1] = 1.0
+        out[k:m] -= 2 * v * (v' * out[k:m]) / (v' * v)
     end
 end
 
 function householder_QR_div!(out, b, QR)
+    # We want out_div=$R^{-1}Q^{*}b$
     m, n = size(QR)
-    out .= b
-    for j = n:-1:1
-        v = zeros(m)
-        v[j] = 1
-        v[j+1:m] = QR[j+1:m, j]
-        out[j] -= 2 * v[j:m] * (v[j:m]' * out[j:m])
-        out[j] /= QR[j,j]
+    # Compute Q'b.
+    for k = 1:n
+        v = QR[k:m, k]
+        v[1] = 1.0
+        b[k:m] -= 2 * v * (v' * b[k:m]) / (v' * v)
+    end
+    # Solve Rx = Q'b using backward substitution.
+    for i = n:-1:1
+        out[i] = b[i]
+        out[i] -= QR[i,i+1:end]' * out[i+1:end]
+        out[i] /= QR[i,i]
     end
 end
-
-# Problem c
-# function householder_QR!(A)
-#     m, n = size(A)
-#     for k = 1:min(m-1, n)
-#         x = A[k:m,k]
-#         e = zeros(length(x))
-#         e[1] = 1
-#         v = sign(x[1]) * norm(x) * e + x
-#         v /= norm(v)
-#         A[k:m,k:n] -= 2*v*(v'*A[k:m,k:n])
-#     end
-# end
