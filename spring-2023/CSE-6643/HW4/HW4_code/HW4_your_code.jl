@@ -18,6 +18,7 @@ function classical_gram_schmidt(A)
         R[j,j] = norm(v)
         Q[:,j] = v / R[j,j]
     end
+
     return Q, R
 end
 
@@ -39,6 +40,7 @@ function modified_gram_schmidt(A)
         R[j,j] = norm(V[:,j])
         Q[:,j] = V[:,j] / R[j,j]
     end
+
     return Q, R
 end
 
@@ -52,11 +54,11 @@ end
 function householder_QR!(A)
     m, n = size(A)
     for k = 1:n
-        x = A[k:m, k]
-        v = sign(x[1]) * norm(x) * [j == 1 ? 1.0 : 0.0 for j in 1:length(x)] + x
+        v = A[k:m, k]
+        v[1] += sign(A[k,k]) * norm(@view(A[k:m, k]))
         v /= v[1]
-        A[k:m, k:n] -= 2 * v * (v' * A[k:m, k:n]) / (v' * v)
-        A[k+1:m, k] = v[2:end]
+        @view(A[k:m, k:n]) .-= 2 * v * (v' * @view(A[k:m, k:n])) / (v' * v)
+        @view(A[k+1:m, k]) .= @view(v[2:end])
     end
 end
 
@@ -72,7 +74,7 @@ end
 function householder_QR_mul!(out, x, QR)
     # We want out_mul=$QRx$
     m, n = size(QR)
-    
+ 
     # Compute Rx.
     out .= triu(A) * x
     # Compute QRx using algorithm from slide 7
