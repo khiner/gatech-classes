@@ -18,6 +18,7 @@ function classical_gram_schmidt(A)
         R[j,j] = norm(v)
         Q[:,j] = v / R[j,j]
     end
+
     return Q, R
 end
 
@@ -39,6 +40,7 @@ function modified_gram_schmidt(A)
         R[j,j] = norm(V[:,j])
         Q[:,j] = V[:,j] / R[j,j]
     end
+
     return Q, R
 end
 
@@ -48,54 +50,69 @@ end
 # This function takes in a matrix A 
 # and computes its QR factorization in place,
 # using householder reflections.
-# # It should not allocate any memory.
+#  It should not allocate any memory.
 function householder_QR!(A)
     m, n = size(A)
     for k = 1:n
-        x = A[k:m, k]
-        v = sign(x[1]) * norm(x) * [j == 1 ? 1.0 : 0.0 for j in 1:length(x)] + x
+        v = A[k:m, k]
+        v[1] += sign(A[k,k]) * norm(@view(A[k:m, k]))
         v /= v[1]
-        A[k:m, k:n] -= 2 * v * (v' * A[k:m, k:n]) / (v' * v)
-        A[k+1:m, k] = v[2:end]
+        @view(A[k:m, k:n]) .-= 2 * v * (v' * @view(A[k:m, k:n])) / (v' * v)
+        @view(A[k+1:m, k]) .= @view(v[2:end])
     end
 end
 
 #----------------------------------------
 # Problem d
 #----------------------------------------
-# These two functions take in the housholder
+# These two functions take in the householder
 # QR factorization from part c and multiply them
 # to a vector (mul) or solve the least squares 
 # problem in A (div), in place.
 # They should not allocate any memory and instead
 # use the preallocated output vector to record the result. 
+
+# Replace `out` with $\mtx{Q}\mtx{R}\vct{x}$.
 function householder_QR_mul!(out, x, QR)
-    # We want out_mul=$QRx$
     m, n = size(QR)
-    
+ 
     # Compute Rx.
-    out .= triu(A) * x
-    # Compute QRx using algorithm from slide 7
+    # Multiply the upper triangular part of QR by x and put it in `out`.
+    for i = 1:m
+        out[i] = (@view(QR[i,i:n]))' * @view(x[i:n])
+    end
+
+    # Compute QRx using algorithm from slide 7.
     for k = n:-1:1
-        v = QR[k:m, k]
+        v = @view(QR[k:m, k])
+        v1_orig = v[1]
         v[1] = 1.0
-        out[k:m] -= 2 * v * (v' * out[k:m]) / (v' * v)
+        α = 2 * v' * @view(out[k:m]) / (v' * v)
+        for i = k:m
+            out[i] -= v[i-k+1] * α
+        end
+        v[1] = v1_orig
     end
 end
 
+# Replace `out` with $\mtx{R}^{-1}\mtx{Q}^{*}\vct{b}$.
 function householder_QR_div!(out, b, QR)
-    # We want out_div=$R^{-1}Q^{*}b$
     m, n = size(QR)
+
     # Compute Q'b.
     for k = 1:n
-        v = QR[k:m, k]
+        v = @view(QR[k:m, k])
+        v1_orig = v[1]
         v[1] = 1.0
-        b[k:m] -= 2 * v * (v' * b[k:m]) / (v' * v)
+        α = 2 * (v' * @view(b[k:m])) / (v' * v)
+        for i = k:m
+            b[i] -= v[i-k+1] * α
+        end
+        v[1] = v1_orig
     end
+
     # Solve Rx = Q'b using backward substitution.
     for i = n:-1:1
-        out[i] = b[i]
-        out[i] -= QR[i,i+1:end]' * out[i+1:end]
-        out[i] /= QR[i,i]
+        out[i] = (b[i] - (@view(QR[i,i+1:end]))' * @view(out[i+1:end])) / QR[i,i]
     end
 end

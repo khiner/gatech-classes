@@ -54,8 +54,8 @@ out_div = randn(20)
 
 allocated_memory_mul = @ballocated  householder_QR_mul!(out_mul, x, QR)
 allocated_memory_div = @ballocated  householder_QR_div!(out_div, b, QR)
-# @assert allocated_memory_mul == 0
-# @assert allocated_memory_div == 0
+@assert allocated_memory_mul == 0
+@assert allocated_memory_div == 0
 
 # Testing for correctness:
 A = randn(25, 20) 
