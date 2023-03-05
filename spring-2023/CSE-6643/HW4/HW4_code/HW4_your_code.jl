@@ -50,15 +50,22 @@ end
 # This function takes in a matrix A 
 # and computes its QR factorization in place,
 # using householder reflections.
-#  It should not allocate any memory.
+# It should not allocate any memory.
 function householder_QR!(A)
     m, n = size(A)
     for k = 1:n
-        v = A[k:m, k]
-        v[1] += sign(A[k,k]) * norm(@view(A[k:m, k]))
-        v /= v[1]
-        @view(A[k:m, k:n]) .-= 2 * v * (v' * @view(A[k:m, k:n])) / (v' * v)
-        @view(A[k+1:m, k]) .= @view(v[2:end])
+        v = @view(A[k:m, k])
+        v1 = sign(v[1]) * norm(v)
+        v[1] += v1
+        v ./= A[k,k]
+        v_dot = v' * v
+        for j = k+1:n
+            α = 2 * v' * @view(A[k:m, j]) / v_dot
+            for i = k:m
+                A[i,j] -= v[i-k+1] * α
+            end
+        end
+        v[1] = -v1
     end
 end
 
