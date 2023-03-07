@@ -78,21 +78,13 @@ What are the computation and communication times for your algorithm?
 (You may assume the use of any permutation-style communication, not necessarily hypercubic.)
 
 \quad Observe that for any two consecutive sorted sequences, we can reverse the second sequence to obtain a single bitonic sequence.
+Thus, we can merge two sorted sequences by reversing the second sequence, and then performing a single Bitonic Merge.
 
-First, let's restrict ourselves to the case where $m + n = p$, so that each processor gets one element.
-Then, we can reverse the last $n$ elements by exchanging every pair
-$$\left(m, m + n - 1\right), \left(m + 1, m + n - 2\right), \dots, \left(m +\frac{n}{2} - 1, m + \frac{n}{2}\right).$$
-This takes $O((\tau + \mu)m)$ communication time.
-However, each processor does not know what the value of $m$ is.
-We can determine $m$ by finding the first processor whose element is \textit{less than} the previous processor's element.
-This can be accomplished with a right-shift communication and a comparison on each processor ($O(\tau + \mu)$ communication time, $O(1)$ computation time).
+Reversing the second sequence can be done by swapping the last $n$ elements, taking $O(\tau + \mu\dfrac{n}{p})$ communication time.
+Then, we can perform a Bitonic Merge in with $O(\dfrac{m+n}{p}\log{p})$ computation time and $O(\tau\log{p} + \mu\dfrac{m+n}{p}\log{p})$ communication time.
 
-After finding $m$ and reversing the last $n$ elements, we can perform a single Bitonic Merge, with computation time $O(\log{p})$ and communication time $O((\tau + \mu)\log{p})$.
-
-Thus, when $m + n = p$, we can merge the two sorted sequences with:
-
-Computation time: $O(1 + \log{p})$\\
-Communication time: $O((\tau + \mu)m + \tau + \mu + (\tau + \mu)\log{p})$ TODO clarify comm time for bitonic merge w/ $n = p$. And also make sure thinking about shift operator time correctly. Then generalize to each processor holding $\frac{m+n}{p}$ elements.
+Total computation time: $O(\dfrac{m+n}{p}\log{p})$\\
+Total communication time: $O(\tau + \mu\dfrac{n}{p} + \tau\log{p} + \mu\dfrac{m+n}{p}\log{p}) = O(\tau\log{p} + \mu\dfrac{m+n}{p}\log{p})$
 
 \section{}
 Two algorithms are designed for the All-to-all communication primitive, and have
