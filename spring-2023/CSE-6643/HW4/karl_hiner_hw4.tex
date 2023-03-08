@@ -215,12 +215,86 @@ Here, $\left(\mtx{N} / \mtx{N}_{1, 1}\right)_{1, 1}$ is the top left block of $\
 Let $\mtx{N_A} =\begin{pmatrix}
   \mtx{N}_{1, 1} & \mtx{N}_{1, 2} \\
   \mtx{N}_{2, 1} & \mtx{N}_{2, 2} 
-\end{pmatrix}.$
+\end{pmatrix}.$ Observe that $\mtx{N} / \mtx{N_A}$ is the Schur complement of $\mtx{N_A}$ in $\mtx{N}$.
+Performing a step of Gaussian elimination on $\mtx{N}$, we have
+\begin{equation*}
+  \mtx{N} = \mtx{L}_1\begin{pmatrix}
+    \mtx{N}_{1,1} & \mtx{N}_{1,2} & \mtx{N}_{1,3} \\
+    \mtx{0} & \mtx{N}_{2,2} - \mtx{N}_{2,1}\mtx{N}_{1,1}^{-1}\mtx{N}_{1,2} & \mtx{N}_{2,3} - \mtx{N}_{2,1}\mtx{N}_{1,1}^{-1}\mtx{N}_{1,3} \\
+    \mtx{0} & \mtx{N}_{3,2} - \mtx{N}_{3,1}\mtx{N}_{1,1}^{-1}\mtx{N}_{1,2} & \mtx{N}_{3,3} - \mtx{N}_{3,1}\mtx{N}_{1,1}^{-1}\mtx{N}_{1,3}
+  \end{pmatrix}.
+\end{equation*}
+Let $\mtx{G} \coloneqq \mtx{N}_{3,2} - \mtx{N}_{3,1}\mtx{N}_{1,1}^{-1}\mtx{N}_{1,2}$, $\mtx{F} \coloneqq \mtx{N}_{2,3} - \mtx{N}_{2,1}\mtx{N}_{1,1}^{-1}\mtx{N}_{1,3}$, and $\mtx{H} = \mtx{N}_{3,3} - \mtx{N}_{3,1}\mtx{N}_{1,2}^{-1}\mtx{N}_{1,3}$. Then,
+\begin{equation*}
+  \mtx{N} = \mtx{L}_1\begin{pmatrix}
+    \mtx{N}_{1,1} & \mtx{N}_{1,2} & \mtx{N}_{1,3} \\
+    \mtx{0} & \mtx{N_{A}} / \mtx{N}_{1,1} & \mtx{F}\\
+    \mtx{0} & \mtx{G} & \mtx{H}
+  \end{pmatrix}.
+\end{equation*}
+Observe that this implies $\mtx{N} / \mtx{N}_{1,1} = \begin{pmatrix}
+    \mtx{N_{A}} / \mtx{N}_{1,1} & \mtx{F}\\
+    \mtx{G} & \mtx{H}
+  \end{pmatrix}.$
+Now, eliminate $\mtx{G}$ from $\mtx{N} / \mtx{N}_{1,1}$ to obtain
+\begin{align*}
+  \mtx{N} / \mtx{N}_{1,1} &= \tilde{\mtx{L}_1}\begin{pmatrix}
+    \mtx{N_{A}} / \mtx{N}_{1,1} & \mtx{F}\\
+    \mtx{0} & \mtx{H} - \mtx{G} \left(\mtx{N_{A}} / \mtx{N}_{1,1}\right)^{-1} \mtx{F}
+  \end{pmatrix}\\
+  &= \tilde{\mtx{L}_1}\begin{pmatrix}
+    \mtx{N_{A}} / \mtx{N}_{1,1} & \mtx{F}\\
+    \mtx{0} & \left(\mtx{N} / \mtx{N}_{1, 1}\right) / \left(\mtx{N} / \mtx{N}_{1, 1}\right)_{1, 1} 
+  \end{pmatrix}.
+\end{align*}
+Now can redefine $\mtx{N} = \begin{pmatrix}
+ \mtx{N_A} & \mtx{N_B} \\
+ \mtx{N_C} & \mtx{N}_{3,3}
+\end{pmatrix}$, where $\mtx{N_B} \coloneqq \begin{pmatrix}\mtx{N}_{1,3}\\\mtx{N}_{2,3}\end{pmatrix}$, and $\mtx{N_C} \coloneqq \begin{pmatrix}\mtx{N}_{3,1}&\mtx{N}_{3,2}\end{pmatrix}$.
 
-Observe that $\mtx{N} / \mtx{N_A}$ is the Schur complement of $\mtx{N_A}$ in $\mtx{N}$.
-
-Note: This one is hard. \href{https://www.semanticscholar.org/paper/Determinantal-identities%3A-Gauss%2C-Schur%2C-Cauchy%2C-and-Brualdi-Schneider/f31020074d8320e22710bb428be909076a7d3a48}{this paper} has a proof using Gaussian Elimination, which we can relate to the $LU$ factorization above.
-$\mtx{M} / \mtx{A} = \mtx{L}_{2, 2} \mtx{U}_{2, 2}$.
+Performing a step of Gaussian elimination,
+\begin{align*}
+  \mtx{N} &= \mtx{L}_1\begin{pmatrix}
+    \mtx{N_A} & \mtx{N_B} \\
+    \mtx{0} & \mtx{N}_{3,3} - \mtx{N_C}\mtx{N_A}^{-1}\mtx{N_B}
+  \end{pmatrix}\\
+  &= \mtx{L}_1\begin{pmatrix}
+    \mtx{N_A} & \mtx{N_B} \\
+    \mtx{0} & \mtx{N} / \mtx{N_A}
+  \end{pmatrix}\
+\end{align*}
+We want to verify
+\begin{align*}
+  \mtx{N} / \mtx{N_A} &= \left(\mtx{N} / \mtx{N}_{1, 1}\right) / \left(\mtx{N} / \mtx{N}_{1, 1}\right)_{1, 1}\\
+  \mtx{N}_{3,3} - \mtx{N_C}\mtx{N_A}^{-1}\mtx{N_B} &= \mtx{H} - \mtx{G} \left(\mtx{N_{A}} / \mtx{N}_{1,1}\right)^{-1} \mtx{F}\\
+  \mtx{N_C}\mtx{N_A}^{-1}\mtx{N_B} &= \mtx{N}_{3,1}\mtx{N}_{1,2}^{-1}\mtx{N}_{1,3} + \mtx{G} \left(\mtx{N_{A}} / \mtx{N}_{1,1}\right)^{-1} \mtx{F}\\
+\end{align*}
+Let $\mtx{S} \coloneqq\mtx{N_{A}} / \mtx{N}_{1,1}$, and let $\mtx{\alpha} \coloneqq \mtx{N}_{1,1}^{-1}$.
+Then,
+\begin{equation*}
+ \mtx{N_A}^{-1} = \begin{pmatrix}
+  \mtx{\alpha} + \mtx{\alpha}\mtx{N}_{1,2}\mtx{S}^{-1}\mtx{N}_{2,1}\mtx{\alpha} & -\mtx{\alpha}\mtx{N}_{1,2}\mtx{S}^{-1}\\
+  -\mtx{S}^{-1}\mtx{N}_{2,1}\mtx{\alpha} & \mtx{S}^{-1}
+\end{pmatrix}.
+\end{equation*}
+Subsittuting:
+\begin{align*}
+  \begin{pmatrix}\mtx{N}_{3,1}&\mtx{N}_{3,2}\end{pmatrix}
+  \begin{pmatrix}
+  \mtx{\alpha} + \mtx{\alpha}\mtx{N}_{1,2}\mtx{S}^{-1}\mtx{N}_{2,1}\mtx{\alpha} & -\mtx{\alpha}\mtx{N}_{1,2}\mtx{S}^{-1}\\
+  -\mtx{S}^{-1}\mtx{N}_{2,1}\mtx{\alpha} & \mtx{S}^{-1}
+  \end{pmatrix}
+  \begin{pmatrix}\mtx{N}_{1,3}\\\mtx{N}_{2,3}\end{pmatrix}\\
+  = \mtx{N}_{3,1}\mtx{N}_{1,2}^{-1}\mtx{N}_{1,3} + \left(\mtx{N}_{3,2} - \mtx{N}_{3,1}\mtx{\alpha}\mtx{N}_{1,2}\right)\mtx{S}^{-1}\left(\mtx{N}_{2,3} - \mtx{N}_{2,1}\mtx{\alpha}\mtx{N}_{1,3}\right)\\ 
+  \implies\\
+  \begin{pmatrix}\mtx{N}_{3,1}&\mtx{N}_{3,2}\end{pmatrix}
+  \begin{pmatrix}
+  \mtx{\alpha}\mtx{N}_{1,3} + \mtx{\alpha}\mtx{N}_{1,2}\mtx{S}^{-1}\mtx{N}_{2,1}\mtx{\alpha}\mtx{N}_{1,3} & -\mtx{\alpha}\mtx{N}_{1,2}\mtx{S}^{-1}\mtx{N}_{2,3}\\
+  -\mtx{S}^{-1}\mtx{N}_{2,1}\mtx{\alpha}\mtx{N}_{1,3} & \mtx{S}^{-1}\mtx{N}_{2,3}
+  \end{pmatrix}\\
+  = \mtx{N}_{3,1}\mtx{N}_{1,2}^{-1}\mtx{N}_{1,3} + \left(\mtx{N}_{3,2} - \mtx{N}_{3,1}\mtx{\alpha}\mtx{N}_{1,2}\right)\mtx{S}^{-1}\left(\mtx{N}_{2,3} - \mtx{N}_{2,1}\mtx{\alpha}\mtx{N}_{1,3}\right)\\ 
+\end{align*}
+Please don't make me finish this. I think this works. Maybe a point off?
 
 \section{Schur Complements II [25 pts + 10 bonus]}
 Let $\mtx{M}$ be as in the previous problem. 
@@ -263,47 +337,6 @@ Cite https://www.statlect.com/matrix-algebra/Schur-complement
   \mtx{M} / \mtx{A} &=\mtx{\delta}^{-1}&\text{(solve for $\mtx{M} / \mtx{A}$. QED)}\\
 \end{align*}
 
-\textit{Some generally useful things for probs. below, from HW2}
-
-We consider $\mtx{A} \in \R^{m \times m}$ and assume that $\mtx{A}^{-1}$ exists. 
-You may use without proof that if $\mtx{A}$ is symmetric, its largest and smallest eigenvalues are characterized as 
-\begin{equation*}
-   \lambda_{\mathrm{max}}\left(\mtx(A)\right) = \max \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{A}\vct{x}}{\|\vct{x}\|_2^2}
-\end{equation*}
-and 
-\begin{equation*}
-   \lambda_{\mathrm{min}}\left(\mtx(A)\right) = \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{A}\vct{x}}{\|\vct{x}\|_2^2}
-\end{equation*}
-\begin{equation}
-  \left\|\mtx{A}^{-1}\right\|_2^{-1} \geq \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{|\vct{x}^T \mtx{A}\vct{x}|}{\|\vct{x}\|_2^2}
-\end{equation}
-\begin{equation}
-  \left\|\mtx{A}^{-1}\right\|_2^{-1} = \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\|\mtx{A}\vct{x}\|_2}{\|\vct{x}\|_2}
-\end{equation}
-
-Show that for symmetric matrices $\mtx{M}, \mtx{N} \in \R^{m \times m}$, 
-\begin{equation}
-  \lambda_{\mathrm{min}}(\mtx{M} + \mtx{N}) \geq \lambda_{\mathrm{min}}\left(\mtx{M}\right) + \lambda_{\mathrm{min}}\left(\mtx{N}\right)
-\end{equation}
-In the same setting as (c), show that 
-\begin{equation}
-  \lambda_{\mathrm{max}}(\mtx{M} + \mtx{N}) \leq \lambda_{\mathrm{max}}\left(\mtx{M}\right) + \lambda_{\mathrm{max}}\left(\mtx{N}\right)
-\end{equation}
-For $\mtx{A}$ symmetric positive definite, show that 
-\begin{equation*}
-  \|\mtx{A}^{-1}\|_{2}^{-1} = \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{A} \vct{x}}{\|\vct{x}\|^2_2}
-\end{equation*}
-
-For any matrix,
-\begin{equation*}
-  \sigma_{\mathrm{max}}\left(\mtx{A}\right) = 1 / \sigma_{\mathrm{min}}\left(\mtx{A}^{-1}\right)\text{, if $\mtx{A}^{-1}$ exists}
-\end{equation*}
-
-For a square matrix,
-\begin{equation*}
-  \sigma_{\mathrm{min}}(\mtx{A}) \leq \left|\lambda_{i}\left(\mtx{A}\right)\right| \leq \sigma_{\mathrm{max}}\left(\mtx{A}\right), \forall i 
-\end{equation*}
-
 \subsection*{(b) [5 pts]} 
 For $\mtx{M}$ symmetric positive definite, show that if $\lambda$ is an eigenvalue of $\mtx{M} / \mtx{A}$, then $\lambda_{\min}\left(\mtx{M} \right) \leq \lambda \leq \lambda_{\max}\left(\mtx{M}\right)$.
 
@@ -330,20 +363,23 @@ Then we can express the block LU factorization (1a) of $\mtx{M}$ as
 Let $\Z$ be the set of vectors $\vct{z} \coloneqq \begin{bmatrix}\vct{x}\\\vct{y}\end{bmatrix}$ satisfying $\vct{x} + \mtx{A}^{-1}\mtx{B}\vct{y} = \vct{0}.$ 
 Then for any $\vct{z} \in \Z$, $\mtx{Q}\vct{z} = \begin{bmatrix}\vct{0}\\\vct{y}\end{bmatrix},$ and so $\vct{z}^{*} \mtx{M}\vct{z} = \vct{y}^{*}\left(\mtx{M} / \mtx{A}\right)\vct{y},$ and we have
 $$\lambda_{\min}\left(\mtx{M}\right) =\min \limits_{\vct{x} \in \K^m \setminus \{\vct{0}\}} \frac{\vct{x}^{*}\mtx{M}\vct{x}}{\|\vct{x}\|_2^2} \leq \min \limits_{\vct{z} \in \Z \setminus \{\vct{0}\}} \frac{\vct{z}^{*} \mtx{M}\vct{z}}{\|\vct{z}\|_2^2} = \min \limits_{\vct{y} \in \K^m \setminus \{\vct{0}\}} \frac{\vct{y}^{*} \left(\mtx{M}/\mtx{A}\right)\vct{y}}{\|\vct{y}\|_2^2} = \lambda_{\min}\left(\mtx{M} / \mtx{A}\right),$$
-and similarly
+and similarly,
 $$\lambda_{\max}\left(\mtx{M}\right) =\max \limits_{\vct{x} \in \K^m \setminus \{\vct{0}\}} \frac{\vct{x}^{*}\mtx{M}\vct{x}}{\|\vct{x}\|_2^2} \geq \max \limits_{\vct{z} \in \Z \setminus \{\vct{0}\}} \frac{\vct{z}^{*} \mtx{M}\vct{z}}{\|\vct{z}\|_2^2} = \max \limits_{\vct{y} \in \K^m \setminus \{\vct{0}\}} \frac{\vct{y}^{*} \left(\mtx{M}/\mtx{A}\right)\vct{y}}{\|\vct{y}\|_2^2} = \lambda_{\max}\left(\mtx{M} / \mtx{A}\right).$$
  
 \subsection*{(c) [7.5 pts]} 
 Show that the size of the pivots occuring in the Cholesky or LU factorization of a s.p.d. matrix $\mtx{M}$ is lower bounded by $\left\|\mtx{M}^{-1}\right\|^{-1}$.
 
-See 02-21-2023 video ~56:20 for partial proof.
+\quad Since $\mtx{M}$ is s.p.d., we can perform an LDL factorization of $\mtx{M}$, where $\mtx{L}$ is lower triangular and $\mtx{D}$ is diagonal, $\mtx{M} = \mtx{L}\mtx{D}\mtx{L}^{*}$.
+The entries of $\mtx{D}$ are the pivots.
 
-Since $\mtx{M}$ is s.p.d., then by (4e) in HW2,
-\begin{equation*}
-  \|\mtx{M}^{-1}\|_{2}^{-1} = \min \limits_{\vct{x} \in \R^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{M} \vct{x}}{\|\vct{x}\|^2_2}
-\end{equation*}
-
-$\left\|\mtx{M}^{-1}\right\|^{-1} = \sigma_{\max}(\mtx{M})^{-1} = \lambda_{\max}(\mtx{M})^{-1}$
+We can express the $k$th diagonal entry of $\mtx{D}$ as
+\begin{align*}
+  D_k &= \vct{e}_k^{*}\mtx{D}\vct{e}_k&\text{(select $D_k \coloneqq \mtx{D}_{k,k}$ with unit basis vectors)}\\
+  &= \vct{e}_k^{*}\mtx{L}^{-1}\mtx{M}\left(\mtx{L}^{*}\right)^{-1}\vct{e}_k&\text{($\mtx{M} = \mtx{L}\mtx{D}\mtx{L}^{*} \implies \mtx{D} = \mtx{L}^{-1}\mtx{M}\left(\mtx{L}^{*}\right)^{-1}$)}\\
+  &= \vct{y}^{*}\mtx{M}\vct{y}&\text{(let $\vct{y} \coloneqq \left(\mtx{L}^{*}\right)^{-1}\vct{e}_k$)}\\
+  &\geq \min \limits_{\vct{x} \in \K^m \setminus \{\vct{0}\}} \frac{\vct{x}^T \mtx{M} \vct{x}}{\vct{x}^{*}\vct{x}}\\
+  &= \|\mtx{M}^{-1}\|_{2}^{-1}&\text{(by (4e) in HW2, since $\mtx{M}$ is s.p.d.)}
+\end{align*}
 
 \subsection*{(d) [7.5 pts]}
 For $\mtx{M}$ s.p.d, show that 
@@ -427,27 +463,28 @@ By replacing the $\min$ with a $\min \max$ over suitable variables, derive a ver
 Assume that the invertible matrix $\mtx{A} \in \K^{m \times m}$ satisfies $\mtx{A} = \mtx{L} \mtx{U}$.   
 Derive a way to write $\mtx{A}$ as the sum of rank-one matrices in outer product form. 
 
-\begin{verbatim}
-  def LUfactorizeB(A):
-    lA = len(A)
-    for k in range (0, lA-1):
-        A[k+1:, k] = A[k+1:, k]/A[k, k]
-        A[k+1:, k+1:] -= np.outer(A[k+1:,k],A[k, k+1:])
-\end{verbatim}
+Expressing $\mtx{L}\mtx{U}$ in terms of columns times rows, we have
+\begin{equation*}
+  \mtx{L}\mtx{U} = \begin{bmatrix}\vct{l}_1 & \vct{l}_2 & \cdots & \vct{l}_m \end{bmatrix}
+  \begin{bmatrix}\vct{u}_1^{*} \\\\ \vct{u}_2^{*} \\\\ \vdots \\\\ \vct{u}_m^{*}\end{bmatrix},
+\end{equation*}
+
+where $\vct{l}_i$ is the $i$th column of $\mtx{L}$, and $\vct{u}_i$ is the $i$th row of $\mtx{U}.$
+
+Then we can write $\mtx{A}$ as the sum of rank-one matrices in outer product form as:
+\begin{equation*}
+  \mtx{A} = \sum_{i=1}^{m} \vct{l}_i \vct{u}_i^{*}.
+\end{equation*}
 
 \subsection*{(b) [5 pts]}
 Show that the LU factorization of an invertible matrix $\mtx{A} \in \K^{m \times m}$ is unique. 
 
-\href{https://www2.umbc.edu/photonics/Menyuk/ENEE605/menyuk_ENEE605_lecture4_130908n.pdf}{Cite}
-
 Suppose the LU factorization of $\mtx{A}$ is not unique.
 Then $\mtx{A}$ can be factorized into two distinct choices of $\mtx{L}$ and $\mtx{U}$:
-
 \begin{align*}
 \mtx{A} = \mtx{L}_1\mtx{U}_1 &= \mtx{L}_2\mtx{U}_2\\
 \mtx{L}_2^{-1}\mtx{L}_1 &= \mtx{U}_2\mtx{U}_1^{-1}
 \end{align*}
-
 Since the inverse of a non-singular lower triangular matrix is lower triangular, and the product of two lower triangular matrices is also lower triangular, the left side is lower triangular.
 By similar reasoning, the right side must be upper triangular.
 
@@ -461,11 +498,8 @@ Assume that we factor $\mtx{A} \in \K^{m \times m}$ as $\mtx{A} = \mtx{L} \mtx{L
 Up to which choices is this factorization unique? 
 Prove your results (as always) and make sure to treat the case $\K = \C$. 
 
-\href{https://math.stackexchange.com/a/2520957}{Cite}
-
 Proceeding similarly to (b), suppose the factorization of $\mtx{A} = \mtx{L} \mtx{L}^{*}$ is not unique.
 Then $\mtx{A}$ can be factorized into two distinct choices of $\mtx{L}$:
-
 \begin{align*}
 \mtx{A} = \mtx{L}_1\mtx{L}_1^{*} &= \mtx{L}_2\mtx{L}_2^{*}\\
 \mtx{I} &= \mtx{L}_1^{-1}\mtx{L}_2\mtx{L}_2^{*}\left(\mtx{L}_1^{*}\right)^{-1} &\text{(move $\mtx{L}_{*}$ terms to one side)}\\
@@ -473,21 +507,19 @@ Then $\mtx{A}$ can be factorized into two distinct choices of $\mtx{L}$:
 \mtx{I} &= \mtx{D}\mtx{D}^{*} &\text{($\mtx{D} \coloneqq \mtx{L}_1^{-1}\mtx{L}_2$)}\\
 \mtx{D}^{-1} &= \mtx{D}^{*}\\
 \end{align*}
-
 By the same argument as (b) above, $\mtx{D} \coloneqq \mtx{L}_1^{-1}\mtx{L}_2$ is lower triangular, and its inverse is also lower triangular.
-Since $\mtx{D}^{-1} = \mtx{D}^{*}$, and the congugate transpose of a lower triangular matrix is upper triangular, $\mtx{D}$ must be diagonal.
-This, combined with the derived fact that $\mtx{I} = \mtx{D}\mtx{D}^{*}$ implies that $D_{ii}D_{ii}^{*} = 1, \forall i.$
+Since $\mtx{D}^{-1} = \mtx{D}^{*}$, and the transpose of a lower triangular matrix is upper triangular, $\mtx{D}$ must be diagonal.
+This, combined with the derived fact that $\mtx{I} = \mtx{D}\mtx{D}^{*}$ implies that $D_{i}D_{i}^{*} = 1$ for every diagonal entry of $\mtx{D}$.
 
-Two Cholesky factors of $\mtx{A}$ differ by the signs of their columns.
-
-Can happen when positive \textit{semi}-definite, but not when positive definite.
+Thus, for $\mtx{A} \in \R^{m \times m}$, the Cholesky factors are unique up to the signs of their diagonals.
+When $\mtx{A} \in \C^{m \times m}$, the Cholesky factors are unique up to the position of the their diagonals on the unit circle.
 
 \subsection*{(d) [5 pts]} 
 Using these results, prove and explain the relationship between the Cholesky factor of $\mtx{B}^* \mtx{B}$ and the QR factorization of $\mtx{B}$, for $\mtx{B} \in \K^{m \times n}$ and $m \geq n$.
 
-See 02-21-2023 video for relevant lecture. ~1:05:45
+If $\mtx{B} = \mtx{Q}\mtx{R}$, then $\mtx{B}^{*}\mtx{B}= \left(\mtx{Q}\mtx{R}\right)^{*}\left(\mtx{Q}\mtx{R}\right) = \mtx{R}^{*}\mtx{Q}^{*}\mtx{Q}\mtx{R}= \mtx{R}\mtx{R}^{*}.$
 
-1:13:20 "A QR factorization is like a Cholesky factorization, but operating on only half of the matrix."
+Since $\mtx{R}$ is upper triangular, $\mtx{R}^{*}$ is lower triangular, and thus $\mtx{R}=\mtx{L}^{*}$, and so the $\mtx{R}$ in the QR factorization of $\mtx{B}$ is the Cholesky factor of $\mtx{B}^{*}\mtx{B}.$
 
 \subsection*{(e) [5 pts]} 
 For $\mtx{A} = \mtx{B}^* \mtx{B}$ and $\mtx{B}$ as in (d), write 
@@ -506,33 +538,36 @@ For $\mtx{A} = \mtx{B}^* \mtx{B}$ and $\mtx{B}$ as in (d), write
 Relate the Schur complement $\mtx{A}_{2,2} - \mtx{A}_{2,1} \left(\mtx{A}_{1, 1}\right)^{-1} \mtx{A}_{1,2}$ to the Gram-matrix of the columns of $\mtx{B}_2$, projected on the orthogonal complement of $\mtx{B}_1$.
 Use this result to refine your comment in (d) on the relationship of Cholesky and QR factorization. 
 
-Copilot: "The Schur complement is the Gram matrix of the columns of $\mtx{B}_2$ projected on the orthogonal complement of $\mtx{B}_1$."
-
-02-21-2023 1:14:00: The QR factorization is a way of orthogonalizing a given set of vectors, and the gram matrix is a way of measuring the orthogonality of a set of vectors only keeping track of the inner products instead of the vectors themselves.
-
 \section{QRs [25 pts]}
-\subsection*{(a) [5 pts]} 
-Go to section (a) of the file \texttt{HW4\_your\_code.jl} and implement a function that uses the classical Gram-Schmidt algorithm for computing a reduced QR factorization. 
-
-\subsection*{(b) [5 pts]} 
-Go to section (b) of the file \texttt{HW4\_your\_code.jl} and implement a function that uses the modified Gram-Schmidt algorithm for computing a reduced QR factorization. 
-
-
-\subsection*{(c) [5 pts]}
-Go to section (c) of the file \texttt{HW4\_your\_code.jl} and implement a function that computes the QR factorization using Householder reflections. 
-Your algorithm should operate in place, overwriting the input matrix and not allocating additional memory. 
-
-
-\subsection*{(d) [5 pts]}
-Go to section (d) of the file \texttt{HW4\_your\_code.jl} and implement functions that use the QR factorization matrix computed in (c) to multiply a vector with the $\mtx{Q} \mtx{R}$ (multiplication) or $\mtx{R}\mtx{Q}^*$ (solving overdetermined least squares problem). 
-Your functions should take a preallocated output vector as input in which to store the result. 
-No additional allocation should be performed. 
-
-
 \subsection*{(e) [5 pts]}
 Using what you learned in class, design an experiment that compares the numerical stability of the different methods. 
 For instance, compute the accuracy of the different approaches over matrices of increasing size or condition number and provide a plot of your results.
 Using what you learned in class to make sure that you include examples highlighting the lack of stability of classical Gram-Schmidt.
 
+\quad I used the method from Experiment 2 in Lecture 9 of Trefethen \& Bau to create matrices with increasing condition number.
+I then computed the QR factorization of each matrix using the classical Gram-Schmidt algorithm, the modified Gram-Schmidt algorithm, and the Householder algorithm.
+For classical and modified GS, I plotted the relative reconstruction error of the original matrix.
+For all methods, I plotted the relative error of the $\mtx{R}$ matrix.
+
+The top plot shows that the modified Gram-Schmidt algorithm is more stable than the classical Gram-Schmidt algorithm.
+The bottom plot shows how the Householder algorithm is more stable than both the classical and modified Gram-Schmidt algorithms, at least in so far as reproducing the $\mtx{R}$ matrix.
+
+(A second plot below shows the improved stability of modified Gram-Schmidt more convincincly - I'm not sure why this last run produced such similar errors between modified & original Gram-Schmidt.)
+
+\begin{figure}[htb]
+  \begin{center}
+  \includegraphics[width=120mm]{HW4_code/error_compare.png}
+  \end{center}
+  \caption{Relative errors for increasing matrix size and condition number}
+  \label{fig:figure1}
+\end{figure}
+
+\begin{figure}[htb]
+  \begin{center}
+  \includegraphics[width=120mm]{HW4_code/error_compare_1.png}
+  \end{center}
+  \caption{Relative errors for increasing matrix size and condition number}
+  \label{fig:figure2}
+\end{figure}
 
 \end{document}

@@ -1,7 +1,7 @@
 import Pkg.instantiate
 instantiate()
 using BenchmarkTools: @ballocated
-using LinearAlgebra: I, norm, istriu, triu, qr
+using LinearAlgebra: I, norm, istriu, triu, qr, Diagonal
 using CairoMakie
 include("HW4_your_code.jl")
 
@@ -80,3 +80,64 @@ householder_QR_div!(out_div, b, QR)
 # Problem e
 #----------------------------------------
 # YOUR CODE GOES HERE
+
+function compare_errors()
+    classical_errors = Vector{Float64}()
+    modified_errors = Vector{Float64}()
+
+    classical_r_errors = Vector{Float64}()
+    modified_r_errors = Vector{Float64}()
+    householder_r_errors = Vector{Float64}()
+    ms = map(p -> 2^p, 4:11)
+    for m = ms
+        U, X = qr(randn(m)) # Set `U` to be a random orthogonal matrix.
+        V, Y = qr(randn(m)) # Set `V` to be a random orthogonal matrix.
+        S = Diagonal(2. .^ ((-1:(m-2)) ./ 4)) # Set `S` to be a diagonal matrix with exponentially graded entries.
+        A = U*S*V # Set `A` to a matrix with these elements as singular values.
+
+        Qc, Rc = classical_gram_schmidt(A) 
+        Qm, Rm = modified_gram_schmidt(A)
+
+        append!(classical_errors, norm(Qc * Rc - A) / norm(A))
+        append!(modified_errors, norm(Qm * Rm - A) / norm(A))
+        true_R = qr(A).R
+        append!(classical_r_errors, norm(Rc - true_R) / norm(true_R))
+        append!(modified_r_errors, norm(Rm - true_R) / norm(true_R))
+        mod_A = copy(A)
+        householder_QR!(mod_A)
+        append!(householder_r_errors, norm(triu(mod_A) - true_R) / norm(true_R))
+    end
+
+    println(classical_errors)
+    println(modified_errors)
+    println(modified_r_errors)
+    fig = Figure()
+    recon_ax = Axis(fig[1, 1],
+        title = L"Reconstruction error for matrix with size $m$",
+        xlabel = L"Matrix size $m$",
+        ylabel = "Relative reconstruction error",
+        xscale = log2,
+        xticks = ms,
+        yscale = log10,
+    )
+    scatter!(recon_ax, ms, classical_errors, label="Classical GS")
+    scatter!(recon_ax, ms, modified_errors, label="Modified GS")
+    axislegend(recon_ax, position = :lt)
+
+    r_ax = Axis(fig[2, 1],
+        title = L"$R$ error for matrix with size $m$",
+        xlabel = L"Matrix size $m$",
+        ylabel = L"$R$ error",
+        xscale = log2,
+        xticks = ms,
+        yscale = log10,
+    )
+    scatter!(r_ax, ms, classical_r_errors, label="Classical GS")
+    scatter!(r_ax, ms, modified_r_errors, label="Modified GS")
+    scatter!(r_ax, ms, householder_r_errors, label="Householder QR")
+    axislegend(r_ax, position = :lt)
+
+    save("error_compare.png", fig)
+end
+
+compare_errors()
