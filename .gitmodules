@@ -11,3 +11,6 @@
 [submodule "spring-2023/CSE-6730/mesh2audio"]
 	path = spring-2023/CSE-6730/mesh2audio
 	url = git@github.com:GATech-CSE-6730-Spring-2023-Project/mesh2audio.git
+[submodule "spring-2023/CSE-6220/PA2"]
+	path = spring-2023/CSE-6220/PA2
+	url = git@github.com:GATech-CSE-6220-Spring-2023-Group/PA2.git
