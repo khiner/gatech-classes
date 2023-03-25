@@ -1,0 +1,139 @@
+\documentclass[twoside,10pt]{article}
+\input{macro.tex}
+
+\begin{document}
+
+\title{CSE 6643 Homework 5}
+\author{Karl Hiner, Spring 2023}
+\date{}
+\maketitle
+
+\section{Power Method [30 pts]} 
+
+We consider a matrix $\mtx{A}$ such that
+\begin{equation} 
+  \mtx{Q}^T \mtx{A} \mtx{Q} = \operatorname{diag}\left(\lambda_1, \ldots, \lambda_m\right),
+\end{equation}
+where $\mtx{Q}$ is orthogonal. We denote by $\vct{q}_i$ the $i$th column of $\mtx{Q}$. 
+
+We now consider the power method and the sequence $\vct{\nu}^{(k)}$  defined as 
+\begin{align}
+  \vct{z}^{(k)} &= \mtx{A} \vct{\nu}^{(k - 1)} \\
+  \vct{\nu}^{(k)} &= \vct{z}^{(k)} / \|\vct{z}^{(k)}\|_2,
+\end{align}
+where we assume that $\|\vct{\nu}^{(0)}\|_2 = 1$. Assume that we have $\theta_k$ such that 
+\begin{equation}
+  \cos(\theta_k) = \vct{q}_1^{T} \vct{\nu}^{(k)}
+\end{equation}
+with $\cos(\theta_{0}) \neq 0$.
+Prove that 
+\begin{equation}
+  1 - \cos(\theta_k)^2 \leq \frac{1}{a_1^2} \sum \limits_{i = 2}^m a_i^2\left(\frac{\lambda_{i}}{\lambda_1}\right)^{2k}, \quad a_i = \vct{q}_i^T \vct{\nu}^{(0)} 
+\end{equation}
+
+\begin{align*}
+  \cos(\theta_k) &= \vct{q}_1^{T} \vct{\nu}^{(k)}&\text{(given)}\\
+  &= \vct{q}_1^{T} \frac{\mtx{A}^k \vct{\nu}^{(0)}}{\|\mtx{A}^k \vct{\nu}^{(0)}\|_2}&\text{(def. of power method)}\\
+  &= \frac{\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\mtx{Q}^T \vct{\nu}^{(0)}}{\|\mtx{Q}\mtx{\Lambda}^k\mtx{Q}^T \vct{\nu}^{(0)}\|_2}&\text{(def. of $\mtx{A}$)}\\
+  &= \frac{\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}}{\|\mtx{Q}\mtx{\Lambda}^k\vct{a}\|_2}&\text{($\vct{a} \equiv \mtx{Q}^T\vct{\nu}^{(0)} \rightarrow a_i = \vct{q}_i^T \vct{\nu}^{(0)}$)}\\
+  \cos(\theta_k)^2 &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\|\mtx{Q}\mtx{\Lambda}^k\vct{a}\|_2^2}&\text{(square both sides)}\\
+  &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\left(\mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^T\left(\mtx{Q}\mtx{\Lambda}^k\vct{a}\right)}&\text{(def. of 2-norm)}\\
+  &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\vct{a}^T\mtx{\Lambda}^k\mtx{Q}^T\mtx{Q}\mtx{\Lambda}^k\vct{a}}&\text{(apply transpose in den.)}\\
+  &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\mtx{\Lambda}^{2k}\vct{a}^T\vct{a}}&\text{(simplify den.)}\\
+  &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{(expand den.)}\\
+  &= \frac{\left(\vct{e}_1\mtx{\Lambda}^k\vct{a}\right)^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{($\vct{q}_1^T\cdot\vct{q}_1 = 1$, $\vct{q}_1^T\cdot\vct{q}_{i \neq 1} = 0$)}\\
+  &= \frac{\lambda_1^{2k} a_1^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{(evaluate num.)}\\
+  1 - \cos(\theta_k)^2 &= 1 - \frac{\lambda_1^{2k} a_1^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{(negate \& add 1 to both sides)}\\
+  &= \frac{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2} - \lambda_1^{2k} a_1^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{(common den.)}\\
+  &= \frac{\sum\limits_{i=2}^m{\lambda_i^{2k}a_i^2}}{\lambda_1^{2k} a_1^2 + \sum\limits_{i=2}^m \lambda_i^{2k} a_i^2}&\text{(rearrange summation terms)}\\
+  &\leq \frac{\sum\limits_{i=2}^m{\lambda_i^{2k}a_i^2}}{\lambda_1^{2k} a_1^2} = \frac{1}{a_1^2} \sum\limits_{i=2}^m a_i^2 \left(\frac{\lambda_i}{\lambda_1}\right)^{2k}&\text{(QED)}\\
+\end{align*}
+
+\section{The LU iteration algorithm [30 pts]} 
+We consider the following iteration, starting with some full rank $\mtx{G}_0 \in \C^{m \times m}$:
+\begin{align}
+  \mtx{Z}_k &= \mtx{A} \mtx{G}_{k - 1}, \\
+  \mtx{G}_{k} \mtx{R}_{k} &= \mtx{Z}_k, \quad \text{LU factorization with no pivoting}, 
+\end{align}
+where $\mtx{G}_k$ is lower-triangular and $\mtx{R}_{k}$ is upper-triangular.
+We define 
+\begin{equation}
+  \mtx{T}_k = \mtx{G}_{k}^{-1} \mtx{A} \mtx{G}_k.
+\end{equation}
+Find an algorithm that computes the sequence $\mtx{T}_{k}$ in a manner similar to the QR iteration. 
+This algorithm is a variant of the QR iteration. The eigenvalues of $\mtx{A}$ appear on the diagonal of $\mtx{T}_k$.
+
+
+
+\section{Convergence of Orthogonal Iteration [40 pts]}
+  In this problem, you will explore the convergence behavior of the orthogonal iteration algorithm. In the problems below, only the asymptotic convergence will match the theoretical estimates. 
+  For small $k$, you may see deviations. 
+  To simplify grading, please use the provided (empty) file \texttt{HW4\_your\_code.jl} for your code. 
+  Please also \underline{attach all results to your report}, both plots and print statements. 
+  The TAs should be able to grade your homework without running your code. 
+  \subsection*{(a) [10 pts]} 
+    Write Julia code to create a matrix in $\R^{m \times m}$ of size $m = 8$ with eigenvalues $1, 3, 9, \ldots, 3^{m -1}$. 
+    Explain your code (as comments \emph{and} in your report) and describe what it does.
+
+  \subsection*{(b) [10 pts]}
+    Implement the orthogonal iteration algorithm. Print the values along the diagonal of $\mtx{R}_{k}$ at each iteration $k$ for $k = 1, \ldots,5$. Print each number using at most four significant digits. 
+  
+  \subsection*{(c) [10 pts]}
+    Considering entry $p$ along the diagonal, plot the convergence of the $p$th eigenvalue. 
+    Choose $p = 1$, $2$, and $3$.  
+    Compare with the theoretical rate of convergence at step $k$ for entry $p$, which is given by 
+    \begin{align}
+      \max(|\lambda_{p + 1} / \lambda_p|^k, |\lambda_p / \lambda_{p -1}|^k), \quad &1 < p < m,\\
+      |\lambda_2 / \lambda_1|^k, \quad &p = 1\\
+      |\lambda_{m} / \lambda_{m -1}|^k, \quad &p = m.
+    \end{align}
+    Use a semi-log plot (meaning that the $y$-axis of your plot should be logarithmic). 
+  
+  \subsection*{(d) [10 pts]}
+    Consider the block $(p + 1 : m, 1 : p)$ in the matrix 
+    \begin{equation}
+      \mtx{A}_k = \mtx{Q}^T_{k} \mtx{A} \mtx{Q}_{k}.
+    \end{equation}
+    Plot the 2-norm of this block as a function of $k$ for $p = 4$. Compare with the analytical estimate, which states that it should decay like $|\lambda_{p + 1} / \lambda_p|^k$.
+
+
+\section{LU and QR iteration [20 bonus pts]}
+We consider the LU iteration applied to a symmetric matrix. Assume that $\mtx{A}_0 \in \R^{m \times m}$ is symmetric and positive-definite. 
+We produce a sequence of matrices $\mtx{A}_i$ using the following algorithm:
+\begin{equation}
+  \mtx{A}_i = \mtx{G}^T_i \mtx{G}_i, \quad \mtx{A}_{i + 1} = \mtx{G}_i \mtx{G}_i^T, 
+\end{equation}
+where $\mtx{G}_i$ are upper-triangular matrices.
+
+Consider now $\mtx{A}'$, the matrix obtained after one step of the QR iteration, that is, 
+\begin{equation}
+  \mtx{A}_0 = \mtx{Q}\mtx{R}, \quad \mtx{A}' = \mtx{R} \mtx{Q}.
+\end{equation}
+We assume that the diagonal of $\mtx{R}$ is positive.
+
+\subsection*{(a) [10 bonus pts]}
+Use $\mtx{A}_0^2$ to show that 
+\begin{equation}
+  \mtx{R} = \mtx{G}_1 \mtx{G}_0
+\end{equation}
+
+\subsection*{(b) [10 bonus pts]}
+Show that
+\begin{equation}
+  \mtx{A}' = \mtx{A}_2
+\end{equation}
+   
+\section{Sensitivity of Eigenvalues [20 bonus pts]}
+We are interested in determining the sensitivity of eigenvalues with respect to perturbations in the matrix.
+
+Prove that if $\mtx{A} \in \C^{m \times m}$ is diagonalizable with $\mtx{A} = \mtx{V} \mtx{\Lambda} \mtx{V}$, and if $\mu$ is an eigenvalue of $\mtx{A} + \mtx{E}$, 
+\begin{equation}
+  \min \limits_{\lambda \in \lambda(\mtx{A})}  \left|\mu -\lambda \right| \leq \kappa_p(\mtx{V}) \|\mtx{E}\|_p.
+\end{equation}
+Here $\|\cdot\|_p$ denotes the $p$-norm and $\kappa_p(\mtx{V}) \coloneqq \|\mtx{V}\|_p \|\mtx{V}^{-1}\|_p$ is the condition number associated with the $p$-norm. 
+
+\emph{Hint:} assume that $\Id + \mtx{F}$ is singular. Then, there is an $\vct{x} \neq \vct{0}$ such that $\vct{x} + \mtx{F}\vct{x} = \vct{0}$. Therefore, $\mtx{F} \vct{x} = -\vct{x}$ and $\|\mtx{F}\|_{p} \geq 1$. 
+For the proof, identify the proper singular matrix and use this result. 
+
+
+\end{document}

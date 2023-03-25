@@ -1,0 +1,188 @@
+%=================================================
+% Basics
+%=================================================
+\usepackage{fixltx2e} % Makes \( \) equation style robust, among other
+                      % things. Must be the first package.
+
+
+% Makes ligatured fonts searchable and copyable in pdf readers
+\usepackage{cmap} % Load before fontenc 
+
+% Always include these font encodings in your document 
+% unless you have a very good reason.
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usepackage{verbatim}
+
+%=============
+% Fonts
+%=============
+
+\usepackage{lmodern} % Improved version of computer modern
+\usepackage[scale=0.88]{tgheros} % Helvetica clone for sans serif font
+
+
+\newcommand\hmmax{2} % Default is 3.
+\newcommand\bmmax{2} % Default is 4.
+
+\usepackage{bm} % boldmath must be called after the package
+\providecommand{\mathbold}[1]{\bm{#1}}
+
+%=============
+% AMS Packages and fonts
+%=============
+\usepackage{amsmath,amsbsy,amsgen,amscd,amsthm,amsfonts,amssymb} 
+
+%=============
+% Margins and paper size
+%=============
+\usepackage[centering,top=1.5in,bottom=1.2in,left=1.4in,right=1.4in]{geometry}
+\usepackage{parskip}
+
+
+%=============
+% Section headings
+%=============
+\usepackage[sf,bf,compact]{titlesec}
+
+%=============
+% Tables and lists
+%=============
+\usepackage{booktabs,longtable,tabu} % Nice tables
+\setlength{\tabulinesep}{1mm}
+\usepackage[font=small,margin=10pt,labelfont={sf,bf},labelsep={space}]{caption}
+
+%=============
+% Code output
+%=============
+% \usepackage{listings}
+% \usepackage{minted}
+
+
+
+
+\usepackage{enumitem}
+\setitemize{itemsep=0pt} 
+\setenumerate{itemsep=0pt}
+\setlist{labelindent=\parindent,%  % Recommended by enumitem package
+  font=\sffamily}
+
+
+%=============
+% Hyperlink colors
+%=============
+\usepackage[usenames,dvipsnames]{xcolor}
+\definecolor{steelblue}{HTML}{A1BDC7}
+\definecolor{orange}{HTML}{D98C21}
+\definecolor{silver}{HTML}{B0ABA8}
+\definecolor{rust}{HTML}{B8420F}
+\definecolor{seagreen}{HTML}{2E6B69}
+\definecolor{joshua}{HTML}{FBDC7F}
+\definecolor{darksky}{HTML}{154c79}
+
+\colorlet{steelblue}{silver!30!white}
+\colorlet{darkorange}{orange!85!black}
+\colorlet{darksilver}{silver!85!black}
+\colorlet{darksteelblue}{steelblue!85!black}
+\colorlet{darkrust}{rust!85!black}
+\colorlet{darkseagreen}{seagreen!85!black}
+
+\usepackage{url}
+\usepackage[colorlinks=true]{hyperref}
+\hypersetup{linkcolor=darkrust}    
+\hypersetup{citecolor=darkseagreen}      
+\hypersetup{urlcolor=darksilver}     
+
+%=============
+% Microtype
+%=============
+\usepackage[final]{microtype} 
+
+%=====================
+% Header
+%=====================
+% \usepackage{fancyhdr}
+% \usepackage{nopageno} % Gets rid of page number at the bottom
+% \fancyhf{} % Clear header style
+% \renewcommand{\headrulewidth}{0.5pt} % remove the header rule
+% \pagestyle{fancy}
+% \fancyhead[LE,RO]{\textsf{\small \thepage}}
+% 
+% \setlength{\headheight}{14pt}
+%=====================
+% Fix delimiters
+%=====================
+
+% Fixes \left and \right spacing issues. See discussion at
+% http://tex.stackexchange.com/questions/2607/spacing-around-left-and-right
+\let\originalleft\left
+\let\originalright\right
+\renewcommand{\left}{\mathopen{}\mathclose\bgroup\originalleft}
+\renewcommand{\right}{\aftergroup\egroup\originalright}
+
+%=================================================
+% Math macros
+%=================================================
+
+%=============
+% Generalities
+%=============
+\usepackage{mathtools}
+\mathtoolsset{centercolon}  % Makes := typeset correctly for definitions
+
+%%% Equation numbering
+%\numberwithin{equation}{section} 
+
+%%% Annotations
+\newcommand{\notate}[1]{\textcolor{red}{\textbf{[#1]}}}
+
+%==============
+% Symbols
+%==============
+\let\oldphi\phi
+\let\oldeps\epsilon
+
+\renewcommand{\phi}{\varphi}
+\renewcommand{\epsilon}{\varepsilon}
+\newcommand{\eps}{\varepsilon}
+
+%==============
+% Constants
+%==============
+
+% Set constants upright
+\newcommand{\cnst}[1]{\mathrm{#1}}  
+\newcommand{\econst}{\mathrm{e}}
+
+\newcommand{\zerovct}{\vct{0}} % Zero vector
+\newcommand{\Id}{\mathbf{I}} % Identity matrix
+\newcommand{\onemtx}{\bm{1}}
+\newcommand{\zeromtx}{\bm{0}}
+
+%==============
+% Sets
+%==============
+\providecommand{\mathbbm}{\mathbb} % In case we don't load bbm
+
+% Reals, complex, naturals
+\newcommand{\R}{\mathbbm{R}}
+\newcommand{\C}{\mathbbm{C}}
+\newcommand{\K}{\mathbbm{K}}
+\newcommand{\N}{\mathbbm{N}}
+
+%==============
+% Probability
+%==============
+\newcommand{\Prob}{\operatorname{\mathbbm{P}}}
+\newcommand{\Expect}{\operatorname{\mathbb{E}}}
+
+%==============
+% Vectors and matrices 
+%==============
+\newcommand{\vct}[1]{\mathbold{#1}}
+\newcommand{\mtx}[1]{\mathbold{#1}}
+
+\newcommand{\mrange}{\operatorname{range}}
+\newcommand{\mnull}{\operatorname{null}}
+
