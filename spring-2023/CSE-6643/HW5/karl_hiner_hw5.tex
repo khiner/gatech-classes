@@ -63,7 +63,26 @@ We define
 Find an algorithm that computes the sequence $\mtx{T}_{k}$ in a manner similar to the QR iteration. 
 This algorithm is a variant of the QR iteration. The eigenvalues of $\mtx{A}$ appear on the diagonal of $\mtx{T}_k$.
 
+From Piazza:
 
+You just need to show your algorithm and are not required to prove the algorithm reveals the eigenvalues on the diagonal of $\mtx{T}_k$.
+It is sufficient to use the given equations to derive a sequence of $\mtx{T}_k$.
+You need to find a manner similar to the QR iteration to compute $\mtx{T}_k$.
+That is, the computation of  $\mtx{T}_k$ should be similar to $\mtx{R}_k\mtx{G}_k$.
+Note that here $\mtx{T}_k \neq \mtx{R}_k\mtx{G}_k$, but you will find that when changing the formula a little bit, e.g, inserting a matrix between $\mtx{R}_k$ and $\mtx{G}_k$, it will make the equality hold.
+This modification should not bring much additional computational cost.
+
+This algorithm consists of iteratively doing matrices multiplication, applying LU factorization, and then doing two different matrices multiplications to compute $\mtx{T}_k$.
+Its relationship to QR factorization only concerns the manner of computation.
+
+\emph{Goal:} Find a matrix $\mtx{B}$ s.t. $\mtx{T}_k = \mtx{G}_{k}^{-1} \mtx{A} \mtx{G}_k = \mtx{R}_k\mtx{B}\mtx{G}_k$.
+
+The QR Iteration algorithm:
+
+\begin{itemize}
+  \item $\mtx{T}_{k-1} = \mtx{U}_k\mtx{R}_k$
+  \item $\mtx{T}_k = \mtx{R}_k\mtx{U}_k$
+\end{itemize}
 
 \section{Convergence of Orthogonal Iteration [40 pts]}
   In this problem, you will explore the convergence behavior of the orthogonal iteration algorithm. In the problems below, only the asymptotic convergence will match the theoretical estimates. 
