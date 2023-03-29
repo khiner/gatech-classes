@@ -227,14 +227,15 @@ Show that
   \mtx{A}' = \mtx{A}_2
 \end{equation}
 \begin{align*}
-  \mtx{A}' &= \mtx{A}_2&\text{(given)}\\
-  \mtx{A}'^2 &= \mtx{A}_2^2&\text{(square both sides)}\\
-  (\mtx{R}\mtx{Q})(\mtx{R}\mtx{Q}) &= (\mtx{G}_1\mtx{G}_1^T)(\mtx{G}_1\mtx{G}_1^T)&\text{(substitute)}\\
-  \mtx{R}\mtx{A}_0\mtx{Q} &= \mtx{G}_1\mtx{A}_1\mtx{G}_1^T&\text{(substitute)}\\
-  \mtx{R}(\mtx{R}^T\mtx{Q}^T)\mtx{Q} &= \mtx{G}_1\mtx{A}_1\mtx{G}_1^T&\text{($\mtx{A}_0$ is symmetric)}\\
-  \mtx{R}\mtx{R}^T &= \mtx{G}_1\mtx{A}_1\mtx{G}_1^T&\text{(simplify l.h.s.)}\\
-  (\mtx{G}_1 \mtx{G}_0)(\mtx{G}_1 \mtx{G}_0)^T &= \mtx{G}_1(\mtx{G}_0 \mtx{G}_0^T)\mtx{G}_1^T&\text{($\mtx{A}_{1} = \mtx{G}_0 \mtx{G}_0^T, \mtx{R} = \mtx{G}_1\mtx{G}_0$ (a))}\\
-  \mtx{G}_1 \mtx{G}_0\mtx{G}_0^T \mtx{G}_1^T &= \mtx{G}_1\mtx{G}_0 \mtx{G}_0^T\mtx{G}_1^T&\text{(rearrange l.h.s. QED)}\\
+  \mtx{G}_1 \mtx{G}_0\mtx{G}_0^T \mtx{G}_1^T &= \mtx{G}_1\mtx{G}_0 \mtx{G}_0^T\mtx{G}_1^T\\
+  (\mtx{G}_1 \mtx{G}_0)(\mtx{G}_1 \mtx{G}_0)^T &= \mtx{G}_1(\mtx{G}_0 \mtx{G}_0^T)\mtx{G}_1^T&\text{(rearrange)}\\
+  \mtx{R}\mtx{R}^T &= \mtx{G}_1\mtx{A}_1\mtx{G}_1^T&\text{($\mtx{A}_{1} = \mtx{G}_0 \mtx{G}_0^T, \mtx{R} = \mtx{G}_1\mtx{G}_0$ (a))}\\
+  \mtx{R}(\mtx{R}^T\mtx{Q}^T)\mtx{Q} &= \mtx{G}_1\mtx{A}_1\mtx{G}_1^T&\text{(multiply l.h.s. by $\mtx{Q}^T\mtx{Q} = \mtx{I}$)}\\
+  \mtx{R}\mtx{A}_0\mtx{Q} &= \mtx{G}_1\mtx{A}_1\mtx{G}_1^T&\text{($\mtx{A}_0 = \mtx{Q}\mtx{R}$, $\mtx{A}_0$ symmetric)}\\
+  \mtx{R}(\mtx{Q}\mtx{R})\mtx{Q} &= \mtx{G}_1(\mtx{G}_1^T\mtx{G}_1)\mtx{G}_1^T&\text{(substitute by defs. of $\mtx{A}_0, \mtx{A}_1$)}\\
+  (\mtx{R}\mtx{Q})(\mtx{R}\mtx{Q}) &= (\mtx{G}_1\mtx{G}_1^T)(\mtx{G}_1\mtx{G}_1^T)&\text{(regroup)}\\
+  \mtx{A}'^2 &= \mtx{A}_2^2&\text{(substitute by defs. of $\mtx{A}', \mtx{A}_2$)}\\
+  \mtx{A}' &= \mtx{A}_2&\text{(QED)}
 \end{align*}
 
 \section{Sensitivity of Eigenvalues [20 bonus pts]}
