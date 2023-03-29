@@ -10,7 +10,7 @@ Performs a QR decomposition of a random matrix to create an orthogonal matrix `Q
 and returns `Q diag(Λ) Q`.
 Arguments:
     * `m` is the size of the matrix.
-    * `Λ` is a vector of the eigenvalues.
+    * `Λ` is a vector of the eig**envalues.
 """
 function random_matrix(m, Λ)
     Q, _ = qr(randn(m, m))

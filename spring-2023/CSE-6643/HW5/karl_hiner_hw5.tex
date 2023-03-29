@@ -39,14 +39,15 @@ Prove that
   \cos(\theta_k)^2 &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\|\mtx{Q}\mtx{\Lambda}^k\vct{a}\|_2^2}&\text{(square both sides)}\\
   &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\left(\mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^T\left(\mtx{Q}\mtx{\Lambda}^k\vct{a}\right)}&\text{(def. of 2-norm)}\\
   &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\vct{a}^T\mtx{\Lambda}^k\mtx{Q}^T\mtx{Q}\mtx{\Lambda}^k\vct{a}}&\text{(apply transpose in den.)}\\
-  &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\mtx{\Lambda}^{2k}\vct{a}^T\vct{a}}&\text{(simplify den.)}\\
+  &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\mtx{\Lambda}^{2k}\vct{a}^T\vct{a}}&\text{(simplify den. $\mtx{Q}$ orth., $\mtx{\Lambda}$ diag.)}\\
   &= \frac{\left(\vct{q}_1^{T} \mtx{Q}\mtx{\Lambda}^k\vct{a}\right)^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{(expand den.)}\\
   &= \frac{\left(\vct{e}_1\mtx{\Lambda}^k\vct{a}\right)^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{($\vct{q}_1^T\cdot\vct{q}_1 = 1$, $\vct{q}_1^T\cdot\vct{q}_{i \neq 1} = 0$)}\\
   &= \frac{\lambda_1^{2k} a_1^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{(evaluate num.)}\\
   1 - \cos(\theta_k)^2 &= 1 - \frac{\lambda_1^{2k} a_1^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{(negate \& add 1 to both sides)}\\
   &= \frac{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2} - \lambda_1^{2k} a_1^2}{\sum\limits_{i=1}^m{\lambda_i^{2k} a_i^2}}&\text{(common den.)}\\
   &= \frac{\sum\limits_{i=2}^m{\lambda_i^{2k}a_i^2}}{\lambda_1^{2k} a_1^2 + \sum\limits_{i=2}^m \lambda_i^{2k} a_i^2}&\text{(rearrange summation terms)}\\
-  &\leq \frac{\sum\limits_{i=2}^m{\lambda_i^{2k}a_i^2}}{\lambda_1^{2k} a_1^2} = \frac{1}{a_1^2} \sum\limits_{i=2}^m a_i^2 \left(\frac{\lambda_i}{\lambda_1}\right)^{2k}&\text{(QED)}\\
+  &\leq \frac{\sum\limits_{i=2}^m{\lambda_i^{2k}a_i^2}}{\lambda_1^{2k} a_1^2}&\left(\text{since $\sum\limits_{i=2}^m \lambda_i^{2k} a_i^2 \geq 0$}\right)\\
+  &= \frac{1}{a_1^2} \sum\limits_{i=2}^m a_i^2 \left(\frac{\lambda_i}{\lambda_1}\right)^{2k}&\text{(QED)}\\
 \end{align*}
 
 \section{The LU iteration algorithm [30 pts]} 
@@ -63,46 +64,66 @@ We define
 Find an algorithm that computes the sequence $\mtx{T}_{k}$ in a manner similar to the QR iteration. 
 This algorithm is a variant of the QR iteration. The eigenvalues of $\mtx{A}$ appear on the diagonal of $\mtx{T}_k$.
 
-From Piazza:
+\hbox{}
 
-You just need to show your algorithm and are not required to prove the algorithm reveals the eigenvalues on the diagonal of $\mtx{T}_k$.
-It is sufficient to use the given equations to derive a sequence of $\mtx{T}_k$.
-You need to find a manner similar to the QR iteration to compute $\mtx{T}_k$.
-That is, the computation of  $\mtx{T}_k$ should be similar to $\mtx{R}_k\mtx{G}_k$.
-Note that here $\mtx{T}_k \neq \mtx{R}_k\mtx{G}_k$, but you will find that when changing the formula a little bit, e.g, inserting a matrix between $\mtx{R}_k$ and $\mtx{G}_k$, it will make the equality hold.
-This modification should not bring much additional computational cost.
+\quad The LU iteration algorithm is similar to the QR iteration algorithm, except that we use the LU factorization instead of the QR factorization.
 
-This algorithm consists of iteratively doing matrices multiplication, applying LU factorization, and then doing two different matrices multiplications to compute $\mtx{T}_k$.
-Its relationship to QR factorization only concerns the manner of computation.
-
-\emph{Goal:} Find a matrix $\mtx{B}$ s.t. $\mtx{T}_k = \mtx{G}_{k}^{-1} \mtx{A} \mtx{G}_k = \mtx{R}_k\mtx{B}\mtx{G}_k$.
-
-The QR Iteration algorithm:
-
+Here is the LU iteration algorithm:
 \begin{itemize}
-  \item $\mtx{T}_{k-1} = \mtx{U}_k\mtx{R}_k$
-  \item $\mtx{T}_k = \mtx{R}_k\mtx{U}_k$
+  \item Initialize $\mtx{T}_0 = \mtx{A}$.
+  \item For $k = 1, 2, \ldots$:
+  \begin{itemize}
+    \item Compute the LU factorization of $\mtx{T}_{k-1}$: $\mtx{L} \mtx{U} = \mtx{T}_{k-1}$.
+    \item Set $\mtx{T}_{k} = \mtx{U} \mtx{L}$.
+  \end{itemize}
 \end{itemize}
+As $k \rightarrow \infty$, the diagonals of $\mtx{T}_k$ converge to the eigenvalues of $\mtx{A}$.
 
-Answer:
+\textit{Note: I have implemented this algorithm in Julia, and it works for square matrices with real eigenvalues, similar to the base QR iteration algorithm.
+As expected (and proven in (4b) below), the algorithm converges twice as slowly as the QR iteration algorithm.
+However, following guidance on Piazza and in office hours, I provide further details and a different approach below.
+We can think of the following as deriving an algorithm similar to the "Simultaneous Iteration" algorithm, but using LU factorization instead of QR factorization.}
 
-We insert the matrix $\mtx{G}_{k}^{-1}$ between $\mtx{R}_k$ and $\mtx{G}_k$. The algorithm involves matrix multiplication, LU factorization, and then computing $\mtx{T}_k$ using the inverse of the lower triangular matrix $\mtx{G}_k$.
+In the QR iteration algorithm, we have:
+\begin{itemize}
+  \item $\mtx{Q}\mtx{R} = \mtx{Z}_{k-1}$
+  \item $\mtx{Z}_{k} = \mtx{R}\mtx{Q}$
+\end{itemize}
+We want to find expressions for $\mtx{T}_{k}$ in the LU iteration that is similar to $\mtx{R}\mtx{Q}$, such that $\mtx{T}_k = \mtx{G}_k^{-1}\mtx{A}\mtx{G}_k$.
+That is, we want to find some matrix $\mtx{B}_k$ such that $\mtx{T}_{k} = \mtx{R}_{k}\mtx{B}_k\mtx{G}_k = \mtx{G}_{k}^{-1}\mtx{A}\mtx{G}_{k}$:
+\begin{align*}
+  \mtx{T}_k &= \mtx{G}_k^{-1}\mtx{A}\mtx{G}_k&\text{(given)}\\
+  \mtx{R}_k\mtx{B}_k\mtx{G}_k &= \mtx{G}_k^{-1}\mtx{A}\mtx{G}_k&\text{($\mtx{T}_k \rightarrow$ desired matrix similar to $\mtx{R}_k\mtx{G}_k$)}\\
+  \mtx{R}_k\mtx{B}_k &= \mtx{G}_k^{-1}\mtx{A}&\text{(right-multiply by $\mtx{G}_k^{-1}$)}\\
+  \mtx{B}_k &= \mtx{R}_k^{-1}\mtx{G}_k^{-1}\mtx{A}&\text{(left-multiply by $\mtx{R}_k^{-1}$ to isolate $\mtx{B}_k$)}\\
+  &= \left(\mtx{G}_k\mtx{R}_k\right)^{-1}\mtx{A}&\text{(group r.h.s. inverses)}\\
+  &= \mtx{Z}_k^{-1}\mtx{A}&\text{(from (7) above)}\\
+  &= \left(\mtx{G}_{k-1}\right)^{-1}&\text{(from (6) above)}
+\end{align*}
+Thus, we have
+$$\mtx{T}_{k} = \mtx{G}_{k}^{-1}\mtx{A}\mtx{G}_{k} = \mtx{R}_{k}\mtx{B}_k\mtx{G}_k = \mtx{R}_{k}\left(\mtx{G}_{k-1}\right)^{-1}\mtx{G}_k.$$
+Here is a "Simultaneous LU iteration" algorithm:
+\begin{itemize}
+  \item Initialize $\mtx{T}_0 = \mtx{A}$
+  \item Initialize $\mtx{G}_0$ to be a full-rank matrix.
+  \item For $k = 1, 2, \ldots$:
+  \begin{itemize}
+    \item Compute $\mtx{Z}_k = \mtx{A}\mtx{G}_{k-1}$.
+    \item Perform the LU factorization of $\mtx{Z}_k$ with no pivoting to find\\
+    $\mtx{G}_k\mtx{R}_k = \mtx{Z}_k.$
+    \item Solve the system $\mtx{G}_{k-1}\mtx{X} = \mtx{G}_k$ for $\mtx{X}$ using forward substitution to obtain\\
+    $\mtx{X} = \left(\mtx{G}_{k-1}\right)^{-1}\mtx{G}_k.$
+    (Note that $\mtx{G}_{k-1}$ is unit lower-diagonal.)
+    \item Compute $\mtx{T}_k = \mtx{R}_k\mtx{X}$
+  \end{itemize}
+\end{itemize}
+As $k \rightarrow \infty$, the diagonals of $\mtx{T}_k$ converge to the eigenvalues of $\mtx{A}$.
 
-To avoid the direct computation of the inverse, we can solve a linear system, as solving a linear system with a triangular matrix is more efficient:
-
-\begin{enumerate}
-  \item Start with the initial full rank $\mtx{G}_0 \in \C^{m \times m}$.
-  \item For each iteration $k$:
-   \begin{enumerate}
-   \item Compute $\mtx{Z}_k = \mtx{A} \mtx{G}_{k - 1}$.
-   \item Perform LU factorization with no pivoting: $\mtx{G}_{k} \mtx{R}_{k} = \mtx{Z}_k$.
-   \item Solve the linear system $\mtx{G}_k \mtx{T}_k = \mtx{Z}_k$ for $\mtx{T}_k$ using forward or backward substitution.
-   \end{enumerate}
-\end{enumerate}
+See attached \verb|lu_iteration.jl| for Julia implementations of the "LU iteration" and "Simultaneous LU iteration" algorithms, along with other iteration algorithms.
 
 \section{Convergence of Orthogonal Iteration [40 pts]}
   In this problem, you will explore the convergence behavior of the orthogonal iteration algorithm. In the problems below, only the asymptotic convergence will match the theoretical estimates. 
-  For small $k$, you may see deviations. 
+  For small $k$, you may see deviations.
   To simplify grading, please use the provided (empty) file \texttt{HW4\_your\_code.jl} for your code. 
   Please also \underline{attach all results to your report}, both plots and print statements. 
   The TAs should be able to grade your homework without running your code. 
@@ -141,33 +162,31 @@ To avoid the direct computation of the inverse, we can solve a linear system, as
 
     \begin{figure}[htb]
       \begin{center}
-      \includegraphics[width=110mm]{HW5_code/convergence_final.png}
+      \includegraphics[width=\textwidth]{HW5_code/convergence_final.png}
       \end{center}
       \caption{Eigenvalue convergence for $p = 1, 2, 3$}
       \label{fig:figure1}
     \end{figure}
-    Figure \ref{fig:figure1} shows plots of the estimated and true eigenvalues, and the actual and theoretical convergence rates for $p = 1, 2, 3$ and $k \in 1, 2, \dots, 10$.
+    \quad Figure \ref{fig:figure1} shows plots of the estimated and true eigenvalues, and the actual and theoretical convergence rates for $p = 1, 2, 3$ and $k \in 1, 2, \dots, 10$.
     Notice that the actual convergence rates are somewhat faster than the theoretical convergence rates.
 
-    \textit{Note: Depending on the generated random matrix, the convergence rate of one or more of the eigenvalues may be closer to the theoretical convergence rate.}
- 
+    \textit{Note: Depending on the generated random matrix, the convergence rates differ between runs.}
+    \clearpage
   \subsection*{(d) [10 pts]}
     Consider the block $(p + 1 : m, 1 : p)$ in the matrix 
     \begin{equation}
       \mtx{A}_k = \mtx{Q}^T_{k} \mtx{A} \mtx{Q}_{k}.
     \end{equation}
     Plot the 2-norm of this block as a function of $k$ for $p = 4$. Compare with the analytical estimate, which states that it should decay like $|\lambda_{p + 1} / \lambda_p|^k$.
-
-    Figure \ref{fig:figure2} shows a plot of the true and analytical 2-norms of these subblocks.
-
+    
     \begin{figure}[htb]
       \begin{center}
-      \includegraphics[width=110mm]{HW5_code/norms_final.png}
+      \includegraphics[width=100mm]{HW5_code/norms_final.png}
       \end{center}
       \caption{Analytical vs. actual 2-norm decay rates}
       \label{fig:figure2}
     \end{figure}
-
+    \quad Figure \ref{fig:figure2} shows a plot of the true and analytical 2-norms of these subblocks.
     The analytical norm estimates have exactly the same decay rate as the true norm estimates, though the magnitudes are lower.
   
     \textit{Note: The exact magnitude of the difference in analytic vs true norms is dependent on the generated random matrix.}
@@ -191,24 +210,66 @@ Use $\mtx{A}_0^2$ to show that
 \begin{equation}
   \mtx{R} = \mtx{G}_1 \mtx{G}_0
 \end{equation}
+\begin{align*}
+  \mtx{A}_0^2 &= \mtx{A}_0^2\\
+  \mtx{A}_0^T\mtx{A}_0 &= \mtx{A}_0\mtx{A}_0&\text{(since $\mtx{A}$ is symmetric, $\mtx{A} = \mtx{A}^T$)}\\
+  (\mtx{Q}\mtx{R})^T(\mtx{Q}\mtx{R}) &= (\mtx{G}^T_0 \mtx{G}_0)(\mtx{G}^T_0 \mtx{G}_0)&\text{(substitute with LU/QR definitions)}\\
+  \mtx{R}^T\mtx{R} &= \mtx{G}^T_0 (\mtx{G}_0\mtx{G}^T_0) \mtx{G}_0&\text{(simplify l.h.s., regroup r.h.s.)}\\
+  \mtx{R}^T\mtx{R} &= \mtx{G}^T_0\mtx{A}_{1}\mtx{G}_0&\text{(by def. of $\mtx{A}_1$)}\\
+  \mtx{R}^T\mtx{R} &= \mtx{G}^T_0(\mtx{G}_1^T\mtx{G}_1)\mtx{G}_0&\text{(by def. of $\mtx{A}_1$)}\\
+  \mtx{R}^T\mtx{R} &= (\mtx{G}_1\mtx{G}_0)^T\mtx{G}_1\mtx{G}_0&\text{(rearrange r.h.s.)}\\
+  \mtx{R} &= \mtx{G}_1\mtx{G}_0 &\text{(QED)}
+\end{align*}
 
 \subsection*{(b) [10 bonus pts]}
 Show that
 \begin{equation}
   \mtx{A}' = \mtx{A}_2
 \end{equation}
-   
+\begin{align*}
+  \mtx{A}' &= \mtx{A}_2&\text{(given)}\\
+  \mtx{A}'^2 &= \mtx{A}_2^2&\text{(square both sides)}\\
+  (\mtx{R}\mtx{Q})(\mtx{R}\mtx{Q}) &= (\mtx{G}_1\mtx{G}_1^T)(\mtx{G}_1\mtx{G}_1^T)&\text{(substitute)}\\
+  \mtx{R}\mtx{A}_0\mtx{Q} &= \mtx{G}_1\mtx{A}_1\mtx{G}_1^T&\text{(substitute)}\\
+  \mtx{R}(\mtx{R}^T\mtx{Q}^T)\mtx{Q} &= \mtx{G}_1\mtx{A}_1\mtx{G}_1^T&\text{($\mtx{A}_0$ is symmetric)}\\
+  \mtx{R}\mtx{R}^T &= \mtx{G}_1\mtx{A}_1\mtx{G}_1^T&\text{(simplify l.h.s.)}\\
+  (\mtx{G}_1 \mtx{G}_0)(\mtx{G}_1 \mtx{G}_0)^T &= \mtx{G}_1(\mtx{G}_0 \mtx{G}_0^T)\mtx{G}_1^T&\text{($\mtx{A}_{1} = \mtx{G}_0 \mtx{G}_0^T, \mtx{R} = \mtx{G}_1\mtx{G}_0$ (a))}\\
+  \mtx{G}_1 \mtx{G}_0\mtx{G}_0^T \mtx{G}_1^T &= \mtx{G}_1\mtx{G}_0 \mtx{G}_0^T\mtx{G}_1^T&\text{(rearrange l.h.s. QED)}\\
+\end{align*}
+
 \section{Sensitivity of Eigenvalues [20 bonus pts]}
 We are interested in determining the sensitivity of eigenvalues with respect to perturbations in the matrix.
 
-Prove that if $\mtx{A} \in \C^{m \times m}$ is diagonalizable with $\mtx{A} = \mtx{V} \mtx{\Lambda} \mtx{V}$, and if $\mu$ is an eigenvalue of $\mtx{A} + \mtx{E}$, 
-\begin{equation}
+Prove that if $\mtx{A} \in \C^{m \times m}$ is diagonalizable with $\mtx{A} = \mtx{V} \mtx{\Lambda} \mtx{V}^{-1}$, and if $\mu$ is an eigenvalue of $\mtx{A} + \mtx{E}$, 
+\begin{equation*}
   \min \limits_{\lambda \in \lambda(\mtx{A})}  \left|\mu -\lambda \right| \leq \kappa_p(\mtx{V}) \|\mtx{E}\|_p.
-\end{equation}
+\end{equation*}
 Here $\|\cdot\|_p$ denotes the $p$-norm and $\kappa_p(\mtx{V}) \coloneqq \|\mtx{V}\|_p \|\mtx{V}^{-1}\|_p$ is the condition number associated with the $p$-norm. 
 
-\emph{Hint:} assume that $\Id + \mtx{F}$ is singular. Then, there is an $\vct{x} \neq \vct{0}$ such that $\vct{x} + \mtx{F}\vct{x} = \vct{0}$. Therefore, $\mtx{F} \vct{x} = -\vct{x}$ and $\|\mtx{F}\|_{p} \geq 1$. 
+\emph{Hint:} assume that $\Id + \mtx{F}$ is singular. Then, there is an $\vct{x} \neq \vct{0}$ such that $\vct{x} + \mtx{F}\vct{x} = \vct{0}$.
+Therefore, $\mtx{F} \vct{x} = -\vct{x}$ and $\|\mtx{F}\|_{p} \geq 1$. 
 For the proof, identify the proper singular matrix and use this result. 
-
+\begin{align*}
+  (\mtx{A} + \mtx{E})\vct{v} &= \mu\vct{v}&\text{(let $\vct{v}$ be the eigenvector for eigenvalue $\mu$)}\\
+  \mtx{A}\vct{v} + \mtx{E}\vct{v} &= \mu\vct{v}&\text{(distribute $\vct{v}$)}\\
+  \mtx{V}\mtx{\Lambda}\mtx{V}^{-1}\vct{v} + \mtx{E}\vct{v} &= \mu\vct{v}&\text{(substitute $\mtx{A} = \mtx{V} \mtx{\Lambda} \mtx{V}^{-1}$)}\\
+  \mtx{V}\mtx{\Lambda}\vct{c} + \mtx{E}\mtx{V}\vct{c} &= \mu\mtx{V}\vct{c}&\text{(Let $\vct{v} = \mtx{V}\vct{c}$)}\\
+  \mtx{V}\mtx{\Lambda} + \mtx{E}\mtx{V} &= \mu\mtx{V}&\text{(drop common $\vct{c}$)}\\
+  \mtx{E}\mtx{V} &= (\mu\mtx{I} - \mtx{\Lambda})\mtx{V}&\text{(rearrange)}\\
+  \mtx{F} \coloneqq (\mtx{V}^{-1}\mtx{E}\mtx{V}) &= \mtx{V}^{-1}(\mu\mtx{I} - \mtx{\Lambda})\mtx{V}&\text{(left-multiply by $\mtx{V}^{-1}$)}\\
+\end{align*}
+Observe that $\mtx{I} + \mtx{F}$ is singular.
+Thus, there exists a nonzero vector $\vct{x}$ such that
+\begin{align*}
+  \vct{x} + \mtx{F}\vct{x} &= \vct{0}\\
+  \mtx{F}\vct{x} &= -\vct{x}\\
+  \|\mtx{F}\|_p &\geq 1&\text{(property of induced matrix norms)}\\
+  \|\mtx{V}^{-1}(\mu\mtx{I} - \mtx{\Lambda})\mtx{V}\|_p &\geq 1&\text{(substitute $\mtx{F}$)}\\
+  \|\mtx{V}^{-1}\|_p \|\mu\mtx{I} - \mtx{\Lambda}\|_p \|\mtx{V}\|_p &\geq 1&\text{(submultiplicative property of matrix norms)}\\
+  \|\mu\mtx{I} - \mtx{\Lambda}\|_p &\geq \frac{1}{\kappa_p(\mtx{V})}&\text{(divide by $ \kappa_p(\mtx{V}) \coloneqq \|\mtx{V}\|_p \|\mtx{V}^{-1}\|_p$)}\\
+  \max_{\lambda \in \lambda(\mtx{A})} \left|\mu - \lambda\right| &\geq \frac{1}{\kappa_p(\mtx{V})}&\text{(def. of $p$-norm)}\\
+  \min_{\lambda \in \lambda(\mtx{A})} \left|\mu - \lambda\right| &\leq \kappa_p(\mtx{V})&\text{(take the reciprocal of the inequality)}\\
+  \min_{\lambda \in \lambda(\mtx{A})} \left|\mu - \lambda\right| &\leq \kappa_p(\mtx{V})\|\mtx{E}\|_p&\text{($\|\mtx{E}\|_p \geq 0$. QED)}
+\end{align*}
 
 \end{document}
