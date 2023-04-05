@@ -1,0 +1,106 @@
+\documentclass[twoside,10pt]{article}
+\input{macro.tex}
+
+\begin{document}
+
+\title{CSE 6643 Homework 6}
+\author{Sch{\"a}fer, Spring 2023}
+\date{Deadline: April 11 Tuesday, 8:00 am}
+\maketitle
+
+\begin{itemize}
+  \item There are 2 sections in grade scope: Homework 6 and Homework 6 Programming. Submit your answers as a PDF file to Homework 6 (report the results that you obtain using programming by using plots, tables, and a description of your implementation like you would when writing a paper.) and also submit your code in a zip file to Homework 6 Programming. 
+  \item Programming questions are posted in Julia. You are allowed to use basic library functions like sorting, plotting, matrix-vector products etc, but nothing that renders the problem itself trivial. Please use your common sense and ask the instructors if you are unsure. 
+  You should never add additional packages to the environment.
+  \item Late homework incurs a penalty of 20\% for every 24 hours that it is late. Thus, right after the deadline, it will only be worth 80\% credit, and after four days, it will not be worth any credit. 
+  \item We recommend the use of LaTeX for typing up your solutions. No credit will be given to unreadable handwriting.
+  \item List explicitly with whom in the class you discussed which problem, if any. Cite all external resources that you were using to complete the homework. For details, consult the collaboration policy in the class syllabus on canvas.
+\end{itemize}
+
+
+\section{Convergence of QR iteration [50 pts]}
+  In this problem, we consider the convergence rate of the QR algorithm with a single-shift strategy. We consider a real matrix $\mtx{A} \in \R^{m \times m}$. 
+  The QR iteration can be written as follows:
+  \begin{align}
+    \mtx{A}^{(0)} &= \mtx{A} \\
+    \mtx{A}^{(k)} &= \mu_k \Id + \mtx{Q}_k \mtx{R}_k,\\
+    \mtx{A}^{(k+1)} &= \mtx{R}_k \mtx{Q}_k + \mu_k \Id.
+  \end{align}
+  If we choose $\mu_k = \mtx{A}_{m, m}^{(k)}$ to be the bottom-right entry of the matrix $\mtx{A}^{(k)}$, then this is called the \emph{single-shift QR iteration.}
+
+  Prove the following results.
+  You may use figures to illustrate your explanations. 
+  \subsection*{(a) [10 pts]}
+  Show that if $\mtx{A}^{(0)} = \mtx{A}$ is an upper Hessenberg matrix, then $\mtx{A}^{(k)}$ is upper Hessenberg for all $k \geq 0$.
+  Thus, from now on, we always assume that the matrix $\mtx{A}$ is an upper Hessenberg matrix.
+
+  \subsection*{(b) [10 pts]}
+  Prove that the total operation cost for each QR iteration is $O(m^2)$.
+
+  \subsection*{(c) [10 pts]}
+  In the QR step, we perform $m - 1$ Givens rotations on the matrix $\mtx{A}^{(k)} - \mu_k \Id$. 
+  Suppose that after $m - 2$ Givens rotations, the bottom-right $2 \times 2$ sub-matrix of $\mtx{A}^{(k)} - \mu_k \Id$ is given by
+  \begin{equation}
+    \begin{pmatrix}
+      a & b \\
+      \varepsilon & 0
+    \end{pmatrix}.
+  \end{equation}
+  Explain why the $(m, m)$ entry is $0$ at that stage, and prove that 
+  \begin{equation}
+    \mtx{A}_{m, m-1}^{(k + 1)} = - \frac{\varepsilon^2 b}{\varepsilon^2 + a^2}.
+  \end{equation}
+
+  \subsection*{(d) [10 pts]} 
+  Based on the previous result, explain why we can expect the single-shift QR algorithm to converge quadratically (provided that it is converging). 
+
+  \subsection*{(e) [10 pts]}
+  We showed that the single-shift QR algorithm converges quite fast if the guess is sufficiently accurate. 
+  However, its convergence is not guaranteed.
+  Give an example in which the single-shift QR algorithm fails to converge, and explain why.
+
+\section{Deflation upon Convergence [20 pts]}
+Consider an upper Hessenberg matrix $\mtx{H} \in \R^{m \times m}$ with eigenvalue $\lambda$. 
+We define 
+\begin{align}
+  \mtx{H} - \lambda \Id &= \mtx{U}_1 \mtx{R}_1 \quad \text{(QR factorization)} \\ 
+  \mtx{H}_1 &= \mtx{R}_1 \mtx{U}_1 + \lambda \Id.
+\end{align}
+
+\subsection*{(a) [10 pts]}
+Prove that if $\mtx{H}_{i + 1, i} \neq  0, \forall 1 \leq i < m$ ($\mtx{H}$ is an unreduced Hessenberg matrix), then 
+\begin{equation}
+  \mtx{H}_1\left(m, \colon\right) = \lambda e_m^{T}. 
+\end{equation}
+
+\subsection*{(b) [10 pts]}
+Explain the connection between this result and the process of deflation in the QR iteration algorithm. 
+
+\section{An implicit QR Factorization [15 bonus pts]}
+Denote $\mtx{H} = \mtx{H}_1$, and assume we generate a sequence of matrices $\mtx{H}_k$ via 
+\begin{equation}
+  \mtx{H}_k - \mu_k \Id = \mtx{U}_k \mtx{R}_k, \quad \mtx{H}_{k + 1} = \mtx{R}_k \mtx{U}_k + \mu_k \Id. 
+\end{equation}
+Prove that 
+\begin{equation}
+  \left(\mtx{U}_1 \cdots \mtx{U}_j\right)\left(\mtx{R}_j \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{j} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right). 
+\end{equation}
+This result shows that we are implicitly computing a QR factorization of 
+\begin{equation}
+  \left(\mtx{H} - \mu_j \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right).   
+\end{equation}
+
+\section{QR with Shifts [30 pts]}
+\subsection*{(a) Almost upper triangular [7.5 pts]} 
+Go to section (a) of the file \texttt{HW6\_your\_code.jl} and implement a function that reduces a symmetric matrix $\mtx{A} \in \mathbb{R}^{m\times m}$ to Hessenberg form using Householder reflections. You should end up with a matrix $\mtx{T}$ in Hessenberg form. Your algorithm should operate in place, overwriting the input matrix and not allocating additional memory. 
+
+\subsection*{(b) Givens [7.5 pts]} 
+Go to section (b) of the file \texttt{HW6\_your\_code.jl} and implement a function that runs a single iteration of the unshifted QR algorithm. Your function should take $\mtx{T}_{k}$ in Hessenberg form as an input and compute $\mtx{T}_{k+1}$ also in Hessenberg form. You should use Givens rotations to implement QR-factorization on $\mtx{T}_{k}$.
+
+\subsection*{(c) Single-Shift vs. Wilkson Shifts [7.5 pts]}
+Go to section (c) of the file \texttt{HW6\_your\_code.jl} and implement a function that runs the practical QR iteration with both the Single-Shift and Wilkinson Shift. Your function should have an input that allows you to select which type of shift you want to use.  Your implementation should include deflation and a reasonable criteria for when to implement deflation and terminate your QR iterations. You can use your function from part (b) to do the QR iteration at each step.
+
+\subsection*{(d) Breaking symmetry [7.5 pts]}
+Go to section (d) of the file \texttt{HW6\_your\_driver.jl} and design an experiment that evaluates your practical QR algorithm with shifts. You should include a semi-log plot showing the rate of convergence of your algorithm using Single-Shift and Wilkinson Shift. Compare the results with the rate of convergence you expected to see for both cases. Do you have a preference between the Wilkinson shift or the Rayleigh shift?  If so which one do you prefer and why?
+
+\end{document}

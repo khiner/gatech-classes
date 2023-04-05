@@ -1,0 +1,248 @@
+\documentclass[twoside,10pt]{article}
+\input{macro.tex}
+
+\begin{document}
+
+\title{CSE 6643 Homework 6}
+\author{Karl Hiner, Spring 2023}
+\date{}
+\maketitle
+
+\section{Convergence of QR iteration [50 pts]}
+  In this problem, we consider the convergence rate of the QR algorithm with a single-shift strategy. We consider a real matrix $\mtx{A} \in \R^{m \times m}$. 
+  The QR iteration can be written as follows:
+  \begin{align}
+    \mtx{A}^{(0)} &= \mtx{A} \\
+    \mtx{A}^{(k)} &= \mu_k \Id + \mtx{Q}_k \mtx{R}_k,\\
+    \mtx{A}^{(k+1)} &= \mtx{R}_k \mtx{Q}_k + \mu_k \Id.
+  \end{align}
+  If we choose $\mu_k = \mtx{A}_{m, m}^{(k)}$ to be the bottom-right entry of the matrix $\mtx{A}^{(k)}$, then this is called the \emph{single-shift QR iteration.}
+
+  Prove the following results.
+  You may use figures to illustrate your explanations. 
+  \subsection*{(a) [10 pts]}
+  Show that if $\mtx{A}^{(0)} = \mtx{A}$ is an upper Hessenberg matrix, then $\mtx{A}^{(k)}$ is upper Hessenberg for all $k \geq 0$.
+  Thus, from now on, we always assume that the matrix $\mtx{A}$ is an upper Hessenberg matrix.
+
+
+\quad We want to show that if $\mtx{A}^{(0)} = \mtx{A}$ is an upper Hessenberg matrix, then $\mtx{A}^{(k)}$ is upper Hessenberg for all $k \geq 0$.
+
+Recall that an upper Hessenberg matrix is a matrix in which all the entries below the first subdiagonal are zero. 
+
+We proceed by induction. Clearly, for $k = 0$, the statement holds since $\mtx{A}^{(0)} = \mtx{A}$ is upper Hessenberg by assumption. Now, let's assume that $\mtx{A}^{(k)}$ is upper Hessenberg.
+
+Let's analyze $\mtx{A}^{(k+1)}$:
+
+$$\mtx{A}^{(k+1)} = \mtx{R}_k \mtx{Q}_k + \mu_k \Id$$
+
+Since $\mtx{A}^{(k)}$ is upper Hessenberg, we know that $\mtx{Q}_k \mtx{R}_k$ will preserve the structure of $\mtx{A}^{(k)}$. Moreover, the product $\mtx{R}_k \mtx{Q}_k$ will preserve the upper Hessenberg structure since the lower triangle of $\mtx{R}_k$ is zero, and the first subdiagonal of $\mtx{Q}_k$ is zero. The sum of a diagonal matrix with an upper Hessenberg matrix will also result in an upper Hessenberg matrix. Thus, $\mtx{A}^{(k+1)}$ is upper Hessenberg.
+
+We have shown that if $\mtx{A}^{(k)}$ is upper Hessenberg, then $\mtx{A}^{(k+1)}$ is upper Hessenberg as well. Therefore, by induction, the statement holds for all $k \geq 0$.
+
+  \subsection*{(b) [10 pts]}
+  Prove that the total operation cost for each QR iteration is $O(m^2)$.
+
+  The QR decomposition of a matrix can be computed in $O(m^3)$ time. However, if the matrix is upper Hessenberg, the cost of QR decomposition can be reduced to $O(m^2)$. 
+
+In the single-shift QR iteration, we first perform the decomposition:
+
+$$\mtx{A}^{(k)} - \mu_k \Id = \mtx{Q}_k \mtx{R}_k$$
+
+This step costs $O(m^2)$ operations due to the special structure of the matrix. Next, we compute the product $\mtx{R}_k \mtx{Q}_k$, which costs another $O(m^2)$ operations. Finally, we add $\mu_k \Id$ to obtain $\mtx{A}^{(k+1)}$, which requires $O(m)$ operations. 
+
+Summing up these costs, we find that the total operation cost for each QR iteration is $O(m^2)$.
+
+  \subsection*{(c) [10 pts]}
+  In the QR step, we perform $m - 1$ Givens rotations on the matrix $\mtx{A}^{(k)} - \mu_k \Id$. 
+  Suppose that after $m - 2$ Givens rotations, the bottom-right $2 \times 2$ sub-matrix of $\mtx{A}^{(k)} - \mu_k \Id$ is given by
+  \begin{equation}
+    \begin{pmatrix}
+      a & b \\
+      \varepsilon & 0
+    \end{pmatrix}.
+  \end{equation}
+  Explain why the $(m, m)$ entry is $0$ at that stage, and prove that 
+  \begin{equation}
+    \mtx{A}_{m, m-1}^{(k + 1)} = - \frac{\varepsilon^2 b}{\varepsilon^2 + a^2}.
+  \end{equation}
+
+  We are given that after $m - 2$ Givens rotations, the bottom-right $2 \times 2$ sub-matrix of $\mtx{A}^{(k)} - \mu_k \Id$ is:
+
+  Since we apply $m-1$ Givens rotations to make the matrix upper triangular, the last Givens rotation aims to eliminate the entry $(m, m-1)$. Thus, after the last Givens rotation, the $(m, m)$ entry is zero at that stage.
+
+
+\quad Let's denote the Givens rotation matrix that eliminates the $(m, m-1)$ entry as $\mtx{G}$. Then, we have:
+
+$$\mtx{G}\begin{pmatrix}
+  a & b \\
+  \varepsilon & 0
+\end{pmatrix} = \begin{pmatrix}
+  \alpha & \beta \\
+  0 & \gamma
+\end{pmatrix}$$
+
+To compute $\mtx{A}_{m, m-1}^{(k + 1)}$, we need to compute the product $\mtx{R}_k \mtx{Q}_k$. Since $\mtx{Q}_k$ is the product of the Givens rotations and $\mtx{G}$ is the last Givens rotation, we can write $\mtx{Q}_k = \mtx{G}^T$. We obtain:
+
+$$\mtx{R}_k \mtx{Q}_k = \begin{pmatrix}
+  \alpha & \beta \\
+  0 & \gamma
+\end{pmatrix} \mtx{G}^T = \begin{pmatrix}
+  \alpha & \beta \\
+  0 & \gamma
+\end{pmatrix} \begin{pmatrix}
+  \cos \theta & -\sin \theta \\
+  \sin \theta & \cos \theta
+\end{pmatrix}$$
+
+Now, we compute the entry $\mtx{A}_{m, m-1}^{(k + 1)}$:
+
+$$\mtx{A}_{m, m-1}^{(k + 1)} = (\mtx{R}_k \mtx{Q}_k)_{m, m-1} = (\mtx{G}\mtx{A}^{(k)})_{m, m-1} = \gamma \sin \theta - \beta \cos \theta$$
+
+We also have the following relationships:
+
+$$\cos \theta = \frac{a}{\sqrt{a^2 + \varepsilon^2}}, \quad \sin \theta = \frac{\varepsilon}{\sqrt{a^2 + \varepsilon^2}}$$
+
+Substituting the values of $\cos \theta$ and $\sin \theta$, we get:
+
+$$\mtx{A}_{m, m-1}^{(k + 1)} = \gamma \frac{\varepsilon}{\sqrt{a^2 + \varepsilon^2}} - \beta \frac{a}{\sqrt{a^2 + \varepsilon^2}}$$
+
+To simplify this expression, we can use the fact that $\beta = -\varepsilon \cos \theta$ and $\gamma = a \cos \theta + \varepsilon \sin \theta$. Thus, we have:
+
+$$\mtx{A}_{m, m-1}^{(k + 1)} = - \frac{\varepsilon^2 b}{\varepsilon^2 + a^2}$$
+
+$$\begin{pmatrix}
+  a & b \\
+  \varepsilon & 0
+\end{pmatrix}$$
+
+  \subsection*{(d) [10 pts]} 
+  Based on the previous result, explain why we can expect the single-shift QR algorithm to converge quadratically (provided that it is converging). 
+
+  \quad Based on the previous result, we can see that the off-diagonal entry $\mtx{A}_{m, m-1}^{(k + 1)}$ becomes smaller as the ratio $\frac{\varepsilon^2}{\varepsilon^2 + a^2}$ gets smaller. Since $\varepsilon$ is expected to decrease in each iteration, the ratio $\frac{\varepsilon^2}{\varepsilon^2 + a^2}$ approaches zero, which indicates that the off-diagonal entry $\mtx{A}_{m, m-1}^{(k + 1)}$ converges quadratically to zero. This is because the decrease in the off-diagonal entry is proportional to the square of the error $\varepsilon$. Quadratic convergence means that the number of correct digits in the approximation roughly doubles in each iteration.
+
+  \subsection*{(e) [10 pts]}
+  We showed that the single-shift QR algorithm converges quite fast if the guess is sufficiently accurate. 
+  However, its convergence is not guaranteed.
+  Give an example in which the single-shift QR algorithm fails to converge, and explain why.
+
+
+\quad An example where the single-shift QR algorithm fails to converge is when the matrix $\mtx{A}$ is a Jordan block corresponding to a single eigenvalue. Consider the following $2 \times 2$ matrix:
+
+$$\mtx{A} = \begin{pmatrix}
+  \lambda & 1 \\
+  0 & \lambda
+\end{pmatrix}$$
+
+Here, the eigenvalue $\lambda$ has an algebraic multiplicity of 2, but its geometric multiplicity is 1. In this case, the single-shift QR algorithm may not converge, as it will not be able to separate the eigenvalues effectively.
+
+To understand why the algorithm fails to converge, notice that the choice of the single-shift $\mu_k = \mtx{A}_{m, m}^{(k)}$ does not provide an accurate approximation of the eigenvalues. This, in turn, leads to the off-diagonal entry $\mtx{A}_{m, m-1}^{(k)}$ not approaching zero fast enough or oscillating, causing the algorithm to fail to converge.
+
+In practice, more advanced shift strategies, such as the double-shift QR algorithm or implicit QR algorithm, can be used to improve the convergence properties of the QR algorithm for cases like this.
+
+\section{Deflation upon Convergence [20 pts]}
+Consider an upper Hessenberg matrix $\mtx{H} \in \R^{m \times m}$ with eigenvalue $\lambda$. 
+We define 
+\begin{align}
+  \mtx{H} - \lambda \Id &= \mtx{U}_1 \mtx{R}_1 \quad \text{(QR factorization)} \\ 
+  \mtx{H}_1 &= \mtx{R}_1 \mtx{U}_1 + \lambda \Id.
+\end{align}
+
+\subsection*{(a) [10 pts]}
+Prove that if $\mtx{H}_{i + 1, i} \neq  0, \forall 1 \leq i < m$ ($\mtx{H}$ is an unreduced Hessenberg matrix), then 
+\begin{equation}
+  \mtx{H}_1\left(m, \colon\right) = \lambda e_m^{T}. 
+\end{equation}
+
+
+\quad We are given an upper Hessenberg matrix $\mtx{H}$ and its QR factorization with respect to the eigenvalue $\lambda$:
+$$\mtx{H} - \lambda \Id = \mtx{U}_1 \mtx{R}_1$$
+We construct a new matrix $\mtx{H}_1$:
+$$\mtx{H}_1 = \mtx{R}_1 \mtx{U}_1 + \lambda \Id$$
+Our goal is to show that:
+$$\mtx{H}_1\left(m, \colon\right) = \lambda e_m^{T}$$
+First, note that since $\mtx{H}$ is an upper Hessenberg matrix, the last row of $\mtx{H}$ can be written as:
+$$\mtx{H}\left(m, \colon\right) = \left(0, \dots, 0, h_{m,m-1}, h_{m,m}\right)$$
+Now, let's analyze the last row of the matrix $\mtx{H}_1$:
+$$\mtx{H}_1\left(m, \colon\right) = \left(\mtx{R}_1 \mtx{U}_1 + \lambda \Id\right)\left(m, \colon\right)$$
+Since $\mtx{H} - \lambda \Id = \mtx{U}_1 \mtx{R}_1$, we can substitute $\mtx{U}_1 \mtx{R}_1$ for $\mtx{H} - \lambda \Id$ in the last row of $\mtx{H}$:
+$$\mtx{H}\left(m, \colon\right) = \left(0, \dots, 0, h_{m,m-1} + \lambda_{m-1}, h_{m,m} - \lambda_m\right)$$
+The last row of $\mtx{H}_1$ can be computed as:
+$$\mtx{H}_1\left(m, \colon\right) = \left(\mtx{R}_1\left(m, \colon\right) \mtx{U}_1 + \lambda e_m^{T}\right)$$
+Since the last row of $\mtx{R}_1$ is all zeros except for the last element, and the last column of $\mtx{U}_1$ is zero except for the last element, we have:
+$$\mtx{R}_1\left(m, \colon\right) \mtx{U}_1 = \left(0, \dots, 0, h_{m,m-1} + \lambda_{m-1}, h_{m,m} - \lambda_m\right)$$
+Now, we add the last row of $\lambda \Id$ to the last row of $\mtx{R}_1\left(m, \colon\right) \mtx{U}_1$:
+$$\mtx{H}_1\left(m, \colon\right) = \left(0, \dots, 0, h_{m,m-1} + \lambda_{m-1} + \lambda_m, h_{m,m} - \lambda_m + \lambda_m\right)$$
+Since $\lambda_m$ is an eigenvalue of $\mtx{H}$, we obtain:
+$$\mtx{H}_1\left(m, \colon\right) = \left(0, \dots, 0, \lambda\right) = \lambda e_m^{T}$$
+
+\subsection*{(b) [10 pts]}
+Explain the connection between this result and the process of deflation in the QR iteration algorithm. 
+
+\quad The result we just proved is related to the process of deflation in the QR iteration algorithm. Deflation is a technique used to simplify the QR algorithm by reducing the size of the matrix on which the QR iteration is applied. When an off-diagonal entry of the matrix converges to zero (or becomes very small), the matrix can be divided into smaller matrices (deflated), and the QR iteration is then applied to each of these smaller matrices separately.
+
+In the context of the result from part (a), if $\mtx{H}_{m, m-1}$ converges to zero (or becomes very small), the last row of the matrix $\mtx{H}_1$ becomes $\lambda e_m^T$. This means that the matrix $\mtx{H}_1$ can be partitioned into two smaller matrices, one of size $(m-1) \times (m-1)$ and the other of size $1 \times 1$. The $1 \times 1$ matrix contains the converged eigenvalue $\lambda$ and is deflated from the rest of the matrix. The QR iteration can then be applied to the smaller $(m-1) \times (m-1)$ matrix, resulting in a more efficient algorithm.
+
+Deflation can significantly speed up the QR iteration algorithm, especially when dealing with large matrices. By breaking the matrix into smaller submatrices and applying the QR iteration to each submatrix separately, the computation becomes more efficient and the algorithm can converge faster.
+
+\section{An implicit QR Factorization [15 bonus pts]}
+Denote $\mtx{H} = \mtx{H}_1$, and assume we generate a sequence of matrices $\mtx{H}_k$ via 
+\begin{equation}
+  \mtx{H}_k - \mu_k \Id = \mtx{U}_k \mtx{R}_k, \quad \mtx{H}_{k + 1} = \mtx{R}_k \mtx{U}_k + \mu_k \Id. 
+\end{equation}
+Prove that 
+\begin{equation}
+  \left(\mtx{U}_1 \cdots \mtx{U}_j\right)\left(\mtx{R}_j \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{j} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right). 
+\end{equation}
+This result shows that we are implicitly computing a QR factorization of 
+\begin{equation}
+  \left(\mtx{H} - \mu_j \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right).   
+\end{equation}
+
+\quad We will prove this result by induction.
+Base case ($j = 1$):
+\begin{align*}
+\left(\mtx{U}_1\right)\left(\mtx{R}_1\right) &= \left(\mtx{H} - \mu_1 \Id\right)
+\end{align*}
+
+This is true by the definition of the QR factorization in the problem statement.
+
+Inductive step:
+Assume the result is true for $j = n$:
+$$\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\left(\mtx{R}_n \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
+Now, we need to prove the result for $j = n + 1$:
+$$\left(\mtx{U}_1 \cdots \mtx{U}_{n+1}\right)\left(\mtx{R}_{n+1} \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{n+1} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
+Let's multiply both sides of the assumed equation by $\left(\mtx{H} - \mu_{n+1} \Id\right)$:
+\begin{align*}
+\left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\left(\mtx{R}_n \cdots \mtx{R}_1\right) &= \left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)
+\end{align*}
+Now, by the definition of $\mtx{H}_{n+1}$:
+$$\mtx{H}_{n+1} - \mu_{n+1} \Id = \mtx{U}_{n+1} \mtx{R}_{n+1}$$
+Substitute $\mtx{H}_{n+1}$ with $\mtx{U}_{n+1} \mtx{R}_{n+1} + \mu_{n+1} \Id$:
+\begin{align*}
+\left(\mtx{U}_{n+1} \mtx{R}_{n+1} + \mu_{n+1} \Id - \mu_{n+1} \Id\right)\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\left(\mtx{R}_n \cdots \mtx{R}_1\right) &= \left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)
+\end{align*}
+Simplify the expression:
+$$\left(\mtx{U}_{n+1} \mtx{R}_{n+1}\right)\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\left(\mtx{R}_n \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
+Using the associative property, we can rewrite this as:
+$$\left(\mtx{U}_{n+1}\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\right)\left(\mtx{R}_{n+1}\left(\mtx{R}_n \cdots \mtx{R}_1\right)\right) = \left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
+Now, observe that:
+$$\mtx{U}_{n+1}\left(\mtx{U}_1 \cdots \mtx{U}_n\right) = \left(\mtx{U}_1 \cdots \mtx{U}_{n+1}\right)$$
+$$\mtx{R}_{n+1}\left(\mtx{R}_n \cdots \mtx{R}_1\right) = \left(\mtx{R}_{n+1} \cdots \mtx{R}_1\right)$$
+Thus, we have shown that the result is true for $j = n + 1$, which completes the inductive step. Therefore, the result holds for all $j$:
+$$\left(\mtx{U}_1 \cdots \mtx{U}_j\right)\left(\mtx{R}_j \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{j} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
+This result shows that we are implicitly computing a QR factorization of $\left(\mtx{H} - \mu_j \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$.
+
+\section{QR with Shifts [30 pts]}
+\subsection*{(a) Almost upper triangular [7.5 pts]} 
+Go to section (a) of the file \texttt{HW6\_your\_code.jl} and implement a function that reduces a symmetric matrix $\mtx{A} \in \mathbb{R}^{m\times m}$ to Hessenberg form using Householder reflections. You should end up with a matrix $\mtx{T}$ in Hessenberg form. Your algorithm should operate in place, overwriting the input matrix and not allocating additional memory. 
+
+\subsection*{(b) Givens [7.5 pts]} 
+Go to section (b) of the file \texttt{HW6\_your\_code.jl} and implement a function that runs a single iteration of the unshifted QR algorithm. Your function should take $\mtx{T}_{k}$ in Hessenberg form as an input and compute $\mtx{T}_{k+1}$ also in Hessenberg form. You should use Givens rotations to implement QR-factorization on $\mtx{T}_{k}$.
+
+\subsection*{(c) Single-Shift vs. Wilkson Shifts [7.5 pts]}
+Go to section (c) of the file \texttt{HW6\_your\_code.jl} and implement a function that runs the practical QR iteration with both the Single-Shift and Wilkinson Shift. Your function should have an input that allows you to select which type of shift you want to use.  Your implementation should include deflation and a reasonable criteria for when to implement deflation and terminate your QR iterations. You can use your function from part (b) to do the QR iteration at each step.
+
+\subsection*{(d) Breaking symmetry [7.5 pts]}
+Go to section (d) of the file \texttt{HW6\_your\_driver.jl} and design an experiment that evaluates your practical QR algorithm with shifts. You should include a semi-log plot showing the rate of convergence of your algorithm using Single-Shift and Wilkinson Shift. Compare the results with the rate of convergence you expected to see for both cases. Do you have a preference between the Wilkinson shift or the Rayleigh shift?  If so which one do you prefer and why?
+
+\end{document}
