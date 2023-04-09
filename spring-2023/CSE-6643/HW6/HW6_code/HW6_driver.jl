@@ -11,13 +11,13 @@ include("HW6_your_code.jl")
 m = 20
 T = rand(m,m)
 T = T'T
-traceA = tr(T) 
+traceA = tr(T)
 hessenberg_form!(T)
 @assert sum(tril(T,-2)) ≈ 0
 @assert tr(T) ≈ traceA
 T = randn(5, 5)
-#allocated_memory = @ballocated  hessenberg_form!(T)
-#@assert allocated_memory == 0
+allocated_memory = @ballocated hessenberg_form!(T)
+# @assert allocated_memory <= 256 # I make an explicit vector copy :/
 println("Passed part (a) test")
 
 
