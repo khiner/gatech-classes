@@ -34,24 +34,55 @@ using LinearAlgebra
 # end
 
 function hessenberg_form!(T)
-    n = size(T, 1)
-    if n > 2
-        a1 = T[2:n, 1]
-        e1 = zeros(n-1); e1[1] = 1
-        sgn = sign(a1[1])
-        v = (a1 + sgn*norm(a1)*e1)
-        v = v ./ norm(v)
-        Q1 = Matrix{Float64}(I, n-1, n-1) - 2*(v*v')
-        T[2:n,1] = Q1*T[2:n,1]
-        T[1,2:n] = Q1*T[1,2:n]
-        T[2:n,2:n] = Q1*T[2:n,2:n]*Q1' 
-        hessenberg_form!(@view(T[2:n,2:n]))
+    m = size(T, 1)
+    for k = 1:m-2
+        v = T[k+1:m, k]
+        v[1] += norm(v) * sign(v[1]) 
+        v ./= norm(v)
+
+        # Array version:
+        # Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
+        # T[k+1:m,k] = Q1*T[k+1:m,k]
+        # T[k,k+1:m] = Q1*T[k,k+1:m]
+        # T[k+1:m,k+1:m] = Q1*T[k+1:m,k+1:m]*Q1'
+
+        # Loop version:
+        # Equivalent to:
+        # ```
+        # Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
+        # T[k+1:m,k] = Q1*T[k+1:m,k]
+        # ```
+        for i = 1:m-k
+            sum = 0
+            for j = 1:m-k
+                sum += ((i == j ? 1 : 0) - 2 * v[i] * v[j]) * T[k+j, k]
+            end
+            T[k+i, k] = sum
+        end
+
+        # Equivalent to:
+        # ```
+        # Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
+        # T[k,k+1:m] = Q1*T[k,k+1:m]
+        # ```
+        for j = 1:m-k
+            sum = 0
+            for i = 1:m-k
+                sum += ((i == j ? 1 : 0) - 2 * v[i] * v[j]) * T[k, k+i]
+            end
+            T[k, k+j] = sum
+        end
+
+        Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
+        T[k+1:m,k+1:m] = Q1*T[k+1:m,k+1:m]*Q1'
+
+        # Loop version, avoiding creation of identity matrix:
     end
 
     # Non-tri-diagonal values are close to zero.
     # Here, we set them to exactly zero.
-    for i = 1:n
-        for j = i+2:n
+    for i = 1:m
+        for j = i+2:m
             T[i,j] = T[j,i] = 0
         end
     end

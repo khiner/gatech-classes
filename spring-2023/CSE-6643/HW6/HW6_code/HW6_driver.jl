@@ -49,7 +49,7 @@ hessenberg_form!(T)
 shift = "wilkinson"
 practical_QR_with_shifts!(T,shift)
 @assert λ ≈ sort(diag(T))
-
+println("Passed part (c) test")
 
 #----------------------------------------
 # Problem d
