@@ -247,36 +247,28 @@ Prove that if $\mtx{H}_{i + 1, i} \neq  0, \forall 1 \leq i < m$ ($\mtx{H}$ is a
   \mtx{H}_1\left(m, \colon\right) = \lambda e_m^{T}. 
 \end{equation}
 
-  Considering the last row of both sides of the given equation (6):
-  \begin{align}
-    \mtx{U}_1(m, \colon) \mtx{R}_1 &= (\mtx{H} - \lambda \Id)(m, \colon) \\
-    &= \begin{bmatrix} 0 & \cdots & 0 & h_{m,m-1} & h_{m,m} - \lambda \end{bmatrix}
-  \end{align}
-  
-  The last row of $\mtx{H}_1(m, \colon)$ will be
-  \begin{align*}
-    \mtx{H}_1(m, \colon) &= \mtx{R}_1 \mtx{U}_1(m, \colon) + \lambda \vct{e}_m^T
-  \end{align*}
-  
-  Since $\mtx{R}_1$ is upper triangular and $\mtx{U}_1(m, i) = 0$ for $1 \leq i < m$, the only non-zero term in the product $\mtx{R}_1 \mtx{U}_1(m, \colon)$ comes from $i = m$:
-  \begin{align*}
-    \mtx{R}_1 \mtx{U}_1(m, \colon) &= \mtx{R}_1(m, m) \mtx{U}_1(m, m)
-  \end{align*}
-  
-  From equations (10), we know that
-  \begin{equation}
-    \mtx{R}_1(m, m) \mtx{U}_1(m, m) = h_{m, m} - \lambda.
-  \end{equation}
-  
-  Combining these results, we have
-  $$\mtx{H}_1(m, \colon) = (h_{m, m} - \lambda) \vct{e}_m^T + \lambda \vct{e}_m^T = \lambda \vct{e}_m^T.$$
-  
+\begin{align*}
+  \mtx{H} \vct{x} &= \lambda \vct{x}&\text{(eigenvector equation for $\mtx{H}$)}\\
+  \mtx{U}_1^T (\mtx{H} - \lambda \Id) \vct{x} &= \mtx{U}_1^T \mtx{H} \vct{x} - \lambda \mtx{U}_1^T \vct{x} = \mtx{R}_1 \vct{y}&\text{($\vct{y} \coloneqq \mtx{U}_1^T \vct{x}$)}\\
+  \mtx{H}_1 \vct{y} &= (\mtx{U}_1^T (\mtx{H} - \lambda \Id) \vct{x} + \lambda \Id) \vct{y}&\text{(substitute $\mtx{R}_1 \vct{y}$)}\\
+  \mtx{H}_1 \vct{y} &= \mtx{U}_1^T \mtx{H} \vct{x} - \lambda \mtx{U}_1^T \vct{x} + \lambda \vct{y}&\text{(simplify)}\\
+  \mtx{H}_1 \vct{y} &= \mtx{U}_1^T \lambda \vct{x} - \lambda \mtx{U}_1^T \vct{x} + \lambda \vct{y}&\text{(substitute $\mtx{H} \vct{x} = \lambda \vct{x}$)}\\
+  \mtx{H}_1 \vct{y} &= \lambda \vct{y}&\text{(simplify)}\\
+  h_{m,m-1} y_{m-1} + h_{m,m} y_m &= \lambda y_m&\text{(examine the last element)}
+\end{align*}
+
+We can now conclude that $h_{m,m} = \lambda$ and $h_{m,m-1} = 0$, and so
+$$\mtx{H}_1\left(m, \colon\right) = \begin{bmatrix} 0 & \cdots & 0 & 0 & \lambda \end{bmatrix} = \lambda e_m^{T}.$$
+
 \subsection*{(b) [10 pts]}
 Explain the connection between this result and the process of deflation in the QR iteration algorithm. 
 
 \quad When an off-diagonal entry of the matrix in the QR iteration converges to near-zero, we can "deflate" the matrix by dividing it into two smaller matrices, and applying the QR iteration to each smaller matrix separately.
 
-In problem (a), we found that if $\mtx{H}_{m, m-1}$ converges to zero, the last row of the matrix $\mtx{H}_1$ becomes $\lambda e_m^T$. This means that the matrix $\mtx{H}_1$ can be partitioned into two smaller matrices, one of size $(m-1) \times (m-1)$ and the other of size $1 \times 1$. The $1 \times 1$ matrix contains the converged eigenvalue $\lambda$ and is deflated from the rest of the matrix. The QR iteration can then be applied to the smaller $(m-1) \times (m-1)$ matrix.
+In problem (a), we found that if $\mtx{H}_{m, m-1}$ converges to zero, the last row of the matrix $\mtx{H}_1$ becomes $\lambda e_m^T$.
+This means that the matrix $\mtx{H}_1$ can be partitioned into two smaller matrices, one of size $(m-1) \times (m-1)$ and the other of size $1 \times 1$.
+The $1 \times 1$ matrix contains the converged eigenvalue $\lambda$ and is deflated from the rest of the matrix.
+The QR iteration can then be applied to the smaller $(m-1) \times (m-1)$ matrix.
 
 \section{An implicit QR Factorization [15 bonus pts]}
 Denote $\mtx{H} = \mtx{H}_1$, and assume we generate a sequence of matrices $\mtx{H}_k$ via 
@@ -327,6 +319,7 @@ First, observe the following relation:
   \left(\mtx{U}_k\right)^T \mtx{H}_k \mtx{U}_k &= \mtx{H}_{k+1}&\text{(by definition of $\mtx{H}_{k+1}$)}
 \end{align*}
 
+\textit{I am not sure how to progress from here. Looking forward to reading the answer!}
 
 \section{QR with Shifts [30 pts]}
 \subsection*{(a) Almost upper triangular [7.5 pts]} 
@@ -340,5 +333,7 @@ Go to section (c) of the file \texttt{HW6\_your\_code.jl} and implement a functi
 
 \subsection*{(d) Breaking symmetry [7.5 pts]}
 Go to section (d) of the file \texttt{HW6\_your\_driver.jl} and design an experiment that evaluates your practical QR algorithm with shifts. You should include a semi-log plot showing the rate of convergence of your algorithm using Single-Shift and Wilkinson Shift. Compare the results with the rate of convergence you expected to see for both cases. Do you have a preference between the Wilkinson shift or the Rayleigh shift?  If so which one do you prefer and why?
+
+\quad \textit{I was not able to complete this.} I struggled to ensure that the two shifts both resulted in the same selected eigenvalue to converge for comparison, and I wasn't able to produce anything meaningful in the time I had.
 
 \end{document}

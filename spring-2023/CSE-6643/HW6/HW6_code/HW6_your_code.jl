@@ -5,34 +5,6 @@ using LinearAlgebra
 #----------------------------------------
 # This function takes in a matrix T and modifies it 
 # in place to Hessenberg form using Householder reduction.
-# function hessenberg_form!(T)
-#     m = size(T, 1)
-
-#     for k = 1:m-2
-#         v = @view(T[k+1:m,k])
-#         v1 = sign(v[1]) * norm(v)
-#         v[1] += v1
-#         nv = norm(v)
-#         v = copy(v) # I can't find a way to avoid this copy.
-#         for j = k+1:m
-#             α = v' * @view(T[k+1:m,j]) / nv
-#             for i = k+1:m
-#                 T[i,j] -= 2α * v[i-k] / nv
-#             end
-#         end
-
-#         T[k+1,k] = -v1
-#         T[k+2:m,k] .= 0
-
-#         for j = k+1:m
-#             β = v' * @view(T[k+1:m, j]) / nv
-#             for i = 1:m
-#                 T[i, j] -= 2β * v[j-k] / nv
-#             end
-#         end
-#     end
-# end
-
 function hessenberg_form!(T)
     m = size(T, 1)
     for k = 1:m-2
@@ -40,11 +12,17 @@ function hessenberg_form!(T)
         v[1] += norm(v) * sign(v[1]) 
         v ./= norm(v)
 
+        # I implemented Trefethen & Bau 26.1 without allocations, but I could not get it to preserve the eigenvalues,
+        # so I implemented the approach in
+        # http://pi.math.cornell.edu/~web6140/TopTenAlgorithms/QRalgorithm.html.
+        # I have partially unrolled the array version presented there, but there is still the very inefficient section at the bottom.
+        # Also there's the implicit array copy for `v` above. Eeps.
+        # Much more work to do here, sorry I didn't get this completely done.
         # Array version:
-        # Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
-        # T[k+1:m,k] = Q1*T[k+1:m,k]
-        # T[k,k+1:m] = Q1*T[k,k+1:m]
-        # T[k+1:m,k+1:m] = Q1*T[k+1:m,k+1:m]*Q1'
+        #     Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
+        #     T[k+1:m,k] = Q1*T[k+1:m,k]
+        #     T[k,k+1:m] = Q1*T[k,k+1:m]
+        #     T[k+1:m,k+1:m] = Q1*T[k+1:m,k+1:m]*Q1'
 
         # Loop version:
         for i = k+1:m
@@ -62,7 +40,7 @@ function hessenberg_form!(T)
             T[k, j] = sum
         end
 
-        # Just need this last part to be looped.
+        # Just need to unroll these last part two multiplies
         Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
         T[k+1:m,k+1:m] *= Q1'
         T[k+1:m,k+1:m] = Q1 * T[k+1:m,k+1:m]
@@ -113,7 +91,12 @@ function givens_qr!(T)
     end
 end
 
-# eye = Matrix{Float64}(I, m, m)
+# Wilkinson shift for symmetric matrices.
+function wilkinson_shift(a, b, c)
+    δ = (a-c)/2
+    return c - sign(δ)*b^2/(abs(δ) + sqrt(δ^2+b^2))
+end
+
 #----------------------------------------
 # Problem c
 #----------------------------------------
@@ -122,79 +105,30 @@ end
 # The input shift dictates which shift type your 
 # algorithm should use. For shift = "single" implement the single shift 
 # and for shift = "wilkinson" implement the Wilkinson shift
-
-# Wilkinson shift for symmetric matrices.
-function wilkinson_shift(a, b, c)
-    δ = (a-c)/2
-    return c - sign(δ)*b^2/(abs(δ) + sqrt(δ^2+b^2))
-end
-
 function practical_QR_with_shifts!(T, shift)
     m = size(T, 1)
-    ϵ = 1e-12
-    max_iterations = 100 * m
-    for _ = 1:max_iterations
-        for k = 1:m-1
-            # Check for deflation
-            if abs(T[k+1, k]) < ϵ * (abs(T[k, k]) + abs(T[k+1, k+1]))
-                T[k+1, k] = 0
-                k += 1
-                continue
-            end
+    m == 1 && return # Base case. All eigenvalues found.
 
-            if shift == "single"
-                μ = T[m, m]
-            elseif shift == "wilkinson"
-                μ = wilkinson_shift(T[m-1,m-1], T[m,m], T[m-1,m])
-            end
-
-            for i = 1:m
-                T[i, i] -= μ
-            end
-            givens_qr!(T)
-            for i = 1:m
-                T[i, i] += μ
-            end
+    ϵ = 1e-11 # Tolerance for convergence.
+    max_iter = 100
+    while abs(T[m, m-1]) > ϵ && (max_iter -= 1) > 0
+        if shift == "single"
+            μ = T[m, m]
+        elseif shift == "wilkinson"
+            μ = wilkinson_shift(T[m-1,m-1], T[m,m], T[m-1,m])
         end
 
-        # Check for convergence
-        sub_diag_norm = 0
-        for i = 1:m-1
-            sub_diag_norm += abs(T[i+1, i])
+        for i = 1:m
+            T[i, i] -= μ
         end
-
-        if sub_diag_norm < ϵ
-            break
+        givens_qr!(T)
+        for i = 1:m
+            T[i, i] += μ
         end
     end
+    practical_QR_with_shifts!(@view(T[1:m-1, 1:m-1]), shift)
 end
-
-# From http://pi.math.cornell.edu/~web6140/TopTenAlgorithms/QRalgorithm.html
-# function QRwithShifts( A::Matrix )
-#     n = size(A,1)
-#     myeigs = zeros(n)
-#     if ( n == 1 )
-#         myeigs[1] = A[1,1]
-#     else
-#         I = eye( n )
-#         # Reduction to Hessenberg form:
-#         A = HessenbergReduction( A )
-#         # Let's start the shifted QR algorithm with 
-#         while( norm(A[n,n-1]) > 1e-10 )
-#             mu = wilkinson_shift( A[n-1,n-1], A[n,n], A[n-1,n] )
-#             # This line should use faster Hessenberg reduction:
-#             (Q,R) = qr(A - mu*I)
-#             # This line needs speeding up, currently O(n^3) operations!: 
-#             A = R*Q + mu*I
-#         end
-#         # Deflation and recurse:
-#         myeigs = [A[n,n] ; QRwithShifts( A[1:n-1, 1:n-1] )]
-#     end
-#     return myeigs
-# end
 
 #----------------------------------------
 # Problem d
 #----------------------------------------
-
-
