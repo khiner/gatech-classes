@@ -24,33 +24,58 @@
   Show that if $\mtx{A}^{(0)} = \mtx{A}$ is an upper Hessenberg matrix, then $\mtx{A}^{(k)}$ is upper Hessenberg for all $k \geq 0$.
   Thus, from now on, we always assume that the matrix $\mtx{A}$ is an upper Hessenberg matrix.
 
+    \quad We use induction. For $k = 0$, $\mtx{A}^{(0)} = \mtx{A}$ is upper Hessenberg by assumption.
+    
+    Now, assume that $\mtx{A}^{(k)}$ is upper Hessenberg.
+    To find $\mtx{A}^{(k+1)}$, we perform a QR factorization of $\mtx{A}^{(k)} - \mu_k \Id $.
+    
+    Since $\mtx{A}^{(k)} - \mu_k \Id$ is an upper Hessenberg matrix, the resulting $\mtx{Q}_k$ factor will also be upper Hessenberg.
 
-\quad We want to show that if $\mtx{A}^{(0)} = \mtx{A}$ is an upper Hessenberg matrix, then $\mtx{A}^{(k)}$ is upper Hessenberg for all $k \geq 0$.
+    To show this, multiply both sides of $\mtx{Q}_k \mtx{R}_k = \mtx{A}^{(k)} - \mu_k \Id$ by $\mtx{R}_k^{-1}$ to get
+    $$\mtx{Q}_k = (\mtx{A}^{(k)} - \mu_k \Id) \mtx{R}_k^{-1}.$$
+    
+    $\mtx{A}^{(k)}$ is upper Hessenberg by our inductive assumption.
+    $\mu_k \Id$ is a diagonal matrix, so $\mtx{A}^{(k)} - \mu_k \Id$ is also upper Hessenberg.
+    $\mtx{R}_k$ is an upper triangular matrix, so $\mtx{R}_k^{-1}$ is also upper triangular.
+  
+    Thus, $\mtx{Q}_k$ is the product of an upper Hessenberg matrix and an upper triangular matrix, and so it is also upper Hessenberg.
+ 
+    Now, to show that $\mtx{A}^{(k+1)} = \mtx{R}_k \mtx{Q}_k + \mu_k \Id$ is upper Hessenberg, we need to prove that the entries below the first subdiagonal are zero.
+    
+    Consider entry $a_{i,j}^{(k+1)}$ of $\mtx{A}^{(k+1)}$, where $i > j + 1$:
+    \begin{align*}
+      \mtx{A}^{(k+1)} &= \mtx{R}_k \mtx{Q}_k + \mu_k \Id \\
+      a_{i,j}^{(k+1)} &= (\mtx{R}_k \mtx{Q}_k)_{i,j} + (\mu_k \Id)_{i,j}\\
+      &= (\mtx{R}_k \mtx{Q}_k)_{i,j}&\text{($\mu_k \Id$ diag. $\rightarrow (\mu_k \Id)_{i,j} = 0, \forall i \neq j$)}\\
+      &= \sum_{p=1}^m r_{i,p}^{(k)} q_{p,j}^{(k)}
+    \end{align*}
+    Since $\mtx{R}_k$ is upper triangular, $r_{i,p}^{(k)} = 0$ for all $i > p$.
+    Also, since $\mtx{Q}_k$ is upper Hessenberg, $q_{p,j}^{(k)} = 0$ for all $p > j + 1$.
+    Combining these observations, we can conclude that $(\mtx{R}_k \mtx{Q}_k)_{i,j} = 0$ for all $i > j + 1$, and so $\mtx{A}^{(k+1)}$ is upper Hessenberg.
 
-Recall that an upper Hessenberg matrix is a matrix in which all the entries below the first subdiagonal are zero. 
-
-We proceed by induction. Clearly, for $k = 0$, the statement holds since $\mtx{A}^{(0)} = \mtx{A}$ is upper Hessenberg by assumption. Now, let's assume that $\mtx{A}^{(k)}$ is upper Hessenberg.
-
-Let's analyze $\mtx{A}^{(k+1)}$:
-
-$$\mtx{A}^{(k+1)} = \mtx{R}_k \mtx{Q}_k + \mu_k \Id$$
-
-Since $\mtx{A}^{(k)}$ is upper Hessenberg, we know that $\mtx{Q}_k \mtx{R}_k$ will preserve the structure of $\mtx{A}^{(k)}$. Moreover, the product $\mtx{R}_k \mtx{Q}_k$ will preserve the upper Hessenberg structure since the lower triangle of $\mtx{R}_k$ is zero, and the first subdiagonal of $\mtx{Q}_k$ is zero. The sum of a diagonal matrix with an upper Hessenberg matrix will also result in an upper Hessenberg matrix. Thus, $\mtx{A}^{(k+1)}$ is upper Hessenberg.
-
-We have shown that if $\mtx{A}^{(k)}$ is upper Hessenberg, then $\mtx{A}^{(k+1)}$ is upper Hessenberg as well. Therefore, by induction, the statement holds for all $k \geq 0$.
-
+    Thus, we have shown that if $\mtx{A}^{(k)}$ is upper Hessenberg, then $\mtx{A}^{(k+1)}$ is also upper Hessenberg, which completes the induction.
+ 
   \subsection*{(b) [10 pts]}
   Prove that the total operation cost for each QR iteration is $O(m^2)$.
 
-  The QR decomposition of a matrix can be computed in $O(m^3)$ time. However, if the matrix is upper Hessenberg, the cost of QR decomposition can be reduced to $O(m^2)$. 
+  \quad A single step of QR iteration involves a QR factorization and computing $\mtx{A}^{(k+1)}$ from the QR factors.
 
-In the single-shift QR iteration, we first perform the decomposition:
+  \begin{enumerate}
+    \item QR factorization:
+    
+    $\mtx{A}^{(k)} - \mu_k \Id$ is upper Hessenberg.
+    We can compute its QR factorization using Givens rotations.
+    Each Givens rotation zeros out one subdiagonal element in each column.
+    Since there are $m-1$ nonzero subdiagonal elements, there will be $O(m-1)$ Givens rotations.
+    Each Givens rotation requires $4m$ operations (2 multiplications and 2 additions per entry across two rows),
+    giving a total cost of $4m(m-1) = O(m^2)$.
+    \item Compute $\mtx{A}^{(k+1)} = \mtx{R}_k \mtx{Q}_k + \mu_k \Id$:
+    
+    $\mtx{R}_k \mtx{Q}_k$ is the product of an upper triangular matrix and an upper Hessenberg matrix, so we can compute the product using $O(m^2)$ operations.
+    Adding the shift $\mu_k \Id$ takes $O(m)$ operations.
+  \end{enumerate}
 
-$$\mtx{A}^{(k)} - \mu_k \Id = \mtx{Q}_k \mtx{R}_k$$
-
-This step costs $O(m^2)$ operations due to the special structure of the matrix. Next, we compute the product $\mtx{R}_k \mtx{Q}_k$, which costs another $O(m^2)$ operations. Finally, we add $\mu_k \Id$ to obtain $\mtx{A}^{(k+1)}$, which requires $O(m)$ operations. 
-
-Summing up these costs, we find that the total operation cost for each QR iteration is $O(m^2)$.
+  Thus, the total operation cost for each QR iteration is $O(m^2) + O(m^2) + O(m) = O(m^2)$.
 
   \subsection*{(c) [10 pts]}
   In the QR step, we perform $m - 1$ Givens rotations on the matrix $\mtx{A}^{(k)} - \mu_k \Id$. 
@@ -66,78 +91,147 @@ Summing up these costs, we find that the total operation cost for each QR iterat
     \mtx{A}_{m, m-1}^{(k + 1)} = - \frac{\varepsilon^2 b}{\varepsilon^2 + a^2}.
   \end{equation}
 
-  We are given that after $m - 2$ Givens rotations, the bottom-right $2 \times 2$ sub-matrix of $\mtx{A}^{(k)} - \mu_k \Id$ is:
+\quad Since we have applied $m-2$ Givens rotations, the $(m, m)$ entry is $0$ because each Givens rotation introduces a $0$ entry below the diagonal, and we have only one non-zero entry left in the last subdiagonal.
 
-  Since we apply $m-1$ Givens rotations to make the matrix upper triangular, the last Givens rotation aims to eliminate the entry $(m, m-1)$. Thus, after the last Givens rotation, the $(m, m)$ entry is zero at that stage.
+We are looking for the lower-left entry of the bottom-right $2\times2$ submatrix of the product $G^T(\mtx{A}^{(k)} - \mu_k \Id)G$, where $G$ is the Givens rotation matrix:
+$$G \coloneqq \begin{pmatrix}
+      c & -s \\
+      s & c
+\end{pmatrix},
+$$
+with $c \coloneqq \dfrac{a}{\sqrt{a^2 + \varepsilon^2}}$ and $s \coloneqq \dfrac{\varepsilon}{\sqrt{a^2 + \varepsilon^2}}$.
 
+For brevity, let's denote the subscript $2\times2$ as the lower-right $2\times2$ submatrix of a matrix.
 
-\quad Let's denote the Givens rotation matrix that eliminates the $(m, m-1)$ entry as $\mtx{G}$. Then, we have:
+We have:
+\begin{align*}
+  \left(G^T(\mtx{A}^{(k)} - \mu_k \Id)G\right)_{2\times2} &= \left(G^T\mtx{A}^{(k)}G\right)_{2\times2} -\left(G^T \mu_k \Id G\right)_{2\times2}\\
+  &=
+  \begin{pmatrix}
+      c & s \\
+      -s & c
+  \end{pmatrix}
+  \begin{pmatrix}
+      a & b \\
+      \varepsilon & 0
+  \end{pmatrix}
+  \begin{pmatrix}
+      c & -s \\
+      s & c
+  \end{pmatrix} +
+  \begin{pmatrix}
+    c & s \\
+    -s & c
+\end{pmatrix}
+\begin{pmatrix}
+    \mu_k & 0 \\
+    0 & \mu_k
+\end{pmatrix}
+\begin{pmatrix}
+    c & -s \\
+    s & c
+\end{pmatrix} 
+\end{align*}
 
-$$\mtx{G}\begin{pmatrix}
+Note that we ultimately only care about the lower-left entry of the bottom-right $2\times2$ submatrix.
+
+We can see the right term will contribute nothing to this entry:
+$$
+\begin{pmatrix}
+  c & s \\
+  -s & c
+\end{pmatrix}
+\begin{pmatrix}
+  \mu_k & 0 \\
+  0 & \mu_k
+\end{pmatrix}
+\begin{pmatrix}
+  c & -s \\
+  s & c
+\end{pmatrix} = 
+\begin{pmatrix}
+  \cdots & \cdots \\
+  \mu_k(-sc + cs) & \cdots 
+\end{pmatrix} = 
+\begin{pmatrix}
+  \cdots & \cdots \\
+  0 & \cdots 
+\end{pmatrix}
+$$
+
+This leaves us with the left term to compute:
+\begin{align*}
+\begin{pmatrix}
+  c & s \\
+  -s & c
+\end{pmatrix}
+\begin{pmatrix}
   a & b \\
   \varepsilon & 0
-\end{pmatrix} = \begin{pmatrix}
-  \alpha & \beta \\
-  0 & \gamma
-\end{pmatrix}$$
+\end{pmatrix}
+\begin{pmatrix}
+  c & -s \\
+  s & c
+\end{pmatrix}\\
+\begin{pmatrix}
+  ac + s\varepsilon & cb \\
+  -sa + c\varepsilon & -sb
+\end{pmatrix}
+\begin{pmatrix}
+  c & -s \\
+  s & c
+\end{pmatrix}\\
+\begin{pmatrix}
+  \cdots & \cdots \\
+  (-sa + c\varepsilon)c + (-sb)s & \cdots
+\end{pmatrix}
+\end{align*}
 
-To compute $\mtx{A}_{m, m-1}^{(k + 1)}$, we need to compute the product $\mtx{R}_k \mtx{Q}_k$. Since $\mtx{Q}_k$ is the product of the Givens rotations and $\mtx{G}$ is the last Givens rotation, we can write $\mtx{Q}_k = \mtx{G}^T$. We obtain:
-
-$$\mtx{R}_k \mtx{Q}_k = \begin{pmatrix}
-  \alpha & \beta \\
-  0 & \gamma
-\end{pmatrix} \mtx{G}^T = \begin{pmatrix}
-  \alpha & \beta \\
-  0 & \gamma
-\end{pmatrix} \begin{pmatrix}
-  \cos \theta & -\sin \theta \\
-  \sin \theta & \cos \theta
-\end{pmatrix}$$
-
-Now, we compute the entry $\mtx{A}_{m, m-1}^{(k + 1)}$:
-
-$$\mtx{A}_{m, m-1}^{(k + 1)} = (\mtx{R}_k \mtx{Q}_k)_{m, m-1} = (\mtx{G}\mtx{A}^{(k)})_{m, m-1} = \gamma \sin \theta - \beta \cos \theta$$
-
-We also have the following relationships:
-
-$$\cos \theta = \frac{a}{\sqrt{a^2 + \varepsilon^2}}, \quad \sin \theta = \frac{\varepsilon}{\sqrt{a^2 + \varepsilon^2}}$$
-
-Substituting the values of $\cos \theta$ and $\sin \theta$, we get:
-
-$$\mtx{A}_{m, m-1}^{(k + 1)} = \gamma \frac{\varepsilon}{\sqrt{a^2 + \varepsilon^2}} - \beta \frac{a}{\sqrt{a^2 + \varepsilon^2}}$$
-
-To simplify this expression, we can use the fact that $\beta = -\varepsilon \cos \theta$ and $\gamma = a \cos \theta + \varepsilon \sin \theta$. Thus, we have:
-
-$$\mtx{A}_{m, m-1}^{(k + 1)} = - \frac{\varepsilon^2 b}{\varepsilon^2 + a^2}$$
-
-$$\begin{pmatrix}
-  a & b \\
-  \varepsilon & 0
-\end{pmatrix}$$
+Simplifying the lower-left entry and substituting for $c$ and $s$,
+\begin{align*}
+(-sa + c\varepsilon)c + (-sb)s &= -csa + c^2\varepsilon - s^2b\\
+&= -\dfrac{a^2\varepsilon}{a^2 + \varepsilon^2} + \dfrac{a^2\varepsilon}{a^2 + \varepsilon^2} - \frac{\varepsilon^2 b}{\varepsilon^2 + a^2}\\
+&= - \frac{\varepsilon^2 b}{\varepsilon^2 + a^2},
+\end{align*}
+which is our desired result.
 
   \subsection*{(d) [10 pts]} 
   Based on the previous result, explain why we can expect the single-shift QR algorithm to converge quadratically (provided that it is converging). 
 
-  \quad Based on the previous result, we can see that the off-diagonal entry $\mtx{A}_{m, m-1}^{(k + 1)}$ becomes smaller as the ratio $\frac{\varepsilon^2}{\varepsilon^2 + a^2}$ gets smaller. Since $\varepsilon$ is expected to decrease in each iteration, the ratio $\frac{\varepsilon^2}{\varepsilon^2 + a^2}$ approaches zero, which indicates that the off-diagonal entry $\mtx{A}_{m, m-1}^{(k + 1)}$ converges quadratically to zero. This is because the decrease in the off-diagonal entry is proportional to the square of the error $\varepsilon$. Quadratic convergence means that the number of correct digits in the approximation roughly doubles in each iteration.
+  \quad In part (c), we derived that the off-diagonal entry of the bottom-right $2 \times 2$ sub-matrix of $\mtx{A}^{(k+1)}$ is given by
+  $$-\frac{\varepsilon^2 b}{\varepsilon^2 + a^2}.$$
+  The $\varepsilon^2$ is in the numerator means that as $\varepsilon \to 0$, the off-diagonal entry $\mtx{A}_{m, m-1}^{(k + 1)}$ will also approach $0$.
+  That is, the off-diagonal entry decreases quadratically with respect to $\varepsilon$.
+  Since the QR algorithm aims to drive the off-diagonal entries to $0$ to reveal the eigenvalues along the diagonal, this suggests the single-shift QR algorithm will converge quadratically if it converges at all.
 
   \subsection*{(e) [10 pts]}
   We showed that the single-shift QR algorithm converges quite fast if the guess is sufficiently accurate. 
   However, its convergence is not guaranteed.
   Give an example in which the single-shift QR algorithm fails to converge, and explain why.
 
-
-\quad An example where the single-shift QR algorithm fails to converge is when the matrix $\mtx{A}$ is a Jordan block corresponding to a single eigenvalue. Consider the following $2 \times 2$ matrix:
+\quad Consider the following matrix:
 
 $$\mtx{A} = \begin{pmatrix}
-  \lambda & 1 \\
-  0 & \lambda
+  0 & 1 \\
+  1 & 0
 \end{pmatrix}$$
 
-Here, the eigenvalue $\lambda$ has an algebraic multiplicity of 2, but its geometric multiplicity is 1. In this case, the single-shift QR algorithm may not converge, as it will not be able to separate the eigenvalues effectively.
+The true eigenvalues of $\mtx{A}$ are $\lambda_1 = 1$ and $\lambda_2 = -1$, and so $\left|\lambda_1\right| = \left|\lambda_2\right| = 1$.
 
-To understand why the algorithm fails to converge, notice that the choice of the single-shift $\mu_k = \mtx{A}_{m, m}^{(k)}$ does not provide an accurate approximation of the eigenvalues. This, in turn, leads to the off-diagonal entry $\mtx{A}_{m, m-1}^{(k)}$ not approaching zero fast enough or oscillating, causing the algorithm to fail to converge.
+Thus, the single-shift QR algorithm cannot decide which direction to move its estimate for the eigenvalues, and so it cannot proceed forward.
 
-In practice, more advanced shift strategies, such as the double-shift QR algorithm or implicit QR algorithm, can be used to improve the convergence properties of the QR algorithm for cases like this.
+To see this, consider the first iteration of the single-shift QR algorithm applied to $\mtx{A}$.
+
+\begin{itemize}
+\item Initialize $\mtx{T}_0 = \mtx{A}$.
+\item Since the diagonal entries are both zero, we choose $\mu_1 = 0$ as the shift (our "eigenvalue estimate").
+\item Then, we take the QR factorization of $\mtx{T}_0 - \mu_1 \Id = \mtx{T}_0$.
+\end{itemize}
+
+We can already see that we can make no progress.
+Furthermore, note that the off-diagonals are not zero (or near-zero), and never will be, and so we cannot use deflation to split up the problem and make progress that way either.
+
+As explained in class, we need a way to break the symmetry of the problem, and this is why we introduce the Wilkinson Shift.
 
 \section{Deflation upon Convergence [20 pts]}
 Consider an upper Hessenberg matrix $\mtx{H} \in \R^{m \times m}$ with eigenvalue $\lambda$. 
@@ -153,36 +247,36 @@ Prove that if $\mtx{H}_{i + 1, i} \neq  0, \forall 1 \leq i < m$ ($\mtx{H}$ is a
   \mtx{H}_1\left(m, \colon\right) = \lambda e_m^{T}. 
 \end{equation}
 
-
-\quad We are given an upper Hessenberg matrix $\mtx{H}$ and its QR factorization with respect to the eigenvalue $\lambda$:
-$$\mtx{H} - \lambda \Id = \mtx{U}_1 \mtx{R}_1$$
-We construct a new matrix $\mtx{H}_1$:
-$$\mtx{H}_1 = \mtx{R}_1 \mtx{U}_1 + \lambda \Id$$
-Our goal is to show that:
-$$\mtx{H}_1\left(m, \colon\right) = \lambda e_m^{T}$$
-First, note that since $\mtx{H}$ is an upper Hessenberg matrix, the last row of $\mtx{H}$ can be written as:
-$$\mtx{H}\left(m, \colon\right) = \left(0, \dots, 0, h_{m,m-1}, h_{m,m}\right)$$
-Now, let's analyze the last row of the matrix $\mtx{H}_1$:
-$$\mtx{H}_1\left(m, \colon\right) = \left(\mtx{R}_1 \mtx{U}_1 + \lambda \Id\right)\left(m, \colon\right)$$
-Since $\mtx{H} - \lambda \Id = \mtx{U}_1 \mtx{R}_1$, we can substitute $\mtx{U}_1 \mtx{R}_1$ for $\mtx{H} - \lambda \Id$ in the last row of $\mtx{H}$:
-$$\mtx{H}\left(m, \colon\right) = \left(0, \dots, 0, h_{m,m-1} + \lambda_{m-1}, h_{m,m} - \lambda_m\right)$$
-The last row of $\mtx{H}_1$ can be computed as:
-$$\mtx{H}_1\left(m, \colon\right) = \left(\mtx{R}_1\left(m, \colon\right) \mtx{U}_1 + \lambda e_m^{T}\right)$$
-Since the last row of $\mtx{R}_1$ is all zeros except for the last element, and the last column of $\mtx{U}_1$ is zero except for the last element, we have:
-$$\mtx{R}_1\left(m, \colon\right) \mtx{U}_1 = \left(0, \dots, 0, h_{m,m-1} + \lambda_{m-1}, h_{m,m} - \lambda_m\right)$$
-Now, we add the last row of $\lambda \Id$ to the last row of $\mtx{R}_1\left(m, \colon\right) \mtx{U}_1$:
-$$\mtx{H}_1\left(m, \colon\right) = \left(0, \dots, 0, h_{m,m-1} + \lambda_{m-1} + \lambda_m, h_{m,m} - \lambda_m + \lambda_m\right)$$
-Since $\lambda_m$ is an eigenvalue of $\mtx{H}$, we obtain:
-$$\mtx{H}_1\left(m, \colon\right) = \left(0, \dots, 0, \lambda\right) = \lambda e_m^{T}$$
-
+  Considering the last row of both sides of the given equation (6):
+  \begin{align}
+    \mtx{U}_1(m, \colon) \mtx{R}_1 &= (\mtx{H} - \lambda \Id)(m, \colon) \\
+    &= \begin{bmatrix} 0 & \cdots & 0 & h_{m,m-1} & h_{m,m} - \lambda \end{bmatrix}
+  \end{align}
+  
+  The last row of $\mtx{H}_1(m, \colon)$ will be
+  \begin{align*}
+    \mtx{H}_1(m, \colon) &= \mtx{R}_1 \mtx{U}_1(m, \colon) + \lambda \vct{e}_m^T
+  \end{align*}
+  
+  Since $\mtx{R}_1$ is upper triangular and $\mtx{U}_1(m, i) = 0$ for $1 \leq i < m$, the only non-zero term in the product $\mtx{R}_1 \mtx{U}_1(m, \colon)$ comes from $i = m$:
+  \begin{align*}
+    \mtx{R}_1 \mtx{U}_1(m, \colon) &= \mtx{R}_1(m, m) \mtx{U}_1(m, m)
+  \end{align*}
+  
+  From equations (10), we know that
+  \begin{equation}
+    \mtx{R}_1(m, m) \mtx{U}_1(m, m) = h_{m, m} - \lambda.
+  \end{equation}
+  
+  Combining these results, we have
+  $$\mtx{H}_1(m, \colon) = (h_{m, m} - \lambda) \vct{e}_m^T + \lambda \vct{e}_m^T = \lambda \vct{e}_m^T.$$
+  
 \subsection*{(b) [10 pts]}
 Explain the connection between this result and the process of deflation in the QR iteration algorithm. 
 
-\quad The result we just proved is related to the process of deflation in the QR iteration algorithm. Deflation is a technique used to simplify the QR algorithm by reducing the size of the matrix on which the QR iteration is applied. When an off-diagonal entry of the matrix converges to zero (or becomes very small), the matrix can be divided into smaller matrices (deflated), and the QR iteration is then applied to each of these smaller matrices separately.
+\quad When an off-diagonal entry of the matrix in the QR iteration converges to near-zero, we can "deflate" the matrix by dividing it into two smaller matrices, and applying the QR iteration to each smaller matrix separately.
 
-In the context of the result from part (a), if $\mtx{H}_{m, m-1}$ converges to zero (or becomes very small), the last row of the matrix $\mtx{H}_1$ becomes $\lambda e_m^T$. This means that the matrix $\mtx{H}_1$ can be partitioned into two smaller matrices, one of size $(m-1) \times (m-1)$ and the other of size $1 \times 1$. The $1 \times 1$ matrix contains the converged eigenvalue $\lambda$ and is deflated from the rest of the matrix. The QR iteration can then be applied to the smaller $(m-1) \times (m-1)$ matrix, resulting in a more efficient algorithm.
-
-Deflation can significantly speed up the QR iteration algorithm, especially when dealing with large matrices. By breaking the matrix into smaller submatrices and applying the QR iteration to each submatrix separately, the computation becomes more efficient and the algorithm can converge faster.
+In problem (a), we found that if $\mtx{H}_{m, m-1}$ converges to zero, the last row of the matrix $\mtx{H}_1$ becomes $\lambda e_m^T$. This means that the matrix $\mtx{H}_1$ can be partitioned into two smaller matrices, one of size $(m-1) \times (m-1)$ and the other of size $1 \times 1$. The $1 \times 1$ matrix contains the converged eigenvalue $\lambda$ and is deflated from the rest of the matrix. The QR iteration can then be applied to the smaller $(m-1) \times (m-1)$ matrix.
 
 \section{An implicit QR Factorization [15 bonus pts]}
 Denote $\mtx{H} = \mtx{H}_1$, and assume we generate a sequence of matrices $\mtx{H}_k$ via 
@@ -198,39 +292,41 @@ This result shows that we are implicitly computing a QR factorization of
   \left(\mtx{H} - \mu_j \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right).   
 \end{equation}
 
-\quad We will prove this result by induction.
-Base case ($j = 1$):
+\quad We will proove this result by induction on $k$.
+
+\textbf{Base case ($k = 1$):}
 \begin{align*}
-\left(\mtx{U}_1\right)\left(\mtx{R}_1\right) &= \left(\mtx{H} - \mu_1 \Id\right)
+  \mtx{U}_k \mtx{R}_k &= \mtx{H}_k - \mu_k \Id&\text{(given)}\\
+  \mtx{U}_1 \mtx{R}_1 &= \mtx{H}_1 - \mu_1 \Id&\text{(set $k = 1$)}\\
+  \left(\mtx{U}_1\right)\left(\mtx{R}_1\right) &= \left(\mtx{H} - \mu_1 \Id\right)&\text{(since $\mtx{H} \coloneqq \mtx{H}_1$. QED for base case)}
 \end{align*}
 
-This is true by the definition of the QR factorization in the problem statement.
+\textbf{Inductive step:}
+Assume that the result holds for $k > 0$.
 
-Inductive step:
-Assume the result is true for $j = n$:
-$$\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\left(\mtx{R}_n \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
-Now, we need to prove the result for $j = n + 1$:
-$$\left(\mtx{U}_1 \cdots \mtx{U}_{n+1}\right)\left(\mtx{R}_{n+1} \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{n+1} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
-Let's multiply both sides of the assumed equation by $\left(\mtx{H} - \mu_{n+1} \Id\right)$:
+Define $\mtx{Q}_k \coloneqq \left(\mtx{U}_1 \cdots \mtx{U}_k\right)$, $\mtx{P}_k \coloneqq \left(\mtx{R}_k \cdots \mtx{R}_1\right)$, and $\mtx{G}_k \coloneqq \left(\mtx{H} - \mu_k \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$.
+
+Then, our inductive assumption is
 \begin{align*}
-\left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\left(\mtx{R}_n \cdots \mtx{R}_1\right) &= \left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)
+  \left(\mtx{U}_1 \cdots \mtx{U}_k\right)\left(\mtx{R}_k \cdots \mtx{R}_1\right) &= \left(\mtx{H} - \mu_k \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)\\
+  \mtx{Q}_k\mtx{P}_k &= \mtx{G}_k.
 \end{align*}
-Now, by the definition of $\mtx{H}_{n+1}$:
-$$\mtx{H}_{n+1} - \mu_{n+1} \Id = \mtx{U}_{n+1} \mtx{R}_{n+1}$$
-Substitute $\mtx{H}_{n+1}$ with $\mtx{U}_{n+1} \mtx{R}_{n+1} + \mu_{n+1} \Id$:
+We want to show that the result also holds for $k+1$.
+That is, we want to show that
 \begin{align*}
-\left(\mtx{U}_{n+1} \mtx{R}_{n+1} + \mu_{n+1} \Id - \mu_{n+1} \Id\right)\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\left(\mtx{R}_n \cdots \mtx{R}_1\right) &= \left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)
+  \left(\mtx{U}_1 \cdots \mtx{U}_{k+1}\right)\left(\mtx{R}_{k+1} \cdots \mtx{R}_1\right) &= \left(\mtx{H} - \mu_{k+1} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)\\
+  \left(\mtx{U}_1 \cdots \mtx{U}_{k} \mtx{U}_{k+1}\right)\left(\mtx{R}_{k+1} \mtx{R}_{k} \cdots \mtx{R}_1\right) &=  \left(\mtx{H} - \mu_{k+1} \Id\right) \left(\mtx{H} - \mu_k \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)\\
+  \mtx{Q}_k \mtx{U}_{k+1}\mtx{R}_{k+1} \mtx{P}_k &= \left(\mtx{H} - \mu_{k+1} \Id\right) \mtx{G}_k.
 \end{align*}
-Simplify the expression:
-$$\left(\mtx{U}_{n+1} \mtx{R}_{n+1}\right)\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\left(\mtx{R}_n \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
-Using the associative property, we can rewrite this as:
-$$\left(\mtx{U}_{n+1}\left(\mtx{U}_1 \cdots \mtx{U}_n\right)\right)\left(\mtx{R}_{n+1}\left(\mtx{R}_n \cdots \mtx{R}_1\right)\right) = \left(\mtx{H} - \mu_{n+1} \Id\right)\left(\mtx{H} - \mu_{n} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
-Now, observe that:
-$$\mtx{U}_{n+1}\left(\mtx{U}_1 \cdots \mtx{U}_n\right) = \left(\mtx{U}_1 \cdots \mtx{U}_{n+1}\right)$$
-$$\mtx{R}_{n+1}\left(\mtx{R}_n \cdots \mtx{R}_1\right) = \left(\mtx{R}_{n+1} \cdots \mtx{R}_1\right)$$
-Thus, we have shown that the result is true for $j = n + 1$, which completes the inductive step. Therefore, the result holds for all $j$:
-$$\left(\mtx{U}_1 \cdots \mtx{U}_j\right)\left(\mtx{R}_j \cdots \mtx{R}_1\right) = \left(\mtx{H} - \mu_{j} \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$$
-This result shows that we are implicitly computing a QR factorization of $\left(\mtx{H} - \mu_j \Id\right) \cdots \left(\mtx{H} - \mu_1 \Id\right)$.
+
+First, observe the following relation:
+\begin{align*}
+  \mtx{H}_k - \mu_k \Id &= \mtx{U}_k \mtx{R}_k&\text{(given)}\\
+  \left(\mtx{U}_k\right)^T \mtx{H}_k \mtx{U}_k &=\left(\mtx{U}_k\right)^T \left(\mtx{U}_k \mtx{R}_k + \mu_k \Id\right) \mtx{U}_k&\text{(mult. left and right by $\left(\mtx{U}_k\right)^T$ and $\mtx{U}_k$)}\\
+  &= \mtx{R}_k \mtx{U}_k + \mu_k \Id&\text{(since $\mtx{U}_k$ is orthonormal)}\\
+  \left(\mtx{U}_k\right)^T \mtx{H}_k \mtx{U}_k &= \mtx{H}_{k+1}&\text{(by definition of $\mtx{H}_{k+1}$)}
+\end{align*}
+
 
 \section{QR with Shifts [30 pts]}
 \subsection*{(a) Almost upper triangular [7.5 pts]} 

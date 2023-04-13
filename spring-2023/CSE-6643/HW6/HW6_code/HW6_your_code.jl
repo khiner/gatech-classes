@@ -47,36 +47,25 @@ function hessenberg_form!(T)
         # T[k+1:m,k+1:m] = Q1*T[k+1:m,k+1:m]*Q1'
 
         # Loop version:
-        # Equivalent to:
-        # ```
-        # Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
-        # T[k+1:m,k] = Q1*T[k+1:m,k]
-        # ```
-        for i = 1:m-k
+        for i = k+1:m
             sum = 0
-            for j = 1:m-k
-                sum += ((i == j ? 1 : 0) - 2 * v[i] * v[j]) * T[k+j, k]
+            for j = k+1:m
+                sum += ((i == j ? 1 : 0) - 2 * v[i-k] * v[j-k]) * T[j, k]
             end
-            T[k+i, k] = sum
+            T[i, k] = sum
+        end
+        for j = k+1:m
+            sum = 0
+            for i = k+1:m
+                sum += ((i == j ? 1 : 0) - 2 * v[i-k] * v[j-k]) * T[k, i]
+            end
+            T[k, j] = sum
         end
 
-        # Equivalent to:
-        # ```
-        # Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
-        # T[k,k+1:m] = Q1*T[k,k+1:m]
-        # ```
-        for j = 1:m-k
-            sum = 0
-            for i = 1:m-k
-                sum += ((i == j ? 1 : 0) - 2 * v[i] * v[j]) * T[k, k+i]
-            end
-            T[k, k+j] = sum
-        end
-
+        # Just need this last part to be looped.
         Q1 = Matrix{Float64}(I, m-k, m-k) - 2(v*v')
-        T[k+1:m,k+1:m] = Q1*T[k+1:m,k+1:m]*Q1'
-
-        # Loop version, avoiding creation of identity matrix:
+        T[k+1:m,k+1:m] *= Q1'
+        T[k+1:m,k+1:m] = Q1 * T[k+1:m,k+1:m]
     end
 
     # Non-tri-diagonal values are close to zero.
