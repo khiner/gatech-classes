@@ -14,3 +14,6 @@
 [submodule "spring-2023/CSE-6220/PA2"]
 	path = spring-2023/CSE-6220/PA2
 	url = git@github.com:GATech-CSE-6220-Spring-2023-Group/PA2.git
+[submodule "spring-2023/CSE-6220/PA3"]
+	path = spring-2023/CSE-6220/PA3
+	url = git@github.com:GATech-CSE-6220-Spring-2023-Group/PA3.git
