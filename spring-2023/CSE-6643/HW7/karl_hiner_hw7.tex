@@ -1,0 +1,166 @@
+\documentclass[twoside,10pt]{article}
+\input{macro.tex}
+
+\begin{document}
+
+\title{CSE 6643 Homework 7}
+\author{Karl Hiner, Spring 2023}
+\date{}
+\maketitle
+
+\section{Convergence of Lanczos iteration [60 pts]}
+Consider the Lanczos process for a symmetric matrix $\mtx{A} \in \R^{m \times m}$, with eigenvalues $\lambda_{1} \geq \lambda_{2} \geq \dots \geq \lambda_{m}$.  
+We denote by $\mtx{T}_k$ the $k \times k$ tri-diagonal matrix computed by the Lancczos process starting with the vector $\vct{q}_1$. 
+Recall that
+\begin{equation}
+  \mtx{T}_k = \mtx{Q}^T_k \mtx{A} \mtx{Q}_k.
+\end{equation}
+The largest eigenvalue $\mu_k$ of $\mtx{T}_k$ satisfies
+\begin{equation}
+  \mu_{k} = \max \limits_{\vct{y} \neq \vct{0}} \frac{\vct{y}^T \mtx{T}_k \vct{y}}{\vct{y}^T \vct{y}}.
+\end{equation}
+You can use (or prove, for bonus points, in problem 3) that 
+\begin{equation}
+  \mu_{k} \leq \lambda_1.
+\end{equation}
+In this exercise you will also need the Chebychev polynomials $T_k(x)$ satisfying  
+\begin{align}
+  T_k\left(\cos \theta\right) &= \cos\left(k \theta \right),\\
+  T_k\left(\cosh y\right) &= \cosh\left(k y \right).
+\end{align}
+Using the Chebychev polynomials, we define 
+\begin{equation}
+  p_k(x) = T_{k - 1} \left( - 1 + 2 \frac{x - \lambda_m}{\lambda_2 - \lambda_m}\right).
+\end{equation}
+
+\subsection*{(a) [10 pts]}
+Consider a polynomial $p(x)$ of degree $k - 1$.
+Show that
+\begin{equation}
+  \mu_k \geq \frac{\vct{q}_1^T p(\mtx{A}) \mtx{A} p(\mtx{A}) \vct{q}_1}{\vct{q}_1^T p(\mtx{A})^2 \vct{q}_1}
+\end{equation}
+
+\begin{align*}
+  \mu_k &= \max\limits_{\vct{y} \neq 0}\dfrac{\vct{y}^T\mtx{T}_k\vct{y}}{\vct{y}^T\vct{y}}&\text{(given)}\\
+  &= \max\limits_{\vct{y} \neq 0}\dfrac{\vct{y}^T\mtx{Q}_k^T \mtx{A}\mtx{Q}_k\vct{y}}{\vct{y}^T\vct{y}}&\text{(substitute $\mtx{T}_k = \mtx{Q}^T_k \mtx{A} \mtx{Q}_k$)}\\
+  &= \max\limits_{\vct{y} \neq 0}\dfrac{\left(\mtx{Q_k}\vct{y}\right)^T \mtx{A}\left(\mtx{Q}_k\vct{y}\right)}{\vct{y}^T\vct{y}}&\text{(rearrange numerator)}\\
+  &= \max\limits_{\vct{x} \in \mathcal{K}(A,q,k) \setminus \emptyset}\dfrac{\vct{x}^T \mtx{A}\vct{x}}{\vct{x}^T\vct{x}}&\text{($\vct{x} \coloneqq \mtx{Q}_k\vct{y}$, $\mathcal{K}$ is the Krylov subspace of $\mtx{A}$)}\\
+\end{align*}
+
+The last step follows since $\mtx{Q}_k$ is obtained by applying the Gram-Schmidt process to the Krylov subspace $\mathcal{K}(A,q,k)$, and thus $\mtx{Q}_k$ is an orthonormal basis for $\mathcal{K}(A,q,k)$.
+
+Since $\vct{x}$ is in the Krylov space of $\mtx{A}$, we can (by the definition of the Krylov space) express it as $\vct{x} = p(\mtx{A})\vct{b}$, where $p$ is a polynomial of degree $k - 1$, and we have
+$$\mu_k = \max \limits_{p \text{ of deg } k - 1} \frac{\vct{b}^T p(\mtx{A})^T\mtx{A} p(\mtx{A})\vct{b}}{\vct{b}^T f(\mtx{A})^2\vct{b}}.$$
+
+Since the starting vector $\vct{q}_1$ is arbitrary, we can choose $\vct{b} = \vct{q}_1$, which completes the proof.
+
+\subsection*{(b) [10 pts]}
+Expand $\vct{q}_1$ in a basis of orthonormal eigenvectors $\left\{\vct{z}_i\right\}_{1 \leq i \leq m}$ of $\mtx{A}$.
+\begin{equation}
+  \vct{q}_1 = y_1 \vct{z}_1 + \dots + y_m \vct{z}_m. 
+\end{equation}
+Prove that 
+\begin{equation}
+  \frac{\vct{q}_1^T p(\mtx{A}) \mtx{A} p(\mtx{A}) \vct{q}_1}{\vct{q}_1^T p(\mtx{A})^2 \vct{q}_1} = \frac{\sum \limits_{i = 1}^{m} y_{i}^2 p(\lambda_i)^2 \lambda_{i}}{\sum \limits_{i = 1}^{m} y_{i}^2 p(\lambda_i)^2}
+\end{equation}
+
+\subsection*{(c) [10 pts]}
+Show that $|p_k(\lambda_i)| \leq 1$, $\forall$ $2 \leq i \leq m$. 
+
+\begin{align*}
+  \lambda_m &\leq \lambda_i \leq \lambda_2&\text{(for $2 \leq i \leq m$, since $\lambda_{1} \geq \lambda_{2} \geq \lambda_{m}$)}\\
+  0 &\leq \lambda_i - \lambda_m \leq \lambda_2 - \lambda_m&\text{(subtract $\lambda_m$)}\\
+  0 &\leq \frac{\lambda_i - \lambda_m}{\lambda_2 - \lambda_m} \leq 1&\text{(divide by $\lambda_2 - \lambda_m$)}\\
+  -1 &\leq -1 + 2 \frac{\lambda_i - \lambda_m}{\lambda_2 - \lambda_m} \leq 1 &\text{(multiply by 2 and subtract 1)}\\
+  -1 &\leq x_i \leq 1 \implies |x_i| \leq 1&\text{($x_i \coloneqq - 1 + 2 \dfrac{\lambda_i - \lambda_m}{\lambda_2 - \lambda_m}$)}
+\end{align*}
+Given the definition of $x_i$, note that $p_k(\lambda_i) = T_{k - 1}(x_i)$.
+Thus, we want to show that $|x_i| \leq 1$ implies $|T_{k - 1}(x_i)| \leq 1$.
+
+We are given that $T_k\left(\cos \theta\right) = \cos\left(k \theta \right)$.
+Since $\cos \theta \in [-1, 1], \forall \theta$, and since $\cos \theta$ produces all values in the range $[-1, 1]$, we can deduce that for any value of $x_i$, $|T_{k - 1}(x_i)| \leq 1$.
+
+Thus, for $2 \leq i \leq m$, we have shown that $|p_k(\lambda_i)| = |T_{k - 1}(x_i)| \leq 1$.
+
+\subsection*{(d) [10 pts]}
+Show that
+\begin{equation}
+  p_k(\lambda_1) \in O\left[ \left(2 \left(2 \frac{\lambda_1 - \lambda_2}{\lambda_2 - \lambda_m} + 1\right)\right)^{k - 1} \right],
+\end{equation}
+in the limit of $(\lambda_{1} - \lambda_{2}) / (\lambda_{2} - \lambda_{m}) \rightarrow \infty$. 
+
+\subsection*{(e) [10 pts]}
+Show that with $\cos{\phi_1} = \vct{q}_1^T \vct{z}_1$, 
+\begin{equation}
+  \lambda_{1} - (\lambda_{1} - \lambda_{m}) \frac{(\tan (\phi_1))^2}{p_{k}(\lambda_1)^2} \leq \mu_{k} \leq \lambda_1.
+\end{equation}
+
+\subsection*{(f) [10 pts]}
+
+Assume, for example, that $\lambda_1 - \lambda_2 = (\lambda_2 - \lambda_m) / 2.$  
+Find $z$ such that 
+\begin{equation}
+  p_k (\lambda_1) \approx \frac{z^{k - 1}}{2}.
+\end{equation}
+Estimate the number of iterations to reach machine accuracy $u$ for $\lambda_1$. 
+
+\section{Arnoldi vs Lanczos [40 pts]}
+\subsection*{Arnoldi [15 pts]} 
+Go to section (a) of the file \texttt{HW7\_your\_code.jl} and implement a function that implements the Arnoldi method. 
+Your method should return an upper Hessenberg matrix. 
+
+\subsection*{(b) Lanczos [15 pts]} 
+Go to section (b) of the file \texttt{HW7\_your\_code.jl} and implement a function that implements the Lanczos method. 
+Your method should return an upper Hessenberg matrix. 
+
+\subsection*{(c) Arnoldi vs Lanczos [10 pts]}
+Compare the behavior of the Arnoldi and Lanczos method on different symmetric matrices. 
+How does the approximation improve as you increase $k_{\max}$? 
+Can you create reproduce scenarios where Lanczos methods fails, for instance by producing ghost eigenvalues?
+Summarize your findings using figures as appropriate, and hand them in \underline{with the written part of your homework}. 
+
+\section{Nested Approximation [20 bonus pts]}
+Let $\mtx{A} \in \R^{m \times m}$ be symmetric, and $\mtx{Q} \in \R^{m \times m}$ be orthogonal with columns $\vct{q}_i$. 
+Define $\mtx{Q}_k \coloneqq \mtx{Q}_{:, 1 : k}$. 
+We denote 
+\begin{align}
+  \overline{\mu}_k &\coloneqq \lambda_{\max} \left(\mtx{Q}_k^T \mtx{A} \mtx{Q}_k\right),\\
+  \underline{\mu}_k &\coloneqq \lambda_{\min}\left(\mtx{Q}^T_k \mtx{A} \mtx{Q}_k\right),
+\end{align}
+where $\lambda_{\max}$ and $\lambda_{\min}$ are the largest and smallest eigenvalues.
+
+Prove that
+\begin{align}
+  \overline{\mu}_{1} \leq \overline{\mu}_{2} \leq \dots \leq \overline{\mu}_m &= \lambda_{\max} \left(\mtx{A}\right),\\
+  \underline{\mu}_{1} \geq \underline{\mu}_{2} \geq \dots \geq \underline{\mu}_m &= \lambda_{\min} \left(\mtx{A}\right).
+\end{align}
+
+\begin{align*}
+  \overline{\mu}_k &\coloneqq \lambda_{\max} \left(\mtx{Q}_k^T \mtx{A} \mtx{Q}_k\right)&\text{(given)}\\
+  &= \max\limits_{\vct{y} \neq 0}\dfrac{\vct{y}^T\mtx{Q}_k^T \mtx{A}\mtx{Q}_k\vct{y}}{\vct{y}^T\vct{y}}&\text{(by the Courant-Fischer theorem)}\\
+  &= \max\limits_{\vct{y} \neq 0}\dfrac{\left(\mtx{Q_k}\vct{y}\right)^T \mtx{A}\left(\mtx{Q}_k\vct{y}\right)}{\vct{y}^T\vct{y}}&\text{(rearrange numerator)}\\
+  &= \max\limits_{\vct{x} \in \mathcal{K}(A,q,k) \setminus \emptyset}\dfrac{\vct{x}^T \mtx{A}\vct{x}}{\vct{x}^T\vct{x}}&\text{($\vct{x} \coloneqq \mtx{Q}_k\vct{y}$, $\mathcal{K}$ is the Krylov subspace of $\mtx{A}$)}\\
+\end{align*}
+
+The last step follows since $\mtx{Q}_k$ is obtained by applying the Gram-Schmidt process to the Krylov subspace $\mathcal{K}(A,q,k)$, and thus $\mtx{Q}_k$ is an orthonormal basis for $\mathcal{K}(A,q,k)$.
+
+By the Courant-Fischer theorem, we can also express largest eigenvalue of $\mtx{A}$ as
+$$\lambda_{\max} \left(\mtx{A}\right) = \max\limits_{\vct{x} \neq 0}\dfrac{\vct{x}^T\mtx{A}\vct{x}}{\vct{x}^T\vct{x}}.$$
+
+Since $\overline{\mu}_k$ is found by maximizing the same objective as $\lambda_{\max} \left(\mtx{A}\right)$, but over a smaller subset, we have $\overline{\mu}_k \leq \lambda_{\max} \left(\mtx{A}\right)$.
+
+\section{Early Termination [20 bonus pts]}
+Let $\mtx{A} \in \R^{m \times m}$ be a symmetric matrix. 
+We denote by $K$ the dimension of the Krylov subspace 
+\begin{equation}
+  \mathcal{K}\left(\mtx{A}, \vct{q}_1, m\right) = \left\{\vct{q}_1, \mtx{A}\vct{q}_1, \mtx{A}^2 \vct{q}_1, \ldots, \mtx{A}^{m - 1} \vct{q}_1\right\}.
+\end{equation}
+The Lanczos algorithm is said to terminate after $k$ steps if $\beta_{k} = 0$ and $\beta_{i} \neq 0, \forall i < k$.
+
+Prove that the Lanczos process, with starting vectors $\vct{q}_1$, terminates in at most $K$ steps in exact arithmetic. 
+
+\section{CIOS [10 bonus pts for the entire class]}
+  In order to help the TAs and myself in improving the course, please make sure to fill out your CIOS. 
+  I take this feedback into account for future iterations of this class, so please aim to provide me with feedback both on what needs improvement and what is good as is. 
+  If $\geq 75$ percent of students in this class fill out their CIOS by the time the homework is graded, everyone in the class earns 10 bonus points.
+\end{document}
