@@ -51,7 +51,6 @@ The last step follows since $\mtx{Q}_k$ is obtained by applying the Gram-Schmidt
 
 Since $\vct{x}$ is in the Krylov space of $\mtx{A}$, we can (by the definition of the Krylov space) express it as $\vct{x} = p(\mtx{A})\vct{b}$, where $p$ is a polynomial of degree $k - 1$, and we have
 $$\mu_k = \max \limits_{p \text{ of deg } k - 1} \frac{\vct{b}^T p(\mtx{A})^T\mtx{A} p(\mtx{A})\vct{b}}{\vct{b}^T f(\mtx{A})^2\vct{b}}.$$
-
 Since the starting vector $\vct{q}_1$ is arbitrary, we can choose $\vct{b} = \vct{q}_1$, which completes the proof.
 
 \subsection*{(b) [10 pts]}
@@ -63,6 +62,25 @@ Prove that
 \begin{equation}
   \frac{\vct{q}_1^T p(\mtx{A}) \mtx{A} p(\mtx{A}) \vct{q}_1}{\vct{q}_1^T p(\mtx{A})^2 \vct{q}_1} = \frac{\sum \limits_{i = 1}^{m} y_{i}^2 p(\lambda_i)^2 \lambda_{i}}{\sum \limits_{i = 1}^{m} y_{i}^2 p(\lambda_i)^2}
 \end{equation}
+
+Numerator:
+\begin{align*}
+  \vct{q}_1^T p(\mtx{A}) \mtx{A} p(\mtx{A}) \vct{q}_1 &= \sum_{i=1}^m y_i \vct{z}_i^T p(\mtx{A}) \mtx{A} p(\mtx{A}) \sum_{j=1}^m y_j \vct{z}_j & \\
+  &= \sum_{i=1}^m \sum_{j=1}^m y_i y_j \vct{z}_i^T p(\mtx{A}) \mtx{A} p(\mtx{A}) \vct{z}_j &\text{(rearrange)}\\
+  &= \sum_{i=1}^m \sum_{j=1}^m y_i y_j \vct{z}_i^T p(\mtx{A}) \mtx{A}  p(\lambda_j) \vct{z}_j &\text{($p(\mtx{A})\vct{z}_j = p(\lambda_j) \vct{z}_j$)}\\
+  &= \sum_{i=1}^m \sum_{j=1}^m y_i y_j \vct{z}_i^T p(\mtx{A}) (\lambda_j p(\lambda_j) \vct{z}_j) &\text{(since $\mtx{A}\vct{z}_j = \lambda_j \vct{z}_j$)} \\
+  &= \sum_{i=1}^m \sum_{j=1}^m y_i y_j p(\lambda_i) \lambda_j p(\lambda_j) \vct{z}_i^T \vct{z}_j &\text{(apply $p(\mtx{A})$ to $\vct{z}_i$)} \\
+  &= \sum_{i=1}^m y_i^2 p(\lambda_i)^2 \lambda_i &\text{(since $\vct{z}_i^T \vct{z}_j=0$ for $i\neq j$, and $\vct{z}_i^T \vct{z}_i=1$)}
+\end{align*}
+
+Denominator:
+\begin{align*}
+  \vct{q}_1^T p(\mtx{A})^2 \vct{q}_1 &= \sum_{i=1}^m y_i \vct{z}_i^T p(\mtx{A})^2 \sum_{j=1}^m y_j \vct{z}_j \\
+  &= \sum_{i=1}^m \sum_{j=1}^m y_i y_j \vct{z}_i^T p(\mtx{A})^2 \vct{z}_j &\text{(rearrange)}\\
+  &= \sum_{i=1}^m \sum_{j=1}^m y_i y_j \vct{z}_i^T p(\mtx{A})  p(\lambda_j) \vct{z}_j &\text{($p(\mtx{A})\vct{z}_j = p(\lambda_j) \vct{z}_j$)}\\
+  &= \sum_{i=1}^m \sum_{j=1}^m y_i y_j p(\lambda_i) p(\lambda_j) \vct{z}_i^T \vct{z}_j &\text{(apply $p(\mtx{A})$ to $\vct{z}_i$)} \\
+  &= \sum_{i=1}^m y_i^2 p(\lambda_i)^2 &\text{(since $\vct{z}_i^T \vct{z}_j=0$ for $i\neq j$, and $\vct{z}_i^T \vct{z}_i=1$)}
+\end{align*}
 
 \subsection*{(c) [10 pts]}
 Show that $|p_k(\lambda_i)| \leq 1$, $\forall$ $2 \leq i \leq m$. 
@@ -89,11 +107,48 @@ Show that
 \end{equation}
 in the limit of $(\lambda_{1} - \lambda_{2}) / (\lambda_{2} - \lambda_{m}) \rightarrow \infty$. 
 
+\hbox{}
+
+\quad From the definition of $p_k(\lambda_1)$, we can write it as:
+$$p_k(\lambda_1) = T_{k - 1}(x_1),$$
+where $x_1 = -1 + 2\dfrac{\lambda_1 - \lambda_m}{\lambda_2 - \lambda_m}$.
+
+(These following steps are due to Yuan Qiu's hint on Piazza - thank you!)
+
+We can write:
+$$p_k(\lambda_1) = \cosh((k-1)t) = \dfrac{e^{(k-1)t} + e^{-(k-1)t}}{2},$$
+where $e^t$ satisfies
+$$\dfrac{e^t + e^{-t}}{2} = -1 + 2\dfrac{\lambda_1 - \lambda_m}{\lambda_2 - \lambda_m} = 2\dfrac{\lambda_1 - \lambda_2}{\lambda_2 - \lambda_m} + 1.$$
+
+Let $l = 2\dfrac{\lambda_1 - \lambda_2}{\lambda_2 - \lambda_m} + 1$.
+Then, we have $e^t + e^{-t} = 2l.$
+
+We can write this as a quadratic equation:
+$$(e^t)^2 - 2l(e^t) + 1 = 0$$
+Solving for $e^t$, we obtain two solutions:
+$$e^t = l \pm \sqrt{l^2 - 1}$$
+
+Now we can rewrite the expression for $p_k(\lambda_1)$ using the solutions:
+$$p_k(\lambda_1) = \frac{1}{2}\left( (l \pm \sqrt{l^2 - 1})^{k-1} + (l \mp \sqrt{l^2 - 1})^{k-1} \right).$$
+
+Note that as $l \rightarrow \infty, \sqrt{l^2 - 1} \approx l$.
+Thus, we can simplify the expression:
+$$p_k(\lambda_1) \approx \frac{1}{2}\left( (2l)^{k-1} + (2l)^{k-1}\right) = (2l)^{k-1}.$$
+
+Substituting the definition of $l$, we have:
+$$p_k(\lambda_1) \approx \left(2 \left(2 \frac{\lambda_1 - \lambda_2}{\lambda_2 - \lambda_m} + 1\right)\right)^{k - 1}.$$
+
+Thus, in the limit of $(\lambda_{1} - \lambda_{2}) / (\lambda_{2} - \lambda_{m}) \rightarrow \infty$, we have:
+
+$$p_k(\lambda_1) \in O\left[ \left(2 \left(2 \frac{\lambda_1 - \lambda_2}{\lambda_2 - \lambda_m} + 1\right)\right)^{k - 1} \right].$$
+
 \subsection*{(e) [10 pts]}
 Show that with $\cos{\phi_1} = \vct{q}_1^T \vct{z}_1$, 
 \begin{equation}
   \lambda_{1} - (\lambda_{1} - \lambda_{m}) \frac{(\tan (\phi_1))^2}{p_{k}(\lambda_1)^2} \leq \mu_{k} \leq \lambda_1.
 \end{equation}
+
+\textit{I'm skipping this one.}
 
 \subsection*{(f) [10 pts]}
 
@@ -103,6 +158,8 @@ Find $z$ such that
   p_k (\lambda_1) \approx \frac{z^{k - 1}}{2}.
 \end{equation}
 Estimate the number of iterations to reach machine accuracy $u$ for $\lambda_1$. 
+
+\textit{I'm also skipping this one.}
 
 \section{Arnoldi vs Lanczos [40 pts]}
 \subsection*{Arnoldi [15 pts]} 
@@ -118,6 +175,8 @@ Compare the behavior of the Arnoldi and Lanczos method on different symmetric ma
 How does the approximation improve as you increase $k_{\max}$? 
 Can you create reproduce scenarios where Lanczos methods fails, for instance by producing ghost eigenvalues?
 Summarize your findings using figures as appropriate, and hand them in \underline{with the written part of your homework}. 
+
+\textit{I'm also skyyipping this one.}
 
 \section{Nested Approximation [20 bonus pts]}
 Let $\mtx{A} \in \R^{m \times m}$ be symmetric, and $\mtx{Q} \in \R^{m \times m}$ be orthogonal with columns $\vct{q}_i$. 
@@ -148,6 +207,23 @@ By the Courant-Fischer theorem, we can also express largest eigenvalue of $\mtx{
 $$\lambda_{\max} \left(\mtx{A}\right) = \max\limits_{\vct{x} \neq 0}\dfrac{\vct{x}^T\mtx{A}\vct{x}}{\vct{x}^T\vct{x}}.$$
 
 Since $\overline{\mu}_k$ is found by maximizing the same objective as $\lambda_{\max} \left(\mtx{A}\right)$, but over a smaller subset, we have $\overline{\mu}_k \leq \lambda_{\max} \left(\mtx{A}\right)$.
+
+As we increase $k$, $\mathcal{K}(A,q,k)$ becomes larger.
+So we are maximizing the objective over a larger set, and we will thus find an equal or larger maximum.
+Therefore, we can conclude that
+$$\overline{\mu}_{1} \leq \overline{\mu}_{2} \leq \dots \leq \overline{\mu}_m.$$
+
+Since $\mathcal{K}(A,q,m)$ spans the entire space, we have $\overline{\mu}_m = \lambda_{\max} \left(\mtx{A}\right)$.
+
+Now, let's prove the inequality for $\underline{\mu}_k$:
+$$\underline{\mu}_k = \min\limits_{\vct{x} \in \mathcal{K}(A,q,k) \setminus \emptyset}\dfrac{\vct{x}^T \mtx{A}\vct{x}}{\vct{x}^T\vct{x}}$$
+
+We'll use similar reasoning as we did for the first direction.
+As we increase $k$, the Krylov subspace $\mathcal{K}(A,q,k)$ becomes larger.
+So we are minimizing the objective over a larger set, and we will find an equal or smaller minimum, and so
+$$\underline{\mu}_{1} \geq \underline{\mu}_{2} \geq \dots \geq \underline{\mu}_m.$$
+
+Finally, since $\mathcal{K}(A,q,m)$ spans the entire space, we have $\underline{\mu}_m = \lambda_{\min} \left(\mtx{A}\right)$.
 
 \section{Early Termination [20 bonus pts]}
 Let $\mtx{A} \in \R^{m \times m}$ be a symmetric matrix. 

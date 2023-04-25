@@ -1,5 +1,3 @@
-
-
 #----------------------------------------
 # Problem a
 #----------------------------------------
@@ -8,7 +6,6 @@
 # The matrix A should be only accessed through 
 # (kmax - 1) matrix-vector products
 function arnoldi(A, q1, kmax)
-    # Your code here
     m = kmax + 1
     H = zeros(m, m - 1)
     Q = zeros(m - 1, m)
