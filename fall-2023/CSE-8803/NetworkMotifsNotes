@@ -1,0 +1,66 @@
+Notes: Network Motifs: Simple Building Blocks of Complex Networks
+
+https://www.cs.cornell.edu/courses/cs6241/2020sp/readings/Milo-2002-motifs.pdf
+
+**Note: Currently, noone is signed up for the hacker role. I may decide to implement this simple idea myself.
+    - https://github.com/aplbrain/dotmotif
+    - https://github.com/aplbrain/grandiso-networkx
+    - https://github.com/p-koo/learning_sequence_motifs
+    - https://github.com/gtremper/Network-Motif
+
+Check this out: https://networkrepository.com/graphvis.php
+
+"To go beyond these global features would require an understanding of the basic structural elements particular to each class of networks (9).
+To do this, we developed an algorithm for detecting network motifs: recurring, significant patterns of interconnections."
+
+Key definition for network motifs: Recurring, significant patterns of interconnections.
+
+"Here we generalize this approach to virtually any type of connectivity graph and find the striking appearance of motifs in networks representing a broad range of natural phenomena."
+
+"Patterns that are functionally important but not statistically significant could exist, which would be missed by our approach."
+
+"The two transcription networks show the same motifs: a three-node motif termed “feedforward loop” (11) and a four-node motif termed “bi-fan."
+
+## Questions
+
+Why did they choose to focus on common connectivity patterns within 3/4-node subgroups?
+Why do they think this measure is representative of "recurring, significant patterns of interconnections"?
+What would other measures be?
+  - Increasing n in n-node subgroups.
+  - what about n-edge subgroups?
+  - use direction in selecting subgroups? E.g. to take regard of causal neighborhoods, like looking at connectivity patterns within markov blankets?
+
+Are 3-node subgraphs expressive enough that finding a statistically highly occuring pattern within it is nontrivial/meaningful/surprising? E.g. they find the "feedforward loop" motif in transcription networks. This is significant if we consider the frequency of this connection pattern amonst _all possible_ ones. But looking at Fig. 1B, we can also see that the feedforward loop (#5) is also only one of the two fully connected graphs without bidirectional edges, and the other one is a loop. So, perhaps we could arrive at the same prediction (feedforward loop is most common 3-node motif) by hypothesising, say, two tendencies of natural networks:
+1) Favor dense over spare connections (reasoning: nodes in natural networks occur in isolation less often than with neighbors)
+2) Avoid tight loops (reasoning: loops are bad at propogating information, and the recursion muddies/saturates signals and obfuscates signal source)
+
+These two principles would also lead us to #5 (feedforward loop).
+So, I don't think we should reasonably assign a uniform prior across all possible connections, and find it slightly misleading to frame the findings with surprise at how non-uniform the actual distribution over motifs is.
+
+
+Also, it could be that e.g. many 3-node network motifs are present in a >3-node motif that isn't studied here. If this were the case, positing explanations like the following may not be appropriate:
+
+"The feedforward loop motif common to both types of networks may play a functional role in information processing. One possible function of this
+circuit is to activate output only if the input signal is persistent and to allow a rapid deactivation when the input goes off (11)."
+
+For example, when I see the 3-node network in the context of neurons, I think of skip-connections, which both have a somewhat different purpose (removing the burden of intermediate nodes adding the identity of their parent signals to their child nodes), and are better understood when we consider the intermediate layers that are being skipped.
+
+- Actually, this reminds me of papers in convolution architecture - in particular in parameterized architectures like the alpha in [MobileNets](https://arxiv.org/pdf/1704.04861.pdf) / [MobileNetV2](https://arxiv.org/pdf/1801.04381.pdf). These provide, in my opinion, a more promising direction for a framework of thinking about common network connectivity patterns - particularly, efficiency vs. accuracy tradeoff with simultaneous representational capacity goals and energy resource constraints.
+
+Put more generally, I think we need to look at higher-order properties of networks than frequency of specific N-node connectivity patterns, and I don't think we can/should avoid considering the functional properties of the network.
+
+"This suggests that motifs can define broad classes of networks, each with specific types of elementary structures." - The suggestion with this wording, and throughout the paper, seems to be that these diferrent systems may be combining these "motifs" together in various waves, to acheive their goals, whereas I don't see why we should conclude they are fundamental building blocks rather than common byproducts of other mechanisms. I find the milder wording they use later in the same paragraph more appropriate: "Information processing seems to give rise to significantly different structures than does energy flow."
+
+Again, in the last paragraph, the authors interpret network motifs in two different ways - as "elementary computational circuits" (which I think is unjustified and likely incorrect), and another milder interpretation as "structures that arise because of the special constrains under which the network has evolved".
+
+
+## Need further understanding
+
+"Edges are directed from a gene that encodes for a transcription factor protein to a gene transcriptionally regulated by that transcription factor."
+
+Need to fully understand "gene transcriptionally regulated by that transcription factor" - I think I get it but be sure.
+
+
+## Potential future research
+
+I think the natural practical question what how graph neural networks perform with these motifs imposed as priors over the node connectivity.
