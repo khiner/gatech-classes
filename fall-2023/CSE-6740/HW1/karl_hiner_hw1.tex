@@ -1,0 +1,134 @@
+\documentclass{article}
+\input{../macro.tex}
+
+\title{HW 1}
+\author{Karl Hiner}
+\date{\today}
+
+\begin{document}
+\maketitle	
+
+\section{Linear Regression}
+
+\subsection{a}
+
+\begin{equation} \label{eq:1}
+    \hat{w} = (X^TX)^{-1}X^TY
+\end{equation}
+\begin{equation} \label{eq:2}
+    Y^i = w^T X^i + \epsilon^i,
+\end{equation}
+where $\epsilon \sim \mathcal{N}(0, \sigma^2)$, $w \in \R^d$, and $\{X^i, Y^i\}$ is the $i$-th data point, with $1 \leq i \leq m$.
+
+Using the normal equation (Eqn. \ref{eq:1}), and the model (Eqn. \ref{eq:2}), derive the expectation $\mathbb{E}\left[\hat{w}\right]$.
+Note that here $X$ is fixed, and only $Y$ is random.
+\begin{align*}
+    \mathbb{E}\left[\hat{w}\right] &= \mathbb{E}\left[(X^TX)^{-1}X^TY\right]&\text{Eqn. \ref{eq:1}}\\
+    &= \mathbb{E}\left[(X^TX)^{-1}X^T\left(Xw + \epsilon\right)\right]&\text{Substitute $Y$}\\
+    &= \mathbb{E}\left[(X^TX)^{-1}X^TXw + (X^TX)^{-1}X^T\epsilon\right]&\text{Distribute}\\
+    &= \mathbb{E}\left[w + (X^TX)^{-1}X^T\epsilon\right]&\text{Simplify}\\
+    &= w + (X^TX)^{-1}X^T\mathbb{E}\left[\epsilon\right]&\text{Linearity of expectation}\\
+    &= w&\text{Since $\mathbb{E}\left[\epsilon\right] = 0$}
+\end{align*}
+
+\subsection{b}
+
+Similarly, derive the variance $\text{Var}\left[\hat{w}\right]$.
+\begin{align*}
+    \text{Var}\left[\hat{w}\right] &= \text{Var}\left[(X^TX)^{-1}X^T\left(Xw + \epsilon\right)\right]&\text{Eqn. \ref{eq:1}, Substitute $Y$}\\
+    &= \text{Var}\left[(X^TX)^{-1}X^TXw + (X^TX)^{-1}X^T\epsilon\right]&\text{Distribute}\\
+    &= \text{Var}\left[w + (X^TX)^{-1}X^T\epsilon\right]&\text{Simplify}\\
+    &= \text{Var}\left[(X^TX)^{-1}X^T\epsilon\right]&\text{Since $w$ is constant}\\
+    &= (X^TX)^{-1}X^T\text{Var}\left[\epsilon\right]X(X^TX)^{-1}&\text{$\text{Var}[\vct{b}^T\mtx{X}] = \vct{b}^T\text{Var}[\mtx{X}]\vct{b}$}\\
+    &= (X^TX)^{-1}X^T(\sigma^2\mtx{I}_M)X(X^TX)^{-1}&\text{$\text{Var}\left[\epsilon\right] \triangleq \sigma^2$}\\
+    &= \sigma^2(X^TX)^{-1}X^TX(X^TX)^{-1}&\text{Commute $\sigma^2$}\\
+    &= \sigma^2(X^TX)^{-1}&\text{Simplify}\\
+\end{align*}
+
+\subsection{c}
+
+Under the white noise assumption above, does $\hat{w}$ follow a Gaussian distribution with mean and variance in (a) and (b), respectively?
+Why or why not?
+
+\textbf{Answer:} Yes, $\hat{w}$ follows a Gaussian distribution with mean and variance in (a) and (b), respectively.
+This is because $\hat{w}$ is a linear combination of the random variables $\epsilon_i$, which are Gaussian by assumption.
+Since $\hat{w}$ is a linear combination of Gaussian random variables, it is itself Gaussian, with $\hat{w} \sim \mathcal{N}(w, \sigma^2(X^TX)^{-1})$.
+
+\subsection{d: Weighted linear regression}
+Suppose we keep the independence assumption but remove the same variance assumption.
+In other words, data points would be still sampled independently, but now they may have different variance $\sigma_i$.
+Thus, the variance (the covariance matrix) of $\epsilon$ would still be diagonal, but with different values:
+
+$$\Sigma = \begin{bmatrix}
+    \sigma_1^2 & 0 & \cdots & 0\\
+    0 & \sigma_2^2 & \cdots & 0\\
+    \vdots & \vdots & \ddots & \vdots\\
+    0 & 0 & \cdots & \sigma_m^2
+\end{bmatrix}$$
+
+Derive the estimator $\hat{w}$ (similar to the normal equations) for this problem using matrix-vector notations with $\Sigma$.
+
+\textbf{Answer:}
+
+We want to minimize
+$$\arg\min_w \sum_{i=1}^{m} \frac{1}{\sigma_i^2}(y_i - w^T x_i)^2.$$
+In matrix-vector notation, this is equivalent to
+$$\arg\min_w (Y - Xw)^T \Sigma^{-1} (Y - Xw).$$
+Taking the derivative with respect to $w$ and setting it to zero:
+\begin{align*}
+    \frac{\partial}{\partial w}\left((Y - Xw)^T \Sigma^{-1} (Y - Xw)\right) &= 0\\
+    \frac{\partial}{\partial w}\left(w^T X^T \Sigma^{-1} X w - 2w^T X^T \Sigma^{-1} Y + Y^T \Sigma^{-1} Y\right) &= 0\\
+    -2X^T \Sigma^{-1} Y + 2X^T \Sigma^{-1} Xw &= 0\\
+    (X^T \Sigma^{-1} X)w &= X^T \Sigma^{-1} Y
+\end{align*}
+Thus, the weighted least squares estimator $\hat{w}$ is:
+$$\hat{w} = (X^T \Sigma^{-1} X)^{-1} X^T \Sigma^{-1} Y$$
+
+\section{Ridge Regression}
+
+For linear regression, it is often assumed that $y_i = w^Tx_i + \epsilon$, where $w, x \in \R^d$ by absorbing the constant term (bias) in an affine hypothesis into $w$, and $\epsilon \sim \mathcal{N}(0, \sigma^2)$ is a Gaussian random variable.
+Given $m$ i.i.d. samples $z_i = (x_i, y_i), 1 \leq i \leq m$, we define $Y = (y_1, \cdots, y_m)^T$ and $X = (x_1, \cdots, x_m)^T$.
+Thus, we have $Y \sim \mathcal{N}(Xw, \sigma^2I_m)$.
+Show that the ridge regression estimate is the mean of the posterior distribution under a Gaussian prior $w \sim \mathcal{N}(0, \tau^2I).$
+Find the explicit relation between the regularization parameter $\lambda$ in the ridge regression estimate of the parameter $w$, and the variances $\sigma^2$ and $\tau^2$.
+
+\textbf{Answer:}
+
+The ridge regression estimate is defined as
+\begin{align*}
+    \hat{w}^{\text{Ridge}} &\triangleq \arg\min_w \sum_{i=1}^{m} (w^T x_i - y_i)^2 + \lambda \|w\|^2\\
+    &= \arg\min_w \|Xw - Y\|^2 + \lambda\|w\|^2.
+\end{align*}
+Taking the derivative with respect to $w$ and setting it to zero results in the following expression for $\hat{w}^{\text{Ridge}}$ (as derived in class):
+\begin{align*}
+    \hat{w}^{\text{Ridge}} &= (X^T X + \lambda I)^{-1} X^T Y
+\end{align*}
+Now, we'll show that this estimator is also the mean of the posterior distribution of $w$ when we assume a Gaussian prior $w \sim \mathcal{N}(0, \tau^2I)$.
+
+The posterior distribution of $w$ is proportional to the product of the likelihood and the prior:
+\begin{align*}
+    p(w|Y) &\propto p(Y|w)p(w)\\
+    &\propto \exp\left(-\frac{1}{2\sigma^2}\|Y - Xw\|^2\right)\exp\left(-\frac{1}{2\tau^2}\|w - 0\|^2\right)\\
+    &= \exp\left(-\frac{1}{2\sigma^2}\|Xw - Y\|^2\right)\exp\left(-\frac{1}{2\tau^2}\|w\|^2\right)
+\end{align*}
+(We neglect the normalization constant $P(Y)$ since it does not depend on $w$.
+We also neglect the Gaussian constant normalizing factors since they will not change the location of the mode.)
+
+We want to find the mean of this posterior distribution.
+Since multiplying two Gaussian PDFs results in another Gaussian PDF, and since the mode of a Gaussian PDF is the mean, we can find the mean of this posterior by taking its negative and minimizing it with respect to $w$:
+\begin{align*}
+    -log(p(w|Y)) &= -log\left(\exp\left(-\frac{1}{2\sigma^2}\|Xw - Y\|^2\right)\exp\left(-\frac{1}{2\tau^2}\|w\|^2\right)\right)\\
+    &= \frac{1}{2\sigma^2}\|Xw - Y\|^2 + \frac{1}{2\tau^2}\|w\|^2\\
+    0 &= \dfrac{\partial}{\partial w}\left(\frac{1}{2\sigma^2}\|Xw - Y\|^2 + \frac{1}{2\tau^2}\|w\|^2\right)\\
+    0 &= \frac{1}{\sigma^2}X^T(Xw - Y) + \frac{1}{\tau^2}w\\
+    0 &= \frac{1}{\sigma^2}X^TXw - \frac{1}{\sigma^2}X^TY + \frac{1}{\tau^2}w\\
+    \hat{w}^{\text{Mean}} &= \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}\frac{1}{\sigma^2}X^TY
+\end{align*}
+Now, we can compare $\hat{w}^{\text{Mean}}$ to $\hat{w}^{\text{Ridge}}$:
+\begin{align*}
+    \hat{w}^{\text{Mean}} &\stackrel{?}{=} \hat{w}^{\text{Ridge}}\\
+    \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}\frac{1}{\sigma^2}X^TY &\stackrel{?}{=} (X^T X + \lambda I)^{-1} X^T Y\\
+\end{align*}
+These two expressions are equal if we set $\lambda = \frac{\sigma^2}{\tau^2}$.
+
+\end{document}
