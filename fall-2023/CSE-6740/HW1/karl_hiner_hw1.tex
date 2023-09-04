@@ -16,9 +16,9 @@
     \hat{w} = (X^TX)^{-1}X^TY
 \end{equation}
 \begin{equation} \label{eq:2}
-    Y^i = w^T X^i + \epsilon^i,
+    y_i = w^T x_i + \epsilon_i,
 \end{equation}
-where $\epsilon \sim \mathcal{N}(0, \sigma^2)$, $w \in \R^d$, and $\{X^i, Y^i\}$ is the $i$-th data point, with $1 \leq i \leq m$.
+where $\epsilon_i \sim \mathcal{N}(0, \sigma^2)$, $w \in \R^d$, and $\{X^i, Y^i\}$ is the $i$-th data point, with $1 \leq i \leq m$.
 
 Using the normal equation (Eqn. \ref{eq:1}), and the model (Eqn. \ref{eq:2}), derive the expectation $\mathbb{E}\left[\hat{w}\right]$.
 Note that here $X$ is fixed, and only $Y$ is random.
@@ -40,7 +40,7 @@ Similarly, derive the variance $\text{Var}\left[\hat{w}\right]$.
     &= \text{Var}\left[w + (X^TX)^{-1}X^T\epsilon\right]&\text{Simplify}\\
     &= \text{Var}\left[(X^TX)^{-1}X^T\epsilon\right]&\text{Since $w$ is constant}\\
     &= (X^TX)^{-1}X^T\text{Var}\left[\epsilon\right]X(X^TX)^{-1}&\text{$\text{Var}[\vct{b}^T\mtx{X}] = \vct{b}^T\text{Var}[\mtx{X}]\vct{b}$}\\
-    &= (X^TX)^{-1}X^T(\sigma^2\mtx{I}_M)X(X^TX)^{-1}&\text{$\text{Var}\left[\epsilon\right] \triangleq \sigma^2$}\\
+    &= (X^TX)^{-1}X^T(\sigma^2I_m)X(X^TX)^{-1}&\text{$\text{Var}\left[\epsilon\right] \triangleq \sigma^2$}\\
     &= \sigma^2(X^TX)^{-1}X^TX(X^TX)^{-1}&\text{Commute $\sigma^2$}\\
     &= \sigma^2(X^TX)^{-1}&\text{Simplify}\\
 \end{align*}
@@ -90,7 +90,7 @@ For linear regression, it is often assumed that $y_i = w^Tx_i + \epsilon$, where
 Given $m$ i.i.d. samples $z_i = (x_i, y_i), 1 \leq i \leq m$, we define $Y = (y_1, \cdots, y_m)^T$ and $X = (x_1, \cdots, x_m)^T$.
 Thus, we have $Y \sim \mathcal{N}(Xw, \sigma^2I_m)$.
 Show that the ridge regression estimate is the mean of the posterior distribution under a Gaussian prior $w \sim \mathcal{N}(0, \tau^2I).$
-Find the explicit relation between the regularization parameter $\lambda$ in the ridge regression estimate of the parameter $w$, and the variances $\sigma^2$ and $\tau^2$.
+Find the explicit relation between the regularization parameter $\lambda$ in the ridge regression estimate of the parameter $w$, and the variances $\sigma^2, \tau^2$.
 
 \textbf{Answer:}
 
@@ -99,7 +99,7 @@ The ridge regression estimate is defined as
     \hat{w}^{\text{Ridge}} &\triangleq \arg\min_w \sum_{i=1}^{m} (w^T x_i - y_i)^2 + \lambda \|w\|^2\\
     &= \arg\min_w \|Xw - Y\|^2 + \lambda\|w\|^2.
 \end{align*}
-Taking the derivative with respect to $w$ and setting it to zero results in the following expression for $\hat{w}^{\text{Ridge}}$ (as derived in class):
+Taking the derivative with respect to $w$ and setting it to zero results in the following expression for $\hat{w}^{\text{Ridge}}$ (as derived in class and in the text):
 \begin{align*}
     \hat{w}^{\text{Ridge}} &= (X^T X + \lambda I)^{-1} X^T Y
 \end{align*}
@@ -111,24 +111,135 @@ The posterior distribution of $w$ is proportional to the product of the likeliho
     &\propto \exp\left(-\frac{1}{2\sigma^2}\|Y - Xw\|^2\right)\exp\left(-\frac{1}{2\tau^2}\|w - 0\|^2\right)\\
     &= \exp\left(-\frac{1}{2\sigma^2}\|Xw - Y\|^2\right)\exp\left(-\frac{1}{2\tau^2}\|w\|^2\right)
 \end{align*}
-(We neglect the normalization constant $P(Y)$ since it does not depend on $w$.
-We also neglect the Gaussian constant normalizing factors since they will not change the location of the mode.)
+\emph{(We neglect the normalization constant $P(Y)$ since it does not depend on $w$.
+We also neglect both of the Gaussian normalizing factors since they do not affect the location of the mode.)}
 
 We want to find the mean of this posterior distribution.
-Since multiplying two Gaussian PDFs results in another Gaussian PDF, and since the mode of a Gaussian PDF is the mean, we can find the mean of this posterior by taking its negative and minimizing it with respect to $w$:
+Since multiplying two Gaussian PDFs results in another Gaussian PDF, and since the mode of a Gaussian PDF is also its mean, we can find the mean of this posterior by taking its negative and settings its derivative with respect to $w$ to zero.
+This value, $\hat{w}^{\text{Mean}}$, will be the (single) maximum of the (Gaussian) posterior distribution:
 \begin{align*}
     -log(p(w|Y)) &= -log\left(\exp\left(-\frac{1}{2\sigma^2}\|Xw - Y\|^2\right)\exp\left(-\frac{1}{2\tau^2}\|w\|^2\right)\right)\\
     &= \frac{1}{2\sigma^2}\|Xw - Y\|^2 + \frac{1}{2\tau^2}\|w\|^2\\
     0 &= \dfrac{\partial}{\partial w}\left(\frac{1}{2\sigma^2}\|Xw - Y\|^2 + \frac{1}{2\tau^2}\|w\|^2\right)\\
     0 &= \frac{1}{\sigma^2}X^T(Xw - Y) + \frac{1}{\tau^2}w\\
     0 &= \frac{1}{\sigma^2}X^TXw - \frac{1}{\sigma^2}X^TY + \frac{1}{\tau^2}w\\
-    \hat{w}^{\text{Mean}} &= \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}\frac{1}{\sigma^2}X^TY
+    \hat{w}^{\text{Mean}} &= \frac{1}{\sigma^2}\left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}X^TY
 \end{align*}
-Now, we can compare $\hat{w}^{\text{Mean}}$ to $\hat{w}^{\text{Ridge}}$:
+Now, we can find the value of \(\lambda\) that makes \(\hat{w}^{\text{Mean}}\) equal to \(\hat{w}^{\text{Ridge}}\):
 \begin{align*}
-    \hat{w}^{\text{Mean}} &\stackrel{?}{=} \hat{w}^{\text{Ridge}}\\
-    \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}\frac{1}{\sigma^2}X^TY &\stackrel{?}{=} (X^T X + \lambda I)^{-1} X^T Y\\
+    \hat{w}^{\text{Mean}} &= \hat{w}^{\text{Ridge}}\\
+    \frac{1}{\sigma^2}\left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}X^TY &= (X^T X + \lambda I)^{-1} X^T Y\\
+    \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}\frac{1}{\sigma^2}&= (X^T X + \lambda I)^{-1}\\
+    \frac{1}{\sigma^2}&= \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)(X^T X + \lambda I)^{-1}\\
+    \frac{1}{\sigma^2} (X^T X + \lambda I)&= \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)\\
+    \frac{1}{\sigma^2} X^T X + \frac{\lambda}{\sigma^2} I &= \frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\\
+    \frac{\lambda}{\sigma^2} I &= \frac{1}{\tau^2}I\\
+    \lambda &= \frac{\sigma^2}{\tau^2}
 \end{align*}
-These two expressions are equal if we set $\lambda = \frac{\sigma^2}{\tau^2}$.
+Thus, $\hat{w}^{\text{Mean}} = \hat{w}^{\text{Ridge}}$ if we set $\lambda = \frac{\sigma^2}{\tau^2}$.
+
+
+\section{Lasso estimator}
+
+The LASSO regression problem can be shown to be the following optimization problem:
+$$\min_{\vct{w} \in \R^d}\sum_{i=1}^m{(\vct{w}^T\vct{x}_i - y_i)^2} \text{ subject to } \|\vct{w}\|_1 \leq \lambda,$$
+where $\lambda > 0$ is a regularization parameter.
+Here, we develop a stochastic gradient descent (SDG) algorithm for this problem, which is useful when we have $m >> d$, where $d$ is the dimension of the parameter space.
+
+\subsection{a}
+Write $\vct{w} = \vct{w}^{+} - \vct{w}^{-}$, where $\vct{w}^{+}, \vct{w}^{-} \geq 0$ are the positive and negative parts of $\vct{w}$ respectively.
+Let $w_j$ be the $j$th component of $\vct{w}$.
+When $w_j \leq 0$, $w_j^{+} = 0$ and $w_j^{-} = -w_j$.
+Similarly, when $w_j \geq 0$, $w_j^{+} = w_j$ and $w_j^{-} = 0$.
+Find a quadratic function, $Q$, of $\vct{w}^{+}$ and $\vct{w}^{-}$ such that
+$$\min_{\vct{w}^{+},\vct{w}^{-} \geq 0}\lambda\sum_{i=1}^m{Q(\vct{w}^{+}, \vct{w}^{-})}$$
+is equivalent to the above LASSO problem.
+Expain the equivalence.
+
+\textbf{Answer:}
+
+[Mohri et al] show in Eqn. 11.33 that the LASSO problem can be rewritten as
+$$\min_{\vct{w}^{+},\vct{w}^{-} \geq 0}\sum_{i=1}^{m}\left((\vct{w}^{+} - \vct{w}^{-})\vct{x}_i - y_i\right)^2 + \lambda\sum_{j=1}^d{(w_j^{+} + w_j^{-})}.$$
+We can rewrite this in the required quadratic form as follows:
+\begin{align*}
+    \min_{\vct{w}^{+},\vct{w}^{-} \geq 0}&\lambda\left(\sum_{i=1}^{m}\frac{1}{\lambda}\left((\vct{w}^{+} - \vct{w}^{-})\vct{x}_i - y_i\right)^2 + \sum_{j=1}^d{(w_j^{+} + w_j^{-})}\right)\\
+    \min_{\vct{w}^{+},\vct{w}^{-} \geq 0}&\lambda\sum_{i=1}^{m}\left(\frac{1}{\lambda}\left((\vct{w}^{+} - \vct{w}^{-})\vct{x}_i - y_i\right)^2 + \frac{1}{m}\sum_{j=1}^d{(w_j^{+} + w_j^{-})}\right)
+\end{align*}
+In this form, we can see that
+$$Q(\vct{w}^{+}, \vct{w}^{-}) = \frac{1}{\lambda}\left((\vct{w}^{+} - \vct{w}^{-})\vct{x}_i - y_i\right)^2 + \frac{1}{m}\sum_{j=1}^d{(w_j^{+} + w_j^{-})}.$$
+
+\subsection{b}
+[Mohri et al Ex. 11.10] Derive a stochastic gradient descent algorithm for the quadratic program (with affine constraints) in part (a).
+
+\subsection{c}
+Suppose $X = [x_1, \cdots, x_m]^T$ is orthonormal and there exists a solution $w$ for $Xw = Y$, where $Y = [y_1, \cdots, y_m]^T$ with no more than $k$ non-zero elements.
+Can the SGD algorithm get arbitrarily close to $w$?
+Explain why or why not.
+
+\section{Logistic Regression}
+Logistic regression is named after the log-odds of success (the logit of the probability) defined as below:
+$$\ln\left(\frac{P[Y=1|X=x]}{P[Y=0|X=x]}\right),$$
+where
+$$P[Y=1|X=x] = \frac{\exp(w_0 + w^Tx)}{1 + \exp(w_0 + w^Tx)}.$$
+
+\subsection{a}
+Show that log-odds of success is a linear function of $X$.
+
+\subsection{b}
+Show that the logistic loss $L(z) = \log(1 + \exp(-z))$ is a convex function.
+
+\section{Programming: Recommendation System}
+
+\emph{Problem Summary:}
+A rating by user $u$ on movie $i$ is approximated by
+
+\begin{equation} \label{eq:5}
+M_{u,i} \approx \sum_{k=1}^{d}{U_{u,k}V_{i,k}}.
+\end{equation}
+We want to fit each element of $U$ and $V$ by minimizing squared reconstruction error over all training data points.
+That is, the objective function we minimize is given by
+\begin{equation} \label{eq:6}
+E(U,V) = \sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - U_uV_v^T)^2} = \sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k=1}^d{U_{u,k}V_{i,k}})^2},
+\end{equation}
+where $U_u$ is the $u$th row of $U$ and $V_i$ is the $i$th row of $V$.
+
+We use gradient descent:
+\begin{equation} \label{eq:8}
+    U_{v,k} \leftarrow U_{v,k} - \mu \frac{\partial E}{\partial U_{v,k}}, \quad V_{j,k} \leftarrow V_{j,k} - \mu \frac{\partial E}{\partial V_{j,k}},
+\end{equation}
+where $\mu$ is the update rate.
+
+\subsection{a}
+Derive the update formula in (\ref{eq:8}) by solving the partial derivatives.
+
+\textbf{Answer:}
+\begin{align*}
+    \frac{\partial E}{\partial U_{v,k}} &= \frac{\partial}{\partial U_{v,k}}\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\\
+    &= \sum_{u=1}^n\sum_{i=1}^m{\frac{\partial}{\partial U_{v,k}}(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\\
+    &= \sum_{u=1}^n\sum_{i=1}^m{2(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})\frac{\partial}{\partial U_{v,k}}(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})}\tag*{\text{Chain rule}}\\
+    &= \sum_{u=1}^n\sum_{i=1}^m{2(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})(-\frac{\partial}{\partial U_{v,k}}\sum_{k'=1}^d{U_{u,k'}V_{i,k'}})}\tag*{$\frac{\partial}{\partial U_{v,k}}M_{u,i} = 0$}\\
+    &= \sum_{i=1}^m{2(M_{v,i} - \sum_{k'=1}^d{U_{v,k'}V_{i,k'}})(-V_{i,k})}\tag*{$\frac{\partial}{\partial U_{v,k}}U_{u,k'}V_{i,k'} = 0, k' \neq k, u \neq v$}\\
+    &= -2\sum_{i=1}^m{(M_{v,i} - \sum_{k'=1}^d{U_{v,k'}V_{i,k'}})V_{i,k}}
+\end{align*}
+\begin{align*}
+    \frac{\partial E}{\partial V_{j,k}} &= \frac{\partial}{\partial V_{j,k}}\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\\
+    &= \sum_{u=1}^n\sum_{i=1}^m{2(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})(-\frac{\partial}{\partial V_{j,k}}\sum_{k'=1}^d{U_{u,k'}V_{i,k'}})}\tag*{\text{Same first three steps}}\\
+    &= \sum_{u=1}^n{2(M_{u,j} - \sum_{k'=1}^d{U_{u,k'}V_{j,k'}})(-U_{j,k})}\tag*{\text{$\frac{\partial}{\partial V_{j,k}}U_{u,k'}V_{j,k'} = 0, k' \neq k, i \neq j$}}\\
+    &= -2\sum_{u=1}^n{(M_{u,j} - \sum_{k'=1}^d{U_{u,k'}V_{j,k'}})U_{j,k}}
+\end{align*}
+
+\subsection{b}
+Redo part (a) using the regularized objective function below. 
+$$E(U,V) = \sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k=1}^d{U_{u,k}V_{i,k}})^2} + \mu\sum_{u, k}{U_{u,k}^2} + \lambda\sum_{i,k}^m{V_{i,k}^2}$$
+
+\begin{align*}
+    \frac{\partial E}{\partial U_{v,k}} &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2} + \mu\sum_{u=1}^n\sum_{k'=1}^d{U_{u,k'}^2} + \lambda\sum_{i=1}^m\sum_{k'=1}^d{V_{i,k'}^2}\right)\\
+    &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial U_{v,k}}\mu\sum_{u=1}^n\sum_{k'=1}^d{U_{u,k'}^2} + \frac{\partial}{\partial U_{v,k}}\lambda\sum_{i,k}^m{V_{i,k}^2}\\
+    &= -2\sum_{i=1}^m{(M_{v,i} - \sum_{k'=1}^d{U_{v,k'}V_{i,k'}})V_{i,k}} + 2\mu U_{v,k}
+\end{align*}
+\begin{align*}
+    \frac{\partial E}{\partial V_{j,k}} &= \frac{\partial}{\partial V_{j,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial U_{v,k}}\mu\sum_{u, k}{U_{u,k}^2} + \frac{\partial}{\partial U_{v,k}}\lambda\sum_{i=1}^m\sum_{k'=1}^d{V_{i,k'}^2}\\
+    &= -2\sum_{u=1}^n{(M_{u,j} - \sum_{k'=1}^d{U_{u,k'}V_{j,k'}})U_{j,k}} + 2\lambda V_{j,k}
+\end{align*}
 
 \end{document}
