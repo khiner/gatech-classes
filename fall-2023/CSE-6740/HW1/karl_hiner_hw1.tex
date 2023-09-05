@@ -229,16 +229,16 @@ Derive the update formula in (\ref{eq:8}) by solving the partial derivatives.
 \end{align*}
 
 \subsection{b}
-Redo part (a) using the regularized objective function below. 
+Redo part (a) using the regularized objective function below:
 $$E(U,V) = \sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k=1}^d{U_{u,k}V_{i,k}})^2} + \mu\sum_{u, k}{U_{u,k}^2} + \lambda\sum_{i,k}^m{V_{i,k}^2}$$
 
 \begin{align*}
-    \frac{\partial E}{\partial U_{v,k}} &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2} + \mu\sum_{u=1}^n\sum_{k'=1}^d{U_{u,k'}^2} + \lambda\sum_{i=1}^m\sum_{k'=1}^d{V_{i,k'}^2}\right)\\
-    &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial U_{v,k}}\mu\sum_{u=1}^n\sum_{k'=1}^d{U_{u,k'}^2} + \frac{\partial}{\partial U_{v,k}}\lambda\sum_{i,k}^m{V_{i,k}^2}\\
+    \frac{\partial E}{\partial U_{v,k}} &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2} + \mu\sum_{u, k'}{U_{u,k'}^2} + \lambda\sum_{i,k'}^m{V_{i,k'}^2}\right)\\
+    &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial U_{v,k}}\mu\sum_{u=1}^n\sum_{k'=1}^d{U_{u,k'}^2} + \frac{\partial}{\partial U_{v,k}}\lambda\sum_{i,k'}^m{V_{i,k'}^2}\\
     &= -2\sum_{i=1}^m{(M_{v,i} - \sum_{k'=1}^d{U_{v,k'}V_{i,k'}})V_{i,k}} + 2\mu U_{v,k}
 \end{align*}
 \begin{align*}
-    \frac{\partial E}{\partial V_{j,k}} &= \frac{\partial}{\partial V_{j,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial U_{v,k}}\mu\sum_{u, k}{U_{u,k}^2} + \frac{\partial}{\partial U_{v,k}}\lambda\sum_{i=1}^m\sum_{k'=1}^d{V_{i,k'}^2}\\
+    \frac{\partial E}{\partial V_{j,k}} &= \frac{\partial}{\partial V_{j,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial V_{j,k}}\mu\sum_{u, k'}{U_{u,k'}^2} + \frac{\partial}{\partial V_{j,k}}\lambda\sum_{i=1}^m\sum_{k'=1}^d{V_{i,k'}^2}\\
     &= -2\sum_{u=1}^n{(M_{u,j} - \sum_{k'=1}^d{U_{u,k'}V_{j,k'}})U_{j,k}} + 2\lambda V_{j,k}
 \end{align*}
 

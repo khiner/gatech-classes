@@ -11,3 +11,4 @@ __MACOSX
 **/**.blg
 **/**.out
 **/**.synctex.gz
+__pycache__
