@@ -1,5 +1,6 @@
 \documentclass{article}
 \input{../macro.tex}
+\usepackage{graphicx}
 
 \title{HW 1}
 \author{Karl Hiner}
@@ -115,29 +116,27 @@ The posterior distribution of $w$ is proportional to the product of the likeliho
 We also neglect both of the Gaussian normalizing factors since they do not affect the location of the mode.)}
 
 We want to find the mean of this posterior distribution.
-Since multiplying two Gaussian PDFs results in another Gaussian PDF, and since the mode of a Gaussian PDF is also its mean, we can find the mean of this posterior by taking its negative and settings its derivative with respect to $w$ to zero.
-This value, $\hat{w}^{\text{Mean}}$, will be the (single) maximum of the (Gaussian) posterior distribution:
+Since multiplying two Gaussian PDFs results in another Gaussian PDF, the posterior is also Gaussian.
+The mean of a Gaussian PDF is also its mode, which is the location of its maximum.
+We can find this (single) maximum, $\hat{w}^{\text{Mean}}$, by finding where its derivative with respect to $w$ is equal to zero.
 \begin{align*}
-    -log(p(w|Y)) &= -log\left(\exp\left(-\frac{1}{2\sigma^2}\|Xw - Y\|^2\right)\exp\left(-\frac{1}{2\tau^2}\|w\|^2\right)\right)\\
+    -log(p(w|Y)) &\propto -log\left(\exp\left(-\frac{1}{2\sigma^2}\|Xw - Y\|^2\right)\exp\left(-\frac{1}{2\tau^2}\|w\|^2\right)\right)\\
     &= \frac{1}{2\sigma^2}\|Xw - Y\|^2 + \frac{1}{2\tau^2}\|w\|^2\\
     0 &= \dfrac{\partial}{\partial w}\left(\frac{1}{2\sigma^2}\|Xw - Y\|^2 + \frac{1}{2\tau^2}\|w\|^2\right)\\
     0 &= \frac{1}{\sigma^2}X^T(Xw - Y) + \frac{1}{\tau^2}w\\
     0 &= \frac{1}{\sigma^2}X^TXw - \frac{1}{\sigma^2}X^TY + \frac{1}{\tau^2}w\\
     \hat{w}^{\text{Mean}} &= \frac{1}{\sigma^2}\left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}X^TY
 \end{align*}
-Now, we can find the value of \(\lambda\) that makes \(\hat{w}^{\text{Mean}}\) equal to \(\hat{w}^{\text{Ridge}}\):
+Now, we can find the value of \(\lambda\) equates \(\hat{w}^{\text{Mean}}\) and \(\hat{w}^{\text{Ridge}}\):
 \begin{align*}
     \hat{w}^{\text{Mean}} &= \hat{w}^{\text{Ridge}}\\
     \frac{1}{\sigma^2}\left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}X^TY &= (X^T X + \lambda I)^{-1} X^T Y\\
     \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)^{-1}\frac{1}{\sigma^2}&= (X^T X + \lambda I)^{-1}\\
-    \frac{1}{\sigma^2}&= \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)(X^T X + \lambda I)^{-1}\\
-    \frac{1}{\sigma^2} (X^T X + \lambda I)&= \left(\frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\right)\\
-    \frac{1}{\sigma^2} X^T X + \frac{\lambda}{\sigma^2} I &= \frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\\
+    \frac{1}{\sigma^2} (X^T X + \lambda I)&= \frac{1}{\sigma^2}X^TX + \frac{1}{\tau^2}I\\
     \frac{\lambda}{\sigma^2} I &= \frac{1}{\tau^2}I\\
     \lambda &= \frac{\sigma^2}{\tau^2}
 \end{align*}
 Thus, $\hat{w}^{\text{Mean}} = \hat{w}^{\text{Ridge}}$ if we set $\lambda = \frac{\sigma^2}{\tau^2}$.
-
 
 \section{Lasso estimator}
 
@@ -152,29 +151,60 @@ Let $w_j$ be the $j$th component of $\vct{w}$.
 When $w_j \leq 0$, $w_j^{+} = 0$ and $w_j^{-} = -w_j$.
 Similarly, when $w_j \geq 0$, $w_j^{+} = w_j$ and $w_j^{-} = 0$.
 Find a quadratic function, $Q$, of $\vct{w}^{+}$ and $\vct{w}^{-}$ such that
-$$\min_{\vct{w}^{+},\vct{w}^{-} \geq 0}\lambda\sum_{i=1}^m{Q(\vct{w}^{+}, \vct{w}^{-})}$$
+$$\min_{\vct{w}^{+},\vct{w}^{-} \geq 0}\sum_{i=1}^m{Q(\vct{w}^{+}, \vct{w}^{-})}$$
 is equivalent to the above LASSO problem.
 Expain the equivalence.
 
 \textbf{Answer:}
 
 [Mohri et al] show in Eqn. 11.33 that the LASSO problem can be rewritten as
-$$\min_{\vct{w}^{+},\vct{w}^{-} \geq 0}\sum_{i=1}^{m}\left((\vct{w}^{+} - \vct{w}^{-})\vct{x}_i - y_i\right)^2 + \lambda\sum_{j=1}^d{(w_j^{+} + w_j^{-})}.$$
-We can rewrite this in the required quadratic form as follows:
-\begin{align*}
-    \min_{\vct{w}^{+},\vct{w}^{-} \geq 0}&\lambda\left(\sum_{i=1}^{m}\frac{1}{\lambda}\left((\vct{w}^{+} - \vct{w}^{-})\vct{x}_i - y_i\right)^2 + \sum_{j=1}^d{(w_j^{+} + w_j^{-})}\right)\\
-    \min_{\vct{w}^{+},\vct{w}^{-} \geq 0}&\lambda\sum_{i=1}^{m}\left(\frac{1}{\lambda}\left((\vct{w}^{+} - \vct{w}^{-})\vct{x}_i - y_i\right)^2 + \frac{1}{m}\sum_{j=1}^d{(w_j^{+} + w_j^{-})}\right)
-\end{align*}
-In this form, we can see that
-$$Q(\vct{w}^{+}, \vct{w}^{-}) = \frac{1}{\lambda}\left((\vct{w}^{+} - \vct{w}^{-})\vct{x}_i - y_i\right)^2 + \frac{1}{m}\sum_{j=1}^d{(w_j^{+} + w_j^{-})}.$$
+$$\min_{\vct{w}^{+},\vct{w}^{-} \geq 0}\sum_{i=1}^{m}\left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)^2 + \lambda\sum_{j=1}^d{(w_j^{+} + w_j^{-})}.$$
+
+To see why these two formulations are equivalent, consider some optimal solution $\vct{w} = \vct{w}^{+} - \vct{w}^{-}$.
+Observe that if both $w^{+}_j$ and $w^{-}_j$ were greater than zero for some $j$, we could adjust both $w^{+}_j$ and $w^{-}_j$ by $-\delta_j = -\min(w^{+}_j, w^{-}_j) > 0$.
+
+This change would not affect the difference $w^{+}_j - w^{-}_j$, but would reduce the sum $w^{+}_j + w^{-}_j$ by $2\delta_j$, improving the regularization term.
+This implies the original solution was not optimal, which is a contradition.
+Thus, for any optimal solution $\vct{w}$, either $w^{+}_j = 0$ or $w^{-}_j = 0$ for all $j$, and we can conclude the following quadratic function admits the same solutions as the LASSO problem:
+$$Q(\vct{w}^{+}, \vct{w}^{-}) = \left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)^2 + \lambda\sum_{j=1}^d{(w_j^{+} + w_j^{-})}$$
 
 \subsection{b}
 [Mohri et al Ex. 11.10] Derive a stochastic gradient descent algorithm for the quadratic program (with affine constraints) in part (a).
+
+\textbf{Answer:}
+
+In stochastic gradient descent, we randomly choose a training pair $(\vct{x}_i, y_i)$ and compute the gradient with respect to this pair.
+
+Here is our quadratic objective function for a single training pair $(\vct{x}_i, y_i)$:
+$$Q(\vct{w}^{+}, \vct{w}^{-}) = \left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)^2 + \lambda\sum_{j=1}^d{(w_j^{+} + w_j^{-})}$$
+$Q$ has two parameters, $\vct{w}^{+}$ and $\vct{w}^{-}$, so we need to compute the partial derivatives with respect to each of these parameters:
+\begin{align*}
+    \frac{\partial Q}{\partial w^{+}_j} &= \frac{\partial}{\partial w^{+}_j}\left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)^2 + \frac{\partial}{\partial w^{+}_j}\lambda\sum_{j=1}^d{(w_j^{+} + w_j^{-})}\tag*{Split}\\
+    &= \frac{\partial}{\partial w^{+}_j}\left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)^2 + \lambda \vct{I}_d\tag*{Solve regularization term}\\
+    &=2\left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)\frac{\partial}{\partial w^{+}_j}\left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right) + \lambda\tag*{Chain rule}\\
+    &=2\left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)\frac{\partial}{\partial w^{+}_j}\left((\vct{w}^{+})^T\vct{x}_i - (\vct{w}^{-})^T\vct{x}_i\right) + \lambda\tag*{$y_i$ is constant}\\
+    &=2\left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)\frac{\partial}{\partial w^{+}_j}\left((\vct{w}^{+})^T\vct{x}_i\right) + \lambda\tag*{$(\vct{w}^{-})^T\vct{x}_i$ is constant}\\
+    &= 2\left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)x_{i,j} + \lambda\tag*{Only the $j$th component of $\vct{x}_i$ interacts with $w_j$}
+\end{align*}
+Similarly, we can derive
+$$\frac{\partial Q}{\partial w^{-}_j} = -2\left((\vct{w}^{+} - \vct{w}^{-})^T\vct{x}_i - y_i\right)x_{i,j} + \lambda.$$
+
+Our update also enforce the constraint, $\vct{w}^{+}, \vct{w}^{-} \geq 0$.
+Here is the final SGD update rule, where $\mu$ is the learning rate:
+$$w^{+}_j \leftarrow \max\left(0, w^{+}_j - \mu\frac{\partial Q}{\partial w^{+}_j}\right), w^{-}_j \leftarrow \max\left(0, w^{-}_j - \mu\frac{\partial Q}{\partial w^{-}_j}\right)$$
 
 \subsection{c}
 Suppose $X = [x_1, \cdots, x_m]^T$ is orthonormal and there exists a solution $w$ for $Xw = Y$, where $Y = [y_1, \cdots, y_m]^T$ with no more than $k$ non-zero elements.
 Can the SGD algorithm get arbitrarily close to $w$?
 Explain why or why not.
+
+Based on the theorem of stable recovery of sparse $w$ from Candes, Romberg, and Tao (2004), if there is a true sparse $w$ with fewer than $S$ entries equal to zero, where $X$ satisfies S-restricted isometry, such that $Xw = Y$, then an estimator subject to $\arg\min_w \|w\|_1$ can exactly recover the true $w$.
+
+Any orthonormal matrix $X$ satisfies S-restricted isometry for any $S$.
+Specifically, since an othonormal matrix $X$ preserves the length of all vectors, $\|X\vct{x}\| = \|\vct{x}\|$, then $\delta_S = 0$ for any $S$ in
+$$(1 - \delta_S)\|\vct{x}\|^2 \leq \|X\vct{x}\|^2 \leq (1 + \delta_S)\|\vct{x}\|^2.$$
+With regard to the ability of SGD to recover this $w$, note that $Q$ is the Lagrangian of the LASSO problem, composed of a quadratic term (with a unique global minimum) and the L1 regularization term required for sparse recovery.
+Thus, there exists a choice of regularization parameter $\lambda$, and a sufficiently small learning rate $\mu$, s.t. the SGD algorithm will, with high probability, converge to the global minimum of $Q$, and thus the true $w$.
 
 \section{Logistic Regression}
 Logistic regression is named after the log-odds of success (the logit of the probability) defined as below:
@@ -185,8 +215,22 @@ $$P[Y=1|X=x] = \frac{\exp(w_0 + w^Tx)}{1 + \exp(w_0 + w^Tx)}.$$
 \subsection{a}
 Show that log-odds of success is a linear function of $X$.
 
+\begin{align*}
+    \ln\left(\frac{P[Y=1|X=x]}{P[Y=0|X=x]}\right) &= \ln\left(\frac{P[Y=1|X=x]}{1 - P[Y=1|X=x]}\right)\tag*{Since $Y$ has two possible values}\\
+    &= \ln\left(\frac{\frac{\exp(w_0 + w^Tx)}{1 + \exp(w_0 + w^Tx)}}{1 - \frac{\exp(w_0 + w^Tx)}{1 + \exp(w_0 + w^Tx)}}\right)\tag*{Substitute for $P[Y=1|X=x]$}\\
+    &= \ln\left(\exp(w_0 + w^Tx)\right)\tag*{Simplify}\\
+    &= w_0 + w^Tx\tag*{$\ln\left(e^x\right) = x$}
+\end{align*}
+Since vector addition and dot product are both linear functions, $w_0 + w^Tx$ is also a linear function of $X$.
+
 \subsection{b}
 Show that the logistic loss $L(z) = \log(1 + \exp(-z))$ is a convex function.
+
+If we show that the second derivative of $L(z)$ is nonnegative for all $z$, then we have shown that $L(z)$ is convex.
+$$L'(z) = \frac{-\exp(-z)}{1 + \exp(-z)}$$
+$$L''(z) = \frac{\exp(-z)}{(1 + \exp(-z))^2}$$
+
+Since \(L''(z) > 0\) for all \(z\), \(L(z)\) is a convex function.
 
 \section{Programming: Recommendation System}
 
@@ -230,16 +274,54 @@ Derive the update formula in (\ref{eq:8}) by solving the partial derivatives.
 
 \subsection{b}
 Redo part (a) using the regularized objective function below:
-$$E(U,V) = \sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k=1}^d{U_{u,k}V_{i,k}})^2} + \mu\sum_{u, k}{U_{u,k}^2} + \lambda\sum_{i,k}^m{V_{i,k}^2}$$
+$$E(U,V) = \sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k=1}^d{U_{u,k}V_{i,k}})^2} + \lambda\sum_{u, k}{U_{u,k}^2} + \lambda\sum_{i,k}^m{V_{i,k}^2}$$
 
 \begin{align*}
-    \frac{\partial E}{\partial U_{v,k}} &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2} + \mu\sum_{u, k'}{U_{u,k'}^2} + \lambda\sum_{i,k'}^m{V_{i,k'}^2}\right)\\
-    &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial U_{v,k}}\mu\sum_{u=1}^n\sum_{k'=1}^d{U_{u,k'}^2} + \frac{\partial}{\partial U_{v,k}}\lambda\sum_{i,k'}^m{V_{i,k'}^2}\\
-    &= -2\sum_{i=1}^m{(M_{v,i} - \sum_{k'=1}^d{U_{v,k'}V_{i,k'}})V_{i,k}} + 2\mu U_{v,k}
+    \frac{\partial E}{\partial U_{v,k}} &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2} + \lambda\sum_{u, k'}{U_{u,k'}^2} + \lambda\sum_{i,k'}^m{V_{i,k'}^2}\right)\\
+    &= \frac{\partial}{\partial U_{v,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial U_{v,k}}\lambda\sum_{u=1}^n\sum_{k'=1}^d{U_{u,k'}^2} + \frac{\partial}{\partial U_{v,k}}\lambda\sum_{i,k'}^m{V_{i,k'}^2}\\
+    &= -2\sum_{i=1}^m{(M_{v,i} - \sum_{k'=1}^d{U_{v,k'}V_{i,k'}})V_{i,k}} + 2\lambda U_{v,k}
 \end{align*}
 \begin{align*}
-    \frac{\partial E}{\partial V_{j,k}} &= \frac{\partial}{\partial V_{j,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial V_{j,k}}\mu\sum_{u, k'}{U_{u,k'}^2} + \frac{\partial}{\partial V_{j,k}}\lambda\sum_{i=1}^m\sum_{k'=1}^d{V_{i,k'}^2}\\
+    \frac{\partial E}{\partial V_{j,k}} &= \frac{\partial}{\partial V_{j,k}}\left(\sum_{u=1}^n\sum_{i=1}^m{(M_{u,i} - \sum_{k'=1}^d{U_{u,k'}V_{i,k'}})^2}\right) + \frac{\partial}{\partial V_{j,k}}\lambda\sum_{u, k'}{U_{u,k'}^2} + \frac{\partial}{\partial V_{j,k}}\lambda\sum_{i=1}^m\sum_{k'=1}^d{V_{i,k'}^2}\\
     &= -2\sum_{u=1}^n{(M_{u,j} - \sum_{k'=1}^d{U_{u,k'}V_{j,k'}})U_{j,k}} + 2\lambda V_{j,k}
 \end{align*}
+
+\subsection{5.4 Report}
+
+\includegraphics[width=\textwidth]{evaluate}
+
+As shown in the chart above, as \verb|lowRank| increases, the training error decreases monotonically, since the model has more capacity to fit the training data.
+However, the error on the test set starts to increase after \verb|lowRank| = 5, indicating that the model is overfitting the training data.
+I also found that training for too many iterations resulted in higher test errors, even for small values of \verb|lowRank|.
+Thus, using a stopping criteria based on the error, rather than a fixed number of steps across all values of \verb|lowRank|, was important to reduce overfitting.
+
+I used grid search to find the best values of $\mu$ and $\lambda$, using a \verb|lowRank| of 5 and running each iteration to "convergence" (see discussion of error-delta stopping criteria below), or until a maximum number of 1500 gradient descent steps.
+I chose to fix the rank at the highest evaluated value of 5 to provide the most degrees of freedom to the model, and thus the most potential for it to (over)fit the data and provide a good signal for evaluating the regularization parameter $\lambda$.
+I used the provided train/test split for each run, and did not perform cross-validation.
+Here is the relevant code for my hyperparameter search:
+
+\begin{verbatim}
+lr = 5 # "Low-rank". Using the highest evaluated value.
+max_iter = 1000
+
+best_learn_rate = 0
+best_reg_coef = 0
+best_rmse = float('inf')
+for learn_rate in [0.0001, 0.0002, 0.0004, 0.0005, 0.0008]:
+    for reg_coef in [0.001, 0.01, 0.02, 0.04, 0.1, 0.2, 0.4]:
+        U, V = run(rate_mat, lr, True, learn_rate, reg_coef, max_iter)
+        rmse_val = rmse(U, V, test_mat)
+        if rmse_val < best_rmse:
+            best_rmse = rmse_val
+            best_learn_rate = learn_rate
+            best_reg_coef = reg_coef
+
+print('Learn rate: {}, Reg coef: {}'.format(best_learn_rate, best_reg_coef)) 
+\end{verbatim}
+
+The best performing values tested for $(\mu, \lambda)$ were $(0.0001, 0.2)$.
+
+My model stop stops gradient descent when the error delta between iterations is less than $10^{-4}$, or when reaching the maximum number of iterations, whichever comes first.
+I chose this error delta value empirically by manually searching for values that stop iterating nearly where the validation error (over the provided "test" set) starts to increase for various values of \verb|lowRank|.
 
 \end{document}
