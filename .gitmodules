@@ -17,3 +17,6 @@
 [submodule "spring-2023/CSE-6220/PA3"]
 	path = spring-2023/CSE-6220/PA3
 	url = git@github.com:GATech-CSE-6220-Spring-2023-Group/PA3.git
+[submodule "fall-2023/CSE-8803/GeoLDM/GeoLDM"]
+	path = fall-2023/CSE-8803/GeoLDM/GeoLDM
+	url = https://github.com/MinkaiXu/GeoLDMadd

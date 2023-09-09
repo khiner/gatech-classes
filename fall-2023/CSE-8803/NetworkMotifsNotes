@@ -15,7 +15,7 @@ To do this, we developed an algorithm for detecting network motifs: recurring, s
 
 Key definition for network motifs: Recurring, significant patterns of interconnections.
 
-"Here we generalize this approach to virtually any type of connectivity graph and find the striking appearance of motifs in networks representing a broad range of natural phenomena."
+"Here we generalize this approach to virtually any type of connectivity graph and find the striking appearance of motifs in networks representing a broad range of natural phenomena." - Is it really "striking"? Take a poll of the class beforehand - which of the 3-node motifs to we believe will be most common in e.g. the transcription network.
 
 "Patterns that are functionally important but not statistically significant could exist, which would be missed by our approach."
 
@@ -37,7 +37,6 @@ Are 3-node subgraphs expressive enough that finding a statistically highly occur
 These two principles would also lead us to #5 (feedforward loop).
 So, I don't think we should reasonably assign a uniform prior across all possible connections, and find it slightly misleading to frame the findings with surprise at how non-uniform the actual distribution over motifs is.
 
-
 Also, it could be that e.g. many 3-node network motifs are present in a >3-node motif that isn't studied here. If this were the case, positing explanations like the following may not be appropriate:
 
 "The feedforward loop motif common to both types of networks may play a functional role in information processing. One possible function of this
@@ -54,6 +53,15 @@ Put more generally, I think we need to look at higher-order properties of networ
 Again, in the last paragraph, the authors interpret network motifs in two different ways - as "elementary computational circuits" (which I think is unjustified and likely incorrect), and another milder interpretation as "structures that arise because of the special constrains under which the network has evolved".
 
 
+**I can crisply demonstrate my issue here by finding two or more networks with vastly different properties/goals/contexts, with intuitively obvious structure when wee look at larger neighborhoods than 3/4, but with similar distributions of 3/4 node motifs.**
+The idea is to challenge the general conclusion/interpretation of the paper that if we find that graphs in different domains share similar motif distributions, this may reflect similar underlying organizational principles. "... motifs can define broad classes of networks, each with specific types of elementary structures."
+
+Ideas for networks to investigate:
+- Ladders
+- CNNs
+- Spider web
+- 
+
 ## Need further understanding
 
 "Edges are directed from a gene that encodes for a transcription factor protein to a gene transcriptionally regulated by that transcription factor."
@@ -63,4 +71,9 @@ Need to fully understand "gene transcriptionally regulated by that transcription
 
 ## Potential future research
 
-I think the natural practical question what how graph neural networks perform with these motifs imposed as priors over the node connectivity.
+A natural practical question is how graph neural networks perform with these motifs imposed as priors over the node connectivity.
+
+## Presentation
+
+Call back to lecture - triangles are important: friends of friends are my friends. This is the feedforward loop. Also, same lecture we talked about clustering coefficients, and how rand. networks have smaller cluster coeff. This is related. ALSO in that same lecture, we saw Erdos/Renyi random graphs.
+
