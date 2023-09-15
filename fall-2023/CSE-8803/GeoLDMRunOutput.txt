@@ -1,0 +1,268 @@
+$ python eval_sample.py --model_path outputs/qm9_latent2 --n_samples 100
+
+Namespace(exp_name='rld_fixsig_enc1_latent2', train_diffusion=True, ae_path=None, trainable_ae=True, model='egnn_dynamics', probabilistic_model='diffusion', latent_nf=2, kl_weight=0.01, diffusion_steps=1000, diffusion_noise_schedule='polynomial_2', diffusion_noise_precision=1e-05, diffusion_loss_type='l2', n_epochs=3000, batch_size=64, lr=0.0001, brute_force=False, actnorm=True, break_train_epoch=False, dp=True, condition_time=True, clip_grad=True, trace='hutch', n_layers=9, inv_sublayers=1, nf=256, tanh=True, attention=True, norm_constant=1, sin_embedding=False, ode_regularization=0.001, dataset='qm9', datadir='qm9/temp', filter_n_atoms=None, dequantization='argmax_variational', n_report_steps=1, wandb_usr=None, no_wandb=False, online=True, no_cuda=False, save_model=True, generate_epochs=1, num_workers=0, test_epochs=20, data_augmentation=False, conditioning=[], resume=None, start_epoch=0, ema_decay=0.9999, augment_noise=0, n_stability_samples=1000, normalize_factors=[1, 4, 10], remove_h=False, include_charges=True, visualize_every_batch=100000000.0, normalization_factor=1, aggregation_method='sum', cuda=False, context_node_nf=0, current_epoch=2721, device=device(type='cpu'))
+dict_keys([0, 1, 6, 7, 8, 9])
+dict_keys([0, 1, 6, 7, 8, 9])
+dict_keys([0, 1, 6, 7, 8, 9])
+Entropy of n_nodes: H[N] -2.475700616836548
+Autoencoder models are _not_ conditioned on time.
+alphas2 [9.99990000e-01 9.99988000e-01 9.99982000e-01 ... 2.59676966e-05
+ 1.39959211e-05 1.00039959e-05]
+gamma [-11.51291546 -11.33059532 -10.92513058 ...  10.55863126  11.17673063
+  11.51251595]
+Sampling handful of molecules.
+Sampling stable molecules.
+
+
+Found stable mol.
+Found stable mol.
+Found stable mol.
+Found stable mol.
+Found stable mol.
+Found stable mol.
+Found stable mol.
+Found stable mol.
+Found stable mol.
+Found stable mol.
+Visualizing molecules.
+Average distance between atoms 3.6492795944213867
+Average distance between atoms 3.354463815689087
+Average distance between atoms 3.1775972843170166
+Average distance between atoms 2.972214460372925
+Average distance between atoms 3.4704604148864746
+Average distance between atoms 3.001070261001587
+Average distance between atoms 3.2692198753356934
+Average distance between atoms 2.950650453567505
+Average distance between atoms 3.1831679344177246
+Average distance between atoms 3.3063015937805176
+Average distance between atoms 3.717552900314331
+Average distance between atoms 3.530945301055908
+Average distance between atoms 3.31319522857666
+Average distance between atoms 3.2729177474975586
+Average distance between atoms 2.9341843128204346
+Average distance between atoms 3.5052011013031006
+Average distance between atoms 3.3520891666412354
+Average distance between atoms 2.8854587078094482
+Average distance between atoms 3.039623975753784
+Average distance between atoms 3.3041813373565674
+Average distance between atoms 3.169421672821045
+Average distance between atoms 3.4128997325897217
+Average distance between atoms 3.06188702583313
+Average distance between atoms 3.0872244834899902
+Average distance between atoms 3.6380062103271484
+Average distance between atoms 3.4018707275390625
+Average distance between atoms 2.706681489944458
+Average distance between atoms 3.2466015815734863
+Average distance between atoms 3.157569646835327
+Average distance between atoms 2.9974968433380127
+Average distance between atoms 3.4917943477630615
+Average distance between atoms 3.344197988510132
+Average distance between atoms 3.061521530151367
+Average distance between atoms 2.8764142990112305
+Average distance between atoms 3.124061346054077
+Average distance between atoms 2.816925048828125
+Average distance between atoms 3.206638813018799
+Average distance between atoms 2.861034870147705
+Average distance between atoms 2.891834020614624
+Average distance between atoms 3.4677133560180664
+Sampling visualization chain.
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
+Found stable molecule to visualize :)
+Creating gif with 108 images
