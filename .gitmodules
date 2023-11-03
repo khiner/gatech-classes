@@ -20,3 +20,6 @@
 [submodule "fall-2023/CSE-8803/GeoLDM/GeoLDM"]
 	path = fall-2023/CSE-8803/GeoLDM/GeoLDM
 	url = https://github.com/MinkaiXu/GeoLDMadd
+[submodule "fall-2023/CSE-8803/egnn-pytorch"]
+	path = fall-2023/CSE-8803/egnn-pytorch
+	url = git@github.com:lucidrains/egnn-pytorch.git

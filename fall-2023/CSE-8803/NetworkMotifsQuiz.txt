@@ -1,0 +1,19 @@
+Quiz: Network Motifs: Simple Building Blocks of Complex Networks
+
+Author: Karl Hiner
+
+Correct answers are signified with an asterisk (*).
+
+1. Network motifs aim to characterize classes of networks by analyzing _____ connectivity patterns.
+a) Local *
+b) Global
+
+2. To identify network motifs, the authors investigated connected subgraphs of what two sizes (number of connected nodes in the subgraphs):
+a) 2, 3
+b) 3, 4 *
+c) 4, 5
+d) 5, 6
+
+3. The authors construct "randomized graphs" to compare with real networks to identify motifs. In their method, each node in a randomized graph has the same:
+a) Neighbors
+b) Incoming/Outgoing edges *
