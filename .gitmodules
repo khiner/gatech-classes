@@ -23,3 +23,9 @@
 [submodule "fall-2023/CSE-8803/egnn-pytorch"]
 	path = fall-2023/CSE-8803/egnn-pytorch
 	url = git@github.com:lucidrains/egnn-pytorch.git
+[submodule "fall-2023/CSE-8803/FinalProject/Paragraph"]
+	path = fall-2023/CSE-8803/FinalProject/Paragraph
+	url = https://github.com/oxpig/Paragraph.git
+[submodule "spring-2024/phys-6260/homework-1-khiner"]
+	path = spring-2024/phys-6260/homework-1-khiner
+	url = git@github.com:gt-phys6260-sp22/homework-1-khiner.git
