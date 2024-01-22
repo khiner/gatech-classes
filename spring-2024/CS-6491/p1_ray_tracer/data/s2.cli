@@ -1,0 +1,31 @@
+# three triangles at different distances from the viewer
+
+fov 90
+background .3 .3 .9
+light 0 0 5 1 1 1
+
+surface  0.1 0.8 0.1
+
+begin
+vertex -2 -2 -3
+vertex  2 -2 -3
+vertex  0  2 -3
+end
+
+surface  0.8 0.1 0.1
+
+begin
+vertex -1 -1 -2
+vertex  1 -1 -2
+vertex  0  1 -2
+end
+
+surface  0.1 0.1 0.8
+
+begin
+vertex -4 -4 -5
+vertex  4 -4 -5
+vertex  0  4 -5
+end
+
+render

@@ -1,0 +1,130 @@
+# an icosahedron (20 triangles)
+
+fov 60
+background .3 .3 .9
+light 4 4 8  .7 .7 .7
+
+surface 1 1 1
+
+begin
+vertex 0.525731 0.850651 -3
+vertex 0.850651 0 -3.525731
+vertex 0.850651 0 -2.474269
+end
+
+begin
+vertex 0.850651 0 -3.525731
+vertex 0.525731 -0.850651 -3
+vertex 0.850651 0 -2.474269
+end
+
+begin
+vertex -0.525731 0.850651 -3
+vertex -0.850651 0 -2.474269
+vertex -0.850651 0 -3.525731
+end
+
+begin
+vertex -0.525731 -0.850651 -3
+vertex -0.850651 0 -3.525731
+vertex -0.850651 0 -2.474269
+end
+
+begin
+vertex 0 0.525731 -2.149349
+vertex -0.525731 0.850651 -3
+vertex 0.525731 0.850651 -3
+end
+
+begin
+vertex 0 0.525731 -3.850651
+vertex 0.525731 0.850651 -3
+vertex -0.525731 0.850651 -3
+end
+
+begin
+vertex 0.850651 0 -3.525731
+vertex 0 0.525731 -3.850651
+vertex 0 -0.525731 -3.850651
+end
+
+begin
+vertex -0.850651 0 -3.525731
+vertex 0 -0.525731 -3.850651
+vertex 0 0.525731 -3.850651
+end
+
+begin
+vertex 0 -0.525731 -3.850651
+vertex -0.525731 -0.850651 -3
+vertex 0.525731 -0.850651 -3
+end
+
+begin
+vertex 0 -0.525731 -2.149349
+vertex 0.525731 -0.850651 -3
+vertex -0.525731 -0.850651 -3
+end
+
+begin
+vertex 0.850651 0 -2.474269
+vertex 0 -0.525731 -2.149349
+vertex 0 0.525731 -2.149349
+end
+
+begin
+vertex -0.850651 0 -2.474269
+vertex 0 0.525731 -2.149349
+vertex 0 -0.525731 -2.149349
+end
+
+begin
+vertex 0 0.525731 -3.850651
+vertex 0.850651 0 -3.525731
+vertex 0.525731 0.850651 -3
+end
+
+begin
+vertex 0 0.525731 -2.149349
+vertex 0.525731 0.850651 -3
+vertex 0.850651 0 -2.474269
+end
+
+begin
+vertex 0 0.525731 -3.850651
+vertex -0.525731 0.850651 -3
+vertex -0.850651 0 -3.525731
+end
+
+begin
+vertex 0 0.525731 -2.149349
+vertex -0.850651 0 -2.474269
+vertex -0.525731 0.850651 -3
+end
+
+begin
+vertex 0 -0.525731 -3.850651
+vertex 0.525731 -0.850651 -3
+vertex 0.850651 0 -3.525731
+end
+
+begin
+vertex 0 -0.525731 -2.149349
+vertex 0.850651 0 -2.474269
+vertex 0.525731 -0.850651 -3
+end
+
+begin
+vertex -0.525731 -0.850651 -3
+vertex 0 -0.525731 -3.850651
+vertex -0.850651 0 -3.525731
+end
+
+begin
+vertex 0 -0.525731 -2.149349
+vertex -0.525731 -0.850651 -3
+vertex -0.850651 0 -2.474269
+end
+
+render
+

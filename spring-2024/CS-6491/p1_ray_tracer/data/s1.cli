@@ -1,0 +1,15 @@
+# one triangle
+
+fov 90
+background .3 .3 .9
+light 0 0 5 1 1 1
+
+surface  0.8 0.1 0.1
+
+begin
+vertex -1 -1 -3
+vertex  1 -1 -3
+vertex  0  1 -3
+end
+
+render

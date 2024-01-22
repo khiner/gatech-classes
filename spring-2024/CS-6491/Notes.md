@@ -6,10 +6,10 @@
 
 x(t) = x_0 + t(x_1 - x_0)
 
-Translate x \in [0,w] -> x' \in [-k,k] (the view plane for hw 1A)
+Translate x \in [0,w], y \in [0,h] -> x', y' \in [-k,k] (the view plane)
 
-x' = (x - w/2) \* (2k/w)
-y'
+x' = (x - w/2)*(2k/w)
+y' = (y - h/2)*(-2k/h)
 
 ### Ray triangle intersection
 
@@ -54,3 +54,23 @@ side(A,B,P,N) = sign of N _ (AP \cross AB)
 side(B,C,P,N) = ...
 side(C,A,P,N) = ...
 All must be equal sign.
+
+## Fri Jan 19
+
+Scene graphs:
+    Scene 1: (TS) -> P
+    P'' = T * S * P
+    Scene 2: ST -> P
+    P'' = S * T * P
+
+Box with extent 1, in 3D centered at origin
+w.t. move it by T = translate(0,0,-10)
+
+push()
+translate(0,0,-10)
+box()
+pop()
+
+matrix stack
+top of stack = current transformation matrix C
+initially, C = I
