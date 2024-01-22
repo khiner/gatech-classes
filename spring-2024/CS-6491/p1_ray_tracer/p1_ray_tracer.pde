@@ -4,6 +4,7 @@
 // you parse the scene description (.cli) files.
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,7 +26,115 @@ void keyPressed() {
   }
 }
 
-color unitColor(float r, float g, float b) { return color(r * 255, g * 255, b * 255); }
+/**** Scene description ****/
+
+class Color {
+  float r, g, b; // In range [0, 1]
+
+  Color(float r, float g, float b) {
+    this.r = r;
+    this.g = g;
+    this.b = b;
+  }
+  
+  Color add(Color other) { return new Color(r + other.r, g + other.g, b + other.b); }
+  Color add(float scalar) { return new Color(r + scalar, g + scalar, b + scalar); }
+
+  Color mult(Color other) { return new Color(r * other.r, g * other.g, b * other.b); }
+  Color mult(float scalar) { return new Color(r * scalar, g * scalar, b * scalar); }
+
+  color get() { return color(r * 255, g * 255, b * 255); }
+}
+
+
+class Light {
+  PVector position;
+  Color c;
+
+  Light(PVector position, Color c) {
+    this.position = position;
+    this.c = c;
+  }
+}
+
+class Surface {
+  Color diffuse;
+  
+  Surface(Color diffuse) {
+    this.diffuse = diffuse;
+  }
+}
+
+class Triangle {
+  Surface surface;
+  PVector p1, p2, p3;
+
+  Triangle(Surface surface, PVector p1, PVector p2, PVector p3) {
+    this.p1 = p1;
+    this.p2 = p2;
+    this.p3 = p3;
+    this.surface = surface;
+  }
+
+  PVector normal() {
+    final PVector edge1 = PVector.sub(p2, p1), edge2 = PVector.sub(p3, p1);
+    return edge1.cross(edge2).normalize();
+  }
+}
+
+class Ray {
+  PVector origin, direction;
+  
+  Ray(PVector origin, PVector direction) {
+    this.origin = origin;
+    this.direction = direction;
+  }
+ 
+  // Interpolate along the ray to find the point at distance `t`.
+  PVector interp(float t) {
+    return PVector.add(origin, PVector.mult(direction, t));
+  }
+}
+
+class Hit {
+  Ray ray;
+  float t; // Distance along the ray
+  PVector point; // Intersection point
+  Triangle triangle;
+  
+  Hit(Ray ray, float t, Triangle triangle) {
+    this.ray = ray;
+    this.t = t;
+    this.triangle = triangle;
+    this.point = ray.interp(t);
+  }
+}
+
+class Scene {
+  float fovDegrees;
+  Color backgroundColor;
+  List<Light> lights;
+  List<Triangle> triangles;
+
+  Scene() {
+    fovDegrees = 0;
+    backgroundColor = new Color(0, 0, 0);
+    lights = new ArrayList();
+    triangles = new ArrayList();
+  }
+
+  // Returns a hit for the intersecting triangle closest to the ray's origin,
+  // or `null` if the ray does not intersect any triangle.
+  Hit raycast(Ray ray) {
+    return triangles.stream()
+      .map(triangle -> rayTriangleIntersection(ray, triangle))
+      .filter(Objects::nonNull)
+      .min(Comparator.comparingDouble(hit -> hit.t))
+      .orElse(null);
+  }
+}
+
+/**** Scene commands/parsing ****/
 
 enum SceneCommandType {
   Background,
@@ -38,33 +147,11 @@ enum SceneCommandType {
   Render
 }
 
-class Light {
-  PVector position;
-  color c;
-
-  Light(PVector position, color c) {
-    this.position = position;
-    this.c = c;
-  }
-  Light() {
-    this(new PVector(0, 0, 0), unitColor(1, 1, 1));
-  }
-}
-
-class Surface {
-  color diffuse;
-  
-  Surface(color diffuse) {
-    this.diffuse = diffuse;
-  }
-  Surface() {
-    this(color(0, 0, 0));
-  }
-}
-
+// A `SceneCommand` is a complete, immutable, structured parsing of a textual scene command (a line in a `.cli` file).
+// All commands with data provide a single `get()` method returning an instance of their respective data type.
 abstract class SceneCommand {
-  String name;
-  SceneCommandType type;
+  final String name;
+  final SceneCommandType type;
 
   SceneCommand(String name, SceneCommandType type) {
     this.name = name;
@@ -73,18 +160,18 @@ abstract class SceneCommand {
 }
 
 class BackgroundCommand extends SceneCommand {
-  color c;
+  final Color c;
 
   BackgroundCommand(String name, SceneCommandType type, float r, float g, float b) {
     super(name, type);
-    this.c = unitColor(r, g, b);
+    this.c = new Color(r, g, b);
   }
   
-  color get() { return c; }
+  Color get() { return c; }
 }
 
 class FovCommand extends SceneCommand {
-  float degrees;
+  final float degrees;
 
   FovCommand(String name, SceneCommandType type, float degrees) {
     super(name, type);
@@ -95,22 +182,22 @@ class FovCommand extends SceneCommand {
 }
 
 class LightCommand extends SceneCommand {
-  Light light;
+  final Light light;
 
   LightCommand(String name, SceneCommandType type, float x, float y, float z, float r, float g, float b) {
     super(name, type);
-    this.light = new Light(new PVector(x, y, z), unitColor(r, g, b));
+    this.light = new Light(new PVector(x, y, z), new Color(r, g, b));
   }
   
   Light get() { return light; }
 }
 
 class SurfaceCommand extends SceneCommand {
-  Surface surface;
+  final Surface surface;
 
   SurfaceCommand(String name, SceneCommandType type, float dr, float dg, float db) {
     super(name, type);
-    this.surface = new Surface(unitColor(dr, dg, db));
+    this.surface = new Surface(new Color(dr, dg, db));
   }
   
   Surface get() { return surface; }
@@ -121,7 +208,7 @@ class BeginCommand extends SceneCommand {
 }
 
 class VertexCommand extends SceneCommand {
-  PVector position;
+  final PVector position;
 
   VertexCommand(String name, SceneCommandType type, float x, float y, float z) {
     super(name, type);
@@ -166,15 +253,14 @@ class SceneCommandParser {
         throw new IllegalArgumentException("Unknown command type: " + name);
     }
   }
+
   SceneCommand parseTokens(String tokens) { return parseTokens(splitTokens(tokens, " ")); }
 
-
+  // Assumes `filePath` is relative to `./data/`.
   List<SceneCommand> parseFile(String filePath) {
-    println("Parsing '" + filePath + "'");
-
-    String[] lines = loadStrings(filePath);
+    final String[] lines = loadStrings(filePath);
     if (lines == null) {
-      println("Error! Failed to read the file.");
+      println("Error! Failed to read the file " + filePath);
       return new ArrayList();
     }
 
@@ -198,56 +284,17 @@ class SceneCommandParser {
   }
 };
 
-class Triangle {
-    PVector p1, p2, p3;
-
-    Triangle(PVector p1, PVector p2, PVector p3) {
-        this.p1 = p1;
-        this.p2 = p2;
-        this.p3 = p3;
-    }
-}
-
-class Scene {
-  float fovDegrees;
-  color backgroundColor;
-  Light light;
-  Surface surface;
-  List<Triangle> triangles;
-
-  Scene() {
-    fovDegrees = 0;
-    backgroundColor = color(0, 0, 0);
-    light = new Light();
-    surface = new Surface();
-    triangles = new ArrayList();
-  }
-
-  // Returns the closest intersecting triangle to the ray's origin,
-  // or `null` if the ray does not intersect any triangles.
-  Triangle raycastTriangle(Ray ray) {
-    Triangle result = null;
-    float closestT = Float.MAX_VALUE;
-    for (Triangle triangle : triangles) {
-      float t = rayTriangleIntersection(ray, triangle);
-      if (t > 0 && t < closestT) {
-        closestT = t;
-        result = triangle;
-      }
-    }
-
-    return result;
-  }
-}
-
 // This routine parses the text in a scene description file into a list of `SceneCommand`s,
 // creates a new scene and iterates through the commands, updating and drawing the scene.
 void interpreter(String filePath) {
-  SceneCommandParser parser = new SceneCommandParser();
+  final SceneCommandParser parser = new SceneCommandParser();
   final List<SceneCommand> commands = parser.parseFile(filePath);
+
+  // Mutable scene, populated and rendered according to the parsed commands.
   Scene scene = new Scene();
-  
-  PVector tri_1 = null, tri_2 = null, tri_3 = null;
+  // Active accumulated triangle state:
+  Surface surface = null;
+  PVector tri_a = null, tri_b = null, tri_c = null;
 
   for (SceneCommand command : commands) {
     switch (command.type) {
@@ -258,24 +305,26 @@ void interpreter(String filePath) {
         scene.fovDegrees = ((FovCommand)command).get();
         break;
       case Light:
-        scene.light = ((LightCommand)command).get();
+        scene.lights.add(((LightCommand)command).get());
         break;
       case Surface:
-        scene.surface = ((SurfaceCommand)command).get();
+        surface = ((SurfaceCommand)command).get();
         break;
       case Begin:
-        tri_1 = tri_2 = tri_3 = null;
+        tri_a = tri_b = tri_c = null;
         break;
       case Vertex:
-        VertexCommand vertexCommand = (VertexCommand)command;
-          if (tri_1 == null) tri_1 = vertexCommand.get();
-          else if (tri_2 == null) tri_2 = vertexCommand.get();
-          else if (tri_3 == null) tri_3 = vertexCommand.get();
-          else throw new IllegalArgumentException("More than three vertices within a single begin/end block.");
+        final PVector vertex = ((VertexCommand)command).get();
+        if (tri_a == null) tri_a = vertex;
+        else if (tri_b == null) tri_b = vertex;
+        else if (tri_c == null) tri_c = vertex;
+        else throw new IllegalArgumentException("More than three vertices within a single begin/end block.");
         break;
       case End:
-        if (tri_1 != null && tri_2 != null && tri_3 != null) {
-          scene.triangles.add(new Triangle(tri_1, tri_2, tri_3));
+        if (surface != null && tri_a != null && tri_b != null && tri_c != null) {
+          scene.triangles.add(new Triangle(surface, tri_a, tri_b, tri_c));
+        } else {
+          println("Warning: Encountered an `End` command without a surface and three points. No triangle added.");
         }
         break;
       case Render:
@@ -285,36 +334,42 @@ void interpreter(String filePath) {
   }
 }
 
-class Ray {
-  PVector origin, direction;
-  
-  Ray(PVector origin, PVector direction) {
-    this.origin = origin;
-    this.direction = direction;
-  }
+// Returns a hit representing the intersection, or `null` if there is no intersection.
+Hit rayTriangleIntersection(Ray ray, Triangle tri) {
+  final float eps = 0.00001;
+
+  final PVector N = tri.normal();
+  // Calculate `t` (the distance from the ray origin to the intersection point).
+  final float denom = N.dot(ray.direction);
+  if (abs(denom) < eps) return null; // Ray is parallel to the triangle.
+
+  final float t = -(N.dot(ray.origin) - N.dot(tri.p1)) / denom;
+  if (t < 0) return null; // Intersects behind the ray's origin.
+
+  // Check if the intersection point is inside the triangle.
+  final PVector p = ray.interp(t);
+  final PVector edge1 = PVector.sub(tri.p2, tri.p1), edge2 = PVector.sub(tri.p3, tri.p2), edge3 = PVector.sub(tri.p1, tri.p3);
+  final boolean
+    side1 = -N.dot(edge1.cross(PVector.sub(p, tri.p1))) < eps,
+    side2 = -N.dot(edge2.cross(PVector.sub(p, tri.p2))) < eps,
+    side3 = -N.dot(edge3.cross(PVector.sub(p, tri.p3))) < eps;
+
+  return side1 && side2 && side3 ? new Hit(ray, t, tri) : null;
 }
 
-// Moller-Trumbore ray-triangle intersection.
-float rayTriangleIntersection(Ray ray, Triangle tri) {
-  final PVector edge1 = PVector.sub(tri.p2, tri.p1), edge2 = PVector.sub(tri.p3, tri.p1);
-  final PVector h = ray.direction.cross(edge2);
-  final float a = edge1.dot(h);
-  if (a > -0.00001 && a < 0.00001) return -1; // Ray is parallel to the triangle.
+// Compute diffuse color at the hit point using the scene's light sources.
+// Returns the scene's background coler if there is no hit.
+Color shadeDiffuse(Hit hit, Scene scene) {
+  if (hit == null) return scene.backgroundColor;
 
-  final float f = 1.0 / a;
-  final PVector s = PVector.sub(ray.origin, tri.p1);
-  final float u = f * (s.dot(h));
-  if (u < 0.0 || u > 1.0) return -1;
+  PVector N = hit.triangle.normal();
+  if (N.dot(hit.ray.direction) > 0) N.mult(-1); // Ensure the normal is facing the camera.
 
-  final PVector q = s.cross(edge1);
-  final float v = f * ray.direction.dot(q);
-  if (v < 0.0 || u + v > 1.0) return -1;
-
-  // Compute t to find out where the intersection point is on the line.
-  final float t = f * edge2.dot(q);
-  if (t > 0.00001) return t; // Ray intersects.
-
-  return -1; // Line intersects, but ray does not.
+  final Color diffuse = hit.triangle.surface.diffuse;
+  return scene.lights.stream().map(light -> {
+    final PVector lightDir = PVector.sub(light.position, hit.point).normalize();
+    return diffuse.mult(light.c).mult(max(N.dot(lightDir), 0));
+  }).reduce(new Color(0, 0, 0), Color::add);
 }
 
 void drawScene(Scene scene) {
@@ -330,17 +385,9 @@ void drawScene(Scene scene) {
       );
       // This ray starts at the camera and points at the pixel on the view plane.
       final Ray cameraRay = new Ray(cameraPos, viewPlanePos.normalize());
-      final Triangle intersectingTriangle = scene.raycastTriangle(cameraRay);
-      final color c = intersectingTriangle == null ? scene.backgroundColor : scene.surface.diffuse;
-      // todo Compute diffuse color at the intersection point using the provided point light sources.
-      /* Notes:      
-        https://gatech.instructure.com/courses/360970/external_tools/18649
-        One way to make sure the normals always facing outward is to make the normal and ray directions consistent. You can do something like:
-        if dot(N,ray_dir) < 0) // Keep the same normal
-        else // Flip normal direction
-      */
-
-      set(x, y, c); // Set the color of the pixel
+      final Hit hit = scene.raycast(cameraRay);
+      final Color c = shadeDiffuse(hit, scene);
+      set(x, y, c.get()); // Set the color of the pixel
     }
   }
 }
