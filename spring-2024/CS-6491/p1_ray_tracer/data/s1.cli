@@ -1,10 +1,12 @@
-# one triangle
+# one triangle, translated along the x-axis
 
 fov 90
 background .3 .3 .9
 light 0 0 5 1 1 1
 
 surface  0.8 0.1 0.1
+
+translate -2 0 0
 
 begin
 vertex -1 -1 -3

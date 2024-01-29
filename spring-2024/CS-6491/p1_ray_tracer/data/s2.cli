@@ -1,31 +1,25 @@
-# three triangles at different distances from the viewer
+# triangle that casts a shadow on the ground
 
-fov 90
+fov 60
 background .3 .3 .9
-light 0 0 5 1 1 1
+light 4 4 3  1 1 1
 
-surface  0.1 0.8 0.1
+surface  .2 .9 .2
 
-begin
-vertex -2 -2 -3
-vertex  2 -2 -3
-vertex  0  2 -3
-end
+push
 
-surface  0.8 0.1 0.1
+translate 0 -1 -4
 
 begin
-vertex -1 -1 -2
-vertex  1 -1 -2
-vertex  0  1 -2
+vertex  -1 0 0
+vertex   1 0 0
+vertex   0 2 0
 end
 
-surface  0.1 0.1 0.8
+pop
 
-begin
-vertex -4 -4 -5
-vertex  4 -4 -5
-vertex  0  4 -5
-end
+read ground.cli
 
 render
+
+

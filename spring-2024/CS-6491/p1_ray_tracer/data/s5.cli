@@ -1,0 +1,22 @@
+# an icosahedron above a plane, lit by multiple lights
+
+fov 60
+background .3 .3 .9
+
+light -1 4 -2  .8 .2 .2
+light  1 4 -2  .2 .8 .2
+light  0 4 -3  .2 .2 .8
+light  0 0 2   .4 .4 .4
+
+surface 1 1 1
+
+push
+translate 0 0.5 -3
+scale 0.8 0.8 0.8
+read icos.cli
+pop
+
+read ground.cli
+
+render
+
