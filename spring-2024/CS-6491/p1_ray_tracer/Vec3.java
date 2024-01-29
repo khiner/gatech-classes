@@ -34,7 +34,9 @@ public class Vec3 {
   }
 
   public Vec3 normalize() {
-    final float mag = (float)Math.sqrt(x*x + y*y + z*z);
+    final float mag = length();
     return mag == 0 ? new Vec3(0, 0, 0) : new Vec3(x / mag, y / mag, z / mag);
   }
+
+  public float length() { return (float)Math.sqrt(x*x + y*y + z*z); }
 }

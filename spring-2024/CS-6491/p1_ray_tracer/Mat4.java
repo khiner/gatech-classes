@@ -4,18 +4,18 @@ Instances are immutable.
 Rotation angles are in radians.
 */
 public class Mat4 {
-  private final float[] data;
+  private final float[] data; // Row-major, using 1D array instead of 2D for better cache locality.
 
   public Mat4() {
     data = new float[16];
     // Initialize identity matrix.
-    for (int i = 0; i < 16; i += 5) data[i] = 1.f;
+    data[0] = data[5] = data[10] = data[15] = 1;
   }
 
   // Copy constructor
   public Mat4(Mat4 other) { this.data = other.data.clone(); }
 
-  public Mat4 multiply(Mat4 other) {
+  public Mat4 mult(Mat4 other) {
     Mat4 result = new Mat4();
     for (int row = 0; row < 4; row++) {
       for (int col = 0; col < 4; col++) {
@@ -90,12 +90,10 @@ public class Mat4 {
     return result;
   }
 
-  // Applies the rotation angle to the provided enabled axis _in order x, y, z_.
+  // (For now), assumes only one axis is enabled.
   public static Mat4 rotate(float angle, boolean x, boolean y, boolean z) {
-    Mat4 result = new Mat4();
-    if (x) result = result.rotateX(angle);
-    if (y) result = result.rotateY(angle);
-    if (z) result = result.rotateZ(angle);
-    return result;
+    if (x) return rotateX(angle);
+    if (y) return rotateY(angle);
+    return rotateZ(angle);
   }
 }

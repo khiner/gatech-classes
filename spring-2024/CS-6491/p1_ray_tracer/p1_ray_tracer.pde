@@ -25,7 +25,7 @@ void keyPressed() {
     case '4':
     case '5':
     case '6':
-      interpreter("s" + key  + ".cli");
+      interpreter("s" + key  + ".cli", new Scene());
       break;
   }
 }
@@ -80,10 +80,6 @@ class Triangle {
     this.p3 = p3;
   }
 
-  Triangle transform(Mat4 transform) {
-    return new Triangle(surface, transform.apply(p1), transform.apply(p2), transform.apply(p3));
-  }
-
   Vec3 normal() {
     final Vec3 edge1 = p2.sub(p1), edge2 = p3.sub(p1);
     return edge1.cross(edge2).normalize();
@@ -125,6 +121,10 @@ class Scene {
   List<Light> lights;
   List<Triangle> triangles;
 
+  // Active accumulated triangle state:
+  Surface surface = null;
+  Vec3 tri_a = null, tri_b = null, tri_c = null;
+
   Scene() {
     stack = new Mat4Stack();
     fovDegrees = 0;
@@ -133,8 +133,24 @@ class Scene {
     triangles = new ArrayList();
   }
 
-  void addTriangle(Triangle tri) {
-    triangles.add(tri.transform(stack.top()));
+  void addVertex(Vec3 vertex) {
+    vertex = stack.top().apply(vertex);
+    if (tri_a == null) tri_a = vertex;
+    else if (tri_b == null) tri_b = vertex;
+    else if (tri_c == null) tri_c = vertex;
+    else throw new IllegalArgumentException("More than three vertices within a single begin/end block.");
+  }
+
+  void clearVertices() {
+    tri_a = tri_b = tri_c = null;
+  }
+  void commitVertices() {
+    if (surface == null || tri_a == null || tri_b == null || tri_c == null) {
+      println("Warning: Encountered an `End` command without a surface and three points. No triangle added.");
+      return;
+    }
+
+    triangles.add(new Triangle(surface, tri_a, tri_b, tri_c));
   }
 
   // Returns a hit for the intersecting triangle closest to the ray's origin,
@@ -165,6 +181,7 @@ enum SceneCommandType {
   Push,
   Pop,
 
+  Read,
   Render
 }
 
@@ -265,8 +282,8 @@ class ScaleCommand extends TransformCommand {
   }
 }
 class RotateCommand extends TransformCommand {
-  RotateCommand(String name, SceneCommandType type, float angle, boolean x, boolean y, boolean z) {
-    super(name, type, Mat4.rotate(angle, x, y, z));
+  RotateCommand(String name, SceneCommandType type, float degrees, boolean x, boolean y, boolean z) {
+    super(name, type, Mat4.rotate(radians(degrees), x, y, z));
   }
 }
 
@@ -279,6 +296,17 @@ class PopCommand extends SceneCommand {
   PopCommand(String name, SceneCommandType type) {
     super(name, type);
   }
+}
+
+class ReadCommand extends SceneCommand {
+  final String fileName;
+
+  ReadCommand(String name, SceneCommandType type, String fileName) {
+    super(name, type);
+    this.fileName = fileName;
+  }
+
+  String get() { return fileName; }
 }
 
 class RenderCommand extends SceneCommand {
@@ -297,34 +325,21 @@ class SceneCommandParser {
     }
 
     switch (type) {
-      case Background:
-        return new BackgroundCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case Fov:
-        return new FovCommand(name, type, float(tokens[1]));
-      case Light:
-        return new LightCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]), float(tokens[4]), float(tokens[5]), float(tokens[6]));
-      case Surface:
-        return new SurfaceCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case Begin:
-        return new BeginCommand(name, type);
-      case Vertex:
-        return new VertexCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case End:
-        return new EndCommand(name, type);
-      case Translate:
-        return new TranslateCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case Scale:
-        return new ScaleCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case Rotate:
-        return new RotateCommand(name, type, float(tokens[1]), boolean(tokens[2]), boolean(tokens[3]), boolean(tokens[4]));
-      case Push:
-        return new PushCommand(name, type);
-      case Pop:
-        return new PopCommand(name, type);
-      case Render:
-        return new RenderCommand(name, type);
-      default:
-        return null;
+      case Background: return new BackgroundCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
+      case Fov: return new FovCommand(name, type, float(tokens[1]));
+      case Light: return new LightCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]), float(tokens[4]), float(tokens[5]), float(tokens[6]));
+      case Surface: return new SurfaceCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
+      case Begin: return new BeginCommand(name, type);
+      case Vertex: return new VertexCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
+      case End: return new EndCommand(name, type);
+      case Translate: return new TranslateCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
+      case Scale: return new ScaleCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
+      case Rotate: return new RotateCommand(name, type, float(tokens[1]), int(tokens[2]) == 1, int(tokens[3]) == 1, int(tokens[4]) == 1);
+      case Push: return new PushCommand(name, type);
+      case Pop: return new PopCommand(name, type);
+      case Read: return new ReadCommand(name, type, tokens[1]);
+      case Render: return new RenderCommand(name, type);
+      default: return null;
     }
   }
 
@@ -361,6 +376,7 @@ class SceneCommandParser {
       case "push": return SceneCommandType.Push;
       case "pop": return SceneCommandType.Pop;
 
+      case "read": return SceneCommandType.Read;
       case "render": return SceneCommandType.Render;
 
       default: return null;
@@ -368,17 +384,12 @@ class SceneCommandParser {
   }
 };
 
-// This routine parses the text in a scene description file into a list of `SceneCommand`s,
-// creates a new scene and iterates through the commands, updating and drawing the scene.
-void interpreter(String filePath) {
+// This routine parses the text in a scene description file into a list of `SceneCommand`s.
+// Then it iterates through the commands, updating and drawing the provided scene according
+// to the parsed commands.
+void interpreter(String filePath, Scene scene) {
   final SceneCommandParser parser = new SceneCommandParser();
   final List<SceneCommand> commands = parser.parseFile(filePath);
-
-  // Mutable scene, populated and rendered according to the parsed commands.
-  Scene scene = new Scene();
-  // Active accumulated triangle state:
-  Surface surface = null;
-  Vec3 tri_a = null, tri_b = null, tri_c = null;
 
   for (SceneCommand command : commands) {
     switch (command.type) {
@@ -392,24 +403,16 @@ void interpreter(String filePath) {
         scene.lights.add(((LightCommand)command).get());
         break;
       case Surface:
-        surface = ((SurfaceCommand)command).get();
+        scene.surface = ((SurfaceCommand)command).get();
         break;
       case Begin:
-        tri_a = tri_b = tri_c = null;
+        scene.clearVertices();
         break;
       case Vertex:
-        final Vec3 vertex = ((VertexCommand)command).get();
-        if (tri_a == null) tri_a = vertex;
-        else if (tri_b == null) tri_b = vertex;
-        else if (tri_c == null) tri_c = vertex;
-        else throw new IllegalArgumentException("More than three vertices within a single begin/end block.");
+        scene.addVertex(((VertexCommand)command).get());
         break;
       case End:
-        if (surface != null && tri_a != null && tri_b != null && tri_c != null) {
-          scene.addTriangle(new Triangle(surface, tri_a, tri_b, tri_c));
-        } else {
-          println("Warning: Encountered an `End` command without a surface and three points. No triangle added.");
-        }
+        scene.commitVertices();
         break;
       case Translate:
       case Scale:
@@ -422,6 +425,8 @@ void interpreter(String filePath) {
       case Pop:
         scene.stack.pop();
         break;
+      case Read:
+        interpreter(((ReadCommand)command).get(), scene);
       case Render:
         drawScene(scene);
         break;
@@ -431,7 +436,7 @@ void interpreter(String filePath) {
 
 // Returns a hit representing the intersection, or `null` if there is no intersection.
 Hit rayTriangleIntersection(Ray ray, Triangle tri) {
-  final float eps = 0.00001;
+  final float eps = 1e-5;
 
   final Vec3 N = tri.normal();
   // Calculate `t` (the distance from the ray origin to the intersection point).
@@ -460,11 +465,23 @@ Color shadeDiffuse(Hit hit, Scene scene) {
   final Vec3 N = hit.triangle.normal();
   if (N.dot(hit.ray.direction) > 0) N.flip(); // Ensure the normal is facing the camera.
 
+  final Vec3 P = hit.point;
   final Color diffuse = hit.triangle.surface.diffuse;
-  return scene.lights.stream().map(light -> {
-    final Vec3 lightDir = light.position.sub(hit.point).normalize();
-    return diffuse.mult(light.c).mult(max(N.dot(lightDir), 0));
-  }).reduce(new Color(0, 0, 0), Color::add);
+  return scene.lights.stream()
+    .filter(light -> {
+      // If the shadow ray intersects a scene object _before_ it hits the light,
+      // the light does _not_ contribute to this point.
+      final Vec3 pToL = light.position.sub(P), pToLDir = pToL.normalize();
+      // Start the shadow ray epsilon away from the surface to prevent "immediately" hitting the surface _at_ `P`.
+      final Ray shadowRay = new Ray(P.add(pToLDir.mult(1e-4)), pToLDir);
+      final Hit shadowHit = scene.raycast(shadowRay);
+      return shadowHit == null || shadowHit.t >= pToL.length();
+    })
+    .map(light -> {
+      final Vec3 lightDir = light.position.sub(P).normalize();
+      return diffuse.mult(light.c).mult(max(N.dot(lightDir), 0));
+    })
+    .reduce(new Color(0, 0, 0), Color::add);
 }
 
 void drawScene(Scene scene) {

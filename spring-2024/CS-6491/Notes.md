@@ -226,3 +226,41 @@ Fresnel effect:
     This is the Schlick approximation to Fresnel
     steep angle -> lower refl, shallow angle -> higher refl.
     $$k_{trans} = T(\theta) = 1 - R(\theta)$$
+
+## Mon Jan 29
+
+### Surface Generation
+
+Implicit surfaces
+An implicit surface is the set of zeros of a function of three (in 3D) variables.
+
+Implicit function: tell whether point is in, out, or on a surface
+Often use distances or dist^2
+
+Ex. f(p) = r^2 - \|p-c\| p = (x,y,z) c = (x_c,y_c,z_c)
+(we can flip the sign here based on convention, whether we consider pos. values inside (as above) vs. outside the surface)
+
+circle or sphere (2d or 3d) = r^2 - [(x-x_c)^2 + (y-y_c)^2 + (z-z_c)^2]
+
+Basis functions / falloff functions:
+g(d) = e^{-d^2} Gaussian function (used by James Blinn, so sometimes called Blinn function)
+
+d(d) = (1-d^2)^3 (Wyvill - this actually crosses zero, unlike Blinn. We only use the pos. part)
+
+Use with distance functions (to points):
+    f_1(p) = g(\|p-c_1\|)
+    f_2(p) = g(\|p - c_2\|)
+
+Form sum:
+    f(p) = f_1(p) + f_2(p) - T,
+    where T is a scalar
+
+Distance to line segment
+
+D = P2 - P1
+Point Q
+Project Q onto D: V = Q-P1, t = V \dot D / |D|^2
+Closest point P on segment D: {t < 0 -> P1, t > 1 -> P2, else t in [0,1] -> P1 + tD}
+
+d(Q) = \|P-Q\|
+blobby form: f(Q) = g(d(Q))
