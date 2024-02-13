@@ -1,3 +1,5 @@
+import processing.core.PMatrix3D;
+
 /**
 4x4 matrix
 Instances are immutable.
@@ -14,6 +16,28 @@ public class Mat4 {
 
   // Copy constructor
   public Mat4(Mat4 other) { this.data = other.data.clone(); }
+
+  public Mat4(PMatrix3D other) {
+    data = new float[16];
+    other.get(data);
+  }
+
+  public Mat4 invert() {
+    PMatrix3D pmat4 = new PMatrix3D();
+    pmat4.set(data);
+    if (pmat4.invert()) return new Mat4(pmat4);
+    return null; // Inversion not successful. (Some matrices map more than one point to the same image point, and so are irreversible.)
+  }
+
+  public Mat4 transpose() {
+    Mat4 result = new Mat4();
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 4; j++) {
+        result.data[i * 4 + j] = this.data[j * 4 + i];
+      }
+    }
+    return result;
+  }
 
   public Mat4 mult(Mat4 other) {
     Mat4 result = new Mat4();
@@ -41,6 +65,14 @@ public class Mat4 {
       z /= w;
     }
 
+    return new Vec3(x, y, z);
+  }
+
+  // Transform the direction without translation.
+  public Vec3 applyDirection(Vec3 v) {
+    float x = v.x * data[0] + v.y * data[1] + v.z * data[2];
+    float y = v.x * data[4] + v.y * data[5] + v.z * data[6];
+    float z = v.x * data[8] + v.y * data[9] + v.z * data[10];
     return new Vec3(x, y, z);
   }
 

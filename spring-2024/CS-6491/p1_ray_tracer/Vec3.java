@@ -18,12 +18,7 @@ public class Vec3 {
   public Vec3 mult(Vec3 o) { return new Vec3(this.x * o.x, this.y * o.y, this.z * o.z); }
   public Vec3 mult(float v) { return new Vec3(this.x * v, this.y * v, this.z * v); }
 
-  // In-place
-  public void flip() {
-    this.x *= -1;
-    this.y *= -1;
-    this.z *= -1;
-  }
+  public Vec3 flip() { return new Vec3(-this.x, -this.y, -this.z); }
     
   public float dot(Vec3 o) { return this.x * o.x + this.y * o.y + this.z * o.z; }
 
