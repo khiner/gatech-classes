@@ -7,6 +7,8 @@ public class Vec3 {
     this.z = z;
   }
 
+  public float at(int i) { return i == 0 ? x : i == 1 ? y : z; }
+
   public Vec3 add(Vec3 o) { return new Vec3(this.x + o.x, this.y + o.y, this.z + o.z); }
   public Vec3 add(float v) { return new Vec3(this.x + v, this.y + v, this.z + v); }
 

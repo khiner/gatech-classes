@@ -1,0 +1,5 @@
+# Create a scene that includes many, many instances of one of the large meshes:
+# bunny, buddha, dragon, or lucy.
+
+render
+

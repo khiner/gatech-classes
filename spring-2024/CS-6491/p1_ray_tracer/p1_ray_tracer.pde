@@ -12,22 +12,23 @@ import java.util.stream.Collectors;
 boolean debug_flag = false;
 
 void setup() {
-  size (300, 300);  
+  size (300, 300);
   noStroke();
   background (0, 0, 0);
 }
 
+static Integer charToCliFileNumber(char ch) {
+  if (ch >= '1' && ch <= '9') return ch - '0';
+  if (ch == '0') return 10;
+  if (ch == 'a') return 11;
+  return null;
+}
+
 void keyPressed() {
-  switch(key) {
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-      interpreter("s" + key  + ".cli", new Scene());
-      break;
-  }
+  final Integer cli_file_number = charToCliFileNumber(key);
+  if (cli_file_number == null) return;
+
+  interpreter(String.format("s%02d.cli", cli_file_number), new Scene());
 }
 
 /**** Scene description ****/
@@ -70,11 +71,9 @@ class Surface {
 }
 
 class Triangle {
-  Surface surface;
   Vec3 p1, p2, p3;
 
-  Triangle(Surface surface, Vec3 p1, Vec3 p2, Vec3 p3) {
-    this.surface = surface;
+  Triangle(Vec3 p1, Vec3 p2, Vec3 p3) {
     this.p1 = p1;
     this.p2 = p2;
     this.p3 = p3;
@@ -83,6 +82,29 @@ class Triangle {
   Vec3 normal() {
     final Vec3 edge1 = p2.sub(p1), edge2 = p3.sub(p1);
     return edge1.cross(edge2).normalize();
+  }
+}
+
+// Axis-aligned bounding box
+class BBox {
+  Vec3 min, max;
+
+  BBox(Vec3 min, Vec3 max) {
+    this.min = min;
+    this.max = max;
+  }
+
+  // Approximate normal based on the closest axis-aligned plane.
+  Vec3 normal(Vec3 p) {
+    final float eps = 0.001f;
+    if (Math.abs(p.x - min.x) < eps) return new Vec3(-1, 0, 0);
+    if (Math.abs(p.x - max.x) < eps) return new Vec3(1, 0, 0);
+    if (Math.abs(p.y - min.y) < eps) return new Vec3(0, -1, 0);
+    if (Math.abs(p.y - max.y) < eps) return new Vec3(0, 1, 0);
+    if (Math.abs(p.z - min.z) < eps) return new Vec3(0, 0, -1);
+    if (Math.abs(p.z - max.z) < eps) return new Vec3(0, 0, 1);
+
+    return new Vec3(1, 0, 0);
   }
 }
 
@@ -104,13 +126,93 @@ class Hit {
   Ray ray;
   float t; // Distance along the ray
   Vec3 point; // Intersection point
-  Triangle triangle;
+  Vec3 normal; // Normal of the intersected plane
+  Surface surface;
   
-  Hit(Ray ray, float t, Triangle triangle) {
+  Hit(Ray ray, float t, Vec3 normal, Surface surface) {
     this.ray = ray;
     this.t = t;
-    this.triangle = triangle;
     this.point = ray.interp(t);
+    this.normal = normal;
+    this.surface = surface;
+  }
+}
+
+abstract class Object {
+  Surface surface;
+
+  Object(Surface surface) {
+    this.surface = surface;
+  }
+
+  // Returns a hit representing the intersection, or `null` if there is no intersection.
+  abstract Hit raycast(Ray ray);
+}
+
+class TriangleObject extends Object {
+  Triangle triangle;
+
+  TriangleObject(Triangle triangle, Surface surface) {
+    super(surface);
+    this.triangle = triangle;
+  }
+
+  Hit raycast(Ray ray) {
+    final float eps = 1e-5;
+    final Triangle tri = triangle; // For brevity.
+    final Vec3 N = tri.normal();
+    // Calculate `t` (the distance from the ray origin to the intersection point).
+    final float denom = N.dot(ray.direction);
+    if (abs(denom) < eps) return null; // Ray is parallel to the triangle.
+  
+    final float t = -(N.dot(ray.origin) - N.dot(tri.p1)) / denom;
+    if (t < 0) return null; // Intersects behind the ray's origin.
+  
+    // Check if the intersection point is inside the triangle.
+    final Vec3 p = ray.interp(t);
+    final Vec3 edge1 = tri.p2.sub(tri.p1), edge2 = tri.p3.sub(tri.p2), edge3 = tri.p1.sub(tri.p3);
+    final boolean
+      side1 = -N.dot(edge1.cross(p.sub(tri.p1))) < eps,
+      side2 = -N.dot(edge2.cross(p.sub(tri.p2))) < eps,
+      side3 = -N.dot(edge3.cross(p.sub(tri.p3))) < eps;
+  
+    return side1 && side2 && side3 ? new Hit(ray, t, triangle.normal(), surface) : null;
+  }
+}
+
+class BBoxObject extends Object {
+  BBox bbox;
+  
+  BBoxObject(BBox bbox, Surface surface) {
+    super(surface);
+    this.bbox = bbox;
+  }
+
+  /*
+  * Based on PBRTv4's
+  * [Bounds3::IntersectP method](https://github.com/mmp/pbrt-v4/blob/39e01e61f8de07b99859df04b271a02a53d9aeb2/src/pbrt/util/vecmath.h#L1546C1-L1572C1)
+  */
+  Hit raycast(Ray ray) {
+    final float epsilon = 1e-5f;
+    float t0 = 0, t1 = Float.MAX_VALUE;
+    for (int i = 0; i < 3; ++i) {
+      final float d = ray.direction.at(i), o = ray.origin.at(i);
+      final float min = bbox.min.at(i), max = bbox.max.at(i);
+      final float invD = 1.f / d;
+      float tNear = (min - o) * invD, tFar = (max - o) * invD;
+      if (tNear > tFar) {
+        float temp = tNear;
+        tNear = tFar;
+        tFar = temp;
+      }
+
+      tFar *= 1 + 2 * epsilon;
+      t0 = Math.max(t0, tNear);
+      t1 = Math.min(t1, tFar);
+      if (t0 > t1) return null;
+    }
+
+    return new Hit(ray, t0, bbox.normal(ray.interp(t0)), surface);
   }
 }
 
@@ -119,7 +221,8 @@ class Scene {
   float fovDegrees;
   Color backgroundColor;
   List<Light> lights;
-  List<Triangle> triangles;
+  List<Object> objects;
+  List<Object> namedObjects; // Named objects are added to the main `objects` list when they are instanced.
 
   // Active accumulated triangle state:
   Surface surface = null;
@@ -130,7 +233,7 @@ class Scene {
     fovDegrees = 0;
     backgroundColor = new Color(0, 0, 0);
     lights = new ArrayList();
-    triangles = new ArrayList();
+    objects = new ArrayList();
   }
 
   void addVertex(Vec3 vertex) {
@@ -139,6 +242,11 @@ class Scene {
     else if (tri_b == null) tri_b = vertex;
     else if (tri_c == null) tri_c = vertex;
     else throw new IllegalArgumentException("More than three vertices within a single begin/end block.");
+  }
+
+  void addBBox(BBox box) {
+    final Mat4 transform = stack.top();
+    objects.add(new BBoxObject(new BBox(transform.apply(box.min), transform.apply(box.max)), surface));
   }
 
   void clearVertices() {
@@ -150,14 +258,14 @@ class Scene {
       return;
     }
 
-    triangles.add(new Triangle(surface, tri_a, tri_b, tri_c));
+    objects.add(new TriangleObject(new Triangle(tri_a, tri_b, tri_c), surface));
   }
 
   // Returns a hit for the intersecting triangle closest to the ray's origin,
   // or `null` if the ray does not intersect any triangle.
   Hit raycast(Ray ray) {
-    return triangles.stream()
-      .map(triangle -> rayTriangleIntersection(ray, triangle))
+    return objects.stream()
+      .map(object -> object.raycast(ray))
       .filter(Objects::nonNull)
       .min(Comparator.comparingDouble(hit -> hit.t))
       .orElse(null);
@@ -181,6 +289,8 @@ enum SceneCommandType {
   Push,
   Pop,
 
+  Box,
+
   Read,
   Render
 }
@@ -188,20 +298,20 @@ enum SceneCommandType {
 // A `SceneCommand` is a complete, immutable, structured parsing of a textual scene command (a line in a `.cli` file).
 // All commands with data provide a single `get()` method returning an instance of their respective data type.
 abstract class SceneCommand {
-  final String name;
   final SceneCommandType type;
+  final String name;
 
-  SceneCommand(String name, SceneCommandType type) {
-    this.name = name;
+  SceneCommand(SceneCommandType type, String name) {
     this.type = type;
+    this.name = name;
   }
 }
 
 class BackgroundCommand extends SceneCommand {
   final Color c;
 
-  BackgroundCommand(String name, SceneCommandType type, float r, float g, float b) {
-    super(name, type);
+  BackgroundCommand(String name, float r, float g, float b) {
+    super(SceneCommandType.Background, name);
     this.c = new Color(r, g, b);
   }
   
@@ -211,8 +321,8 @@ class BackgroundCommand extends SceneCommand {
 class FovCommand extends SceneCommand {
   final float degrees;
 
-  FovCommand(String name, SceneCommandType type, float degrees) {
-    super(name, type);
+  FovCommand(String name, float degrees) {
+    super( SceneCommandType.Fov, name);
     this.degrees = degrees;
   }
   
@@ -222,8 +332,8 @@ class FovCommand extends SceneCommand {
 class LightCommand extends SceneCommand {
   final Light light;
 
-  LightCommand(String name, SceneCommandType type, float x, float y, float z, float r, float g, float b) {
-    super(name, type);
+  LightCommand(String name, float x, float y, float z, float r, float g, float b) {
+    super(SceneCommandType.Light, name);
     this.light = new Light(new Vec3(x, y, z), new Color(r, g, b));
   }
   
@@ -233,8 +343,8 @@ class LightCommand extends SceneCommand {
 class SurfaceCommand extends SceneCommand {
   final Surface surface;
 
-  SurfaceCommand(String name, SceneCommandType type, float dr, float dg, float db) {
-    super(name, type);
+  SurfaceCommand(String name, float dr, float dg, float db) {
+    super(SceneCommandType.Surface, name);
     this.surface = new Surface(new Color(dr, dg, db));
   }
   
@@ -242,14 +352,14 @@ class SurfaceCommand extends SceneCommand {
 }
 
 class BeginCommand extends SceneCommand {
-  BeginCommand(String name, SceneCommandType type) { super(name, type); }
+  BeginCommand(String name) { super(SceneCommandType.Begin, name); }
 }
 
 class VertexCommand extends SceneCommand {
   final Vec3 position;
 
-  VertexCommand(String name, SceneCommandType type, float x, float y, float z) {
-    super(name, type);
+  VertexCommand(String name, float x, float y, float z) {
+    super(SceneCommandType.Vertex, name);
     this.position = new Vec3(x, y, z);
   }
   
@@ -257,14 +367,14 @@ class VertexCommand extends SceneCommand {
 }
 
 class EndCommand extends SceneCommand {
-  EndCommand(String name, SceneCommandType type) { super(name, type); }
+  EndCommand(String name) { super(SceneCommandType.End, name); }
 }
 
 abstract class TransformCommand extends SceneCommand {
   final Mat4 transform;
 
-  TransformCommand(String name, SceneCommandType type, Mat4 transform) {
-    super(name, type);
+  TransformCommand(SceneCommandType type, String name, Mat4 transform) {
+    super(type, name);
     this.transform = transform;
   }
 
@@ -272,37 +382,44 @@ abstract class TransformCommand extends SceneCommand {
 }
 
 class TranslateCommand extends TransformCommand {
-  TranslateCommand(String name, SceneCommandType type, float tx, float ty, float tz) {
-    super(name, type,  Mat4.translate(tx, ty, tz));
+  TranslateCommand(String name, float tx, float ty, float tz) {
+    super(SceneCommandType.Translate, name,  Mat4.translate(tx, ty, tz));
   }
 }
 class ScaleCommand extends TransformCommand {
-  ScaleCommand(String name, SceneCommandType type, float sx, float sy, float sz) {
-    super(name, type, Mat4.scale(sx, sy, sz));
+  ScaleCommand(String name, float sx, float sy, float sz) {
+    super(SceneCommandType.Scale, name, Mat4.scale(sx, sy, sz));
   }
 }
 class RotateCommand extends TransformCommand {
-  RotateCommand(String name, SceneCommandType type, float degrees, boolean x, boolean y, boolean z) {
-    super(name, type, Mat4.rotate(radians(degrees), x, y, z));
+  RotateCommand(String name, float degrees, boolean x, boolean y, boolean z) {
+    super(SceneCommandType.Rotate, name, Mat4.rotate(radians(degrees), x, y, z));
   }
 }
 
 class PushCommand extends SceneCommand {
-  PushCommand(String name, SceneCommandType type) {
-    super(name, type);
-  }
+  PushCommand(String name) { super(SceneCommandType.Push, name); }
 }
 class PopCommand extends SceneCommand {
-  PopCommand(String name, SceneCommandType type) {
-    super(name, type);
+  PopCommand(String name) { super(SceneCommandType.Pop, name); }
+}
+
+class BoxCommand extends SceneCommand {
+  final BBox box;
+
+  BoxCommand(String name, float xmin, float ymin, float zmin, float xmax, float ymax, float zmax) {
+    super(SceneCommandType.Box, name);
+    this.box = new BBox(new Vec3(xmin, ymin, zmin), new Vec3(xmax, ymax, zmax));
   }
+  
+  BBox get() { return box; }
 }
 
 class ReadCommand extends SceneCommand {
   final String fileName;
 
-  ReadCommand(String name, SceneCommandType type, String fileName) {
-    super(name, type);
+  ReadCommand(String name, String fileName) {
+    super(SceneCommandType.Read, name);
     this.fileName = fileName;
   }
 
@@ -310,14 +427,14 @@ class ReadCommand extends SceneCommand {
 }
 
 class RenderCommand extends SceneCommand {
-  RenderCommand(String name, SceneCommandType type) { super(name, type); }
+  RenderCommand(String name) { super(SceneCommandType.Render, name); }
 }
 
 class SceneCommandParser {
-  SceneCommand parseTokens(String[] tokens) {
-    if (tokens.length == 0) return null;
+  SceneCommand parseTokens(String[] ts) {
+    if (ts.length == 0) return null;
 
-    final String name = tokens.length == 0 ? "none" : tokens[0];
+    final String name = ts.length == 0 ? "none" : ts[0];
     final SceneCommandType type = getType(name);
     if (type == null) {
       println("Warning: Unknown command type: " + name);
@@ -325,20 +442,24 @@ class SceneCommandParser {
     }
 
     switch (type) {
-      case Background: return new BackgroundCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case Fov: return new FovCommand(name, type, float(tokens[1]));
-      case Light: return new LightCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]), float(tokens[4]), float(tokens[5]), float(tokens[6]));
-      case Surface: return new SurfaceCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case Begin: return new BeginCommand(name, type);
-      case Vertex: return new VertexCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case End: return new EndCommand(name, type);
-      case Translate: return new TranslateCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case Scale: return new ScaleCommand(name, type, float(tokens[1]), float(tokens[2]), float(tokens[3]));
-      case Rotate: return new RotateCommand(name, type, float(tokens[1]), int(tokens[2]) == 1, int(tokens[3]) == 1, int(tokens[4]) == 1);
-      case Push: return new PushCommand(name, type);
-      case Pop: return new PopCommand(name, type);
-      case Read: return new ReadCommand(name, type, tokens[1]);
-      case Render: return new RenderCommand(name, type);
+      case Background: return new BackgroundCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
+      case Fov: return new FovCommand(name, float(ts[1]));
+      case Light: return new LightCommand(name, float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
+      case Surface: return new SurfaceCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
+      case Begin: return new BeginCommand(name);
+      case Vertex: return new VertexCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
+      case End: return new EndCommand(name);
+
+      case Translate: return new TranslateCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
+      case Scale: return new ScaleCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
+      case Rotate: return new RotateCommand(name, float(ts[1]), int(ts[2]) == 1, int(ts[3]) == 1, int(ts[4]) == 1);
+      case Push: return new PushCommand(name);
+      case Pop: return new PopCommand(name);
+
+      case Box: return new BoxCommand(name, float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
+
+      case Read: return new ReadCommand(name, ts[1]);
+      case Render: return new RenderCommand(name);
       default: return null;
     }
   }
@@ -375,6 +496,8 @@ class SceneCommandParser {
       case "rotate": return SceneCommandType.Rotate;
       case "push": return SceneCommandType.Push;
       case "pop": return SceneCommandType.Pop;
+
+      case "box": return SceneCommandType.Box;
 
       case "read": return SceneCommandType.Read;
       case "render": return SceneCommandType.Render;
@@ -425,8 +548,12 @@ void interpreter(String filePath, Scene scene) {
       case Pop:
         scene.stack.pop();
         break;
+      case Box:
+        scene.addBBox(((BoxCommand)command).get());
+        break;
       case Read:
         interpreter(((ReadCommand)command).get(), scene);
+        break;
       case Render:
         drawScene(scene);
         break;
@@ -434,39 +561,16 @@ void interpreter(String filePath, Scene scene) {
   }
 }
 
-// Returns a hit representing the intersection, or `null` if there is no intersection.
-Hit rayTriangleIntersection(Ray ray, Triangle tri) {
-  final float eps = 1e-5;
-
-  final Vec3 N = tri.normal();
-  // Calculate `t` (the distance from the ray origin to the intersection point).
-  final float denom = N.dot(ray.direction);
-  if (abs(denom) < eps) return null; // Ray is parallel to the triangle.
-
-  final float t = -(N.dot(ray.origin) - N.dot(tri.p1)) / denom;
-  if (t < 0) return null; // Intersects behind the ray's origin.
-
-  // Check if the intersection point is inside the triangle.
-  final Vec3 p = ray.interp(t);
-  final Vec3 edge1 = tri.p2.sub(tri.p1), edge2 = tri.p3.sub(tri.p2), edge3 = tri.p1.sub(tri.p3);
-  final boolean
-    side1 = -N.dot(edge1.cross(p.sub(tri.p1))) < eps,
-    side2 = -N.dot(edge2.cross(p.sub(tri.p2))) < eps,
-    side3 = -N.dot(edge3.cross(p.sub(tri.p3))) < eps;
-
-  return side1 && side2 && side3 ? new Hit(ray, t, tri) : null;
-}
-
 // Compute diffuse color at the hit point using the scene's light sources.
 // Returns the scene's background coler if there is no hit.
 Color shadeDiffuse(Hit hit, Scene scene) {
   if (hit == null) return scene.backgroundColor;
 
-  final Vec3 N = hit.triangle.normal();
+  final Vec3 N = hit.normal;
   if (N.dot(hit.ray.direction) > 0) N.flip(); // Ensure the normal is facing the camera.
 
   final Vec3 P = hit.point;
-  final Color diffuse = hit.triangle.surface.diffuse;
+  final Color diffuse = hit.surface.diffuse;
   return scene.lights.stream()
     .filter(light -> {
       // If the shadow ray intersects a scene object _before_ it hits the light,
