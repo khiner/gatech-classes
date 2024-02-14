@@ -52,7 +52,6 @@ class Color {
   color get() { return color(r * 255, g * 255, b * 255); }
 }
 
-
 class Light {
   Vec3 position;
   Color c;
@@ -65,13 +64,47 @@ class Light {
 
 class Surface {
   Color diffuse;
-  
+
   Surface(Color diffuse) {
     this.diffuse = diffuse;
   }
 }
 
-class Triangle {
+class Ray {
+  Vec3 origin, direction;
+  
+  Ray(Vec3 origin, Vec3 direction) {
+    this.origin = origin;
+    this.direction = direction;
+  }
+
+  public Ray transform(Mat4 transform) { return new Ray(transform.apply(origin), transform.applyDirection(direction)); }
+
+  // Interpolate along the ray to find the point at distance `t`.
+  Vec3 interp(float t) { return origin.add(direction.mult(t)); }
+}
+
+// An `Intersection` represents the intersection of a `Ray` with a `Geometry`.
+class Intersection {
+  float t; // Distance along the ray
+  Vec3 point; // Intersection point
+  Vec3 normal; // Normal of the intersected plane
+
+  Intersection(float t, Vec3 point, Vec3 normal) {
+    this.t = t;
+    this.point = point;
+    this.normal = normal;
+  }
+  Intersection(Ray ray, float t, Vec3 normal) {
+    this(t, ray.interp(t), normal.dot(ray.direction) > 0 ? normal.flip() : normal); // Ensure the normal is facing the camera.
+  }
+}
+
+abstract class Geometry {
+  abstract Intersection intersect(Ray ray);
+}
+
+class Triangle extends Geometry {
   Vec3 p1, p2, p3;
 
   Triangle(Vec3 p1, Vec3 p2, Vec3 p3) {
@@ -84,10 +117,33 @@ class Triangle {
     final Vec3 edge1 = p2.sub(p1), edge2 = p3.sub(p1);
     return edge1.cross(edge2).normalize();
   }
+
+  Intersection intersect(Ray ray) {
+    final float eps = 1e-5;
+    final Vec3 N = normal();
+    // Calculate `t` (the distance from the ray origin to the intersection point).
+    final float denom = N.dot(ray.direction);
+    if (abs(denom) < eps) return null; // Ray is parallel to the triangle.
+  
+    final float t = -(N.dot(ray.origin) - N.dot(p1)) / denom;
+    if (t < 0) return null; // Intersects behind the ray's origin.
+
+    // Check if the intersection point is inside the triangle.
+    final Vec3 p = ray.interp(t);
+    final Vec3 edge1 = p2.sub(p1), edge2 = p3.sub(p2), edge3 = p1.sub(p3);
+    final boolean
+      side1 = -N.dot(edge1.cross(p.sub(p1))) < eps,
+      side2 = -N.dot(edge2.cross(p.sub(p2))) < eps,
+      side3 = -N.dot(edge3.cross(p.sub(p3))) < eps;
+  
+    if (side1 && side2 && side3) return new Intersection(ray, t, normal());
+
+    return null;
+  }
 }
 
 // Axis-aligned bounding box
-class BBox {
+class BBox extends Geometry {
   Vec3 min, max;
 
   BBox(Vec3 min, Vec3 max) {
@@ -107,124 +163,19 @@ class BBox {
 
     return null;
   }
-}
-
-class Ray {
-  Vec3 origin, direction;
-  
-  Ray(Vec3 origin, Vec3 direction) {
-    this.origin = origin;
-    this.direction = direction;
-  }
-
-  public Ray transform(Mat4 transform) { return new Ray(transform.apply(origin), transform.applyDirection(direction)); }
-
-  // Interpolate along the ray to find the point at distance `t`.
-  Vec3 interp(float t) {
-    return origin.add(direction.mult(t));
-  }
-}
-
-class Hit {
-  float t; // Distance along the ray
-  Vec3 point; // Intersection point
-  Vec3 normal; // Normal of the intersected plane
-  Surface surface;
-
-  Hit(Ray ray, float t, Vec3 normal, Surface surface) {
-    this.t = t;
-    this.point = ray.interp(t);
-    this.normal = normal.dot(ray.direction) > 0 ? normal.flip() : normal; // Ensure the normal is facing the camera.
-    this.surface = surface;
-  }
-}
-
-abstract class Object {
-  // Returns a hit representing the intersection, or `null` if there is no intersection.
-  abstract Hit raycast(Ray ray);
-}
-
-class InstancedObject extends Object {
-  Object object;
-  String name;
-  Mat4 transform, invTransform;
-  Surface surface; // If non-null, this overrides the object's surface when raycasting.
-
-  InstancedObject(Object object, String name, Mat4 transform, Surface surface) {
-    super();
-    this.object = object;
-    this.name = name;
-    this.transform = transform;
-    this.invTransform = transform.invert();
-    if (invTransform == null) throw new RuntimeException("Attempted to instance an object with an uninvertible transform.");
-    this.surface = surface;
-  }
-
-  Hit raycast(Ray ray) {
-    final Ray transformedRay = ray.transform(invTransform);
-    final Hit hit = object.raycast(transformedRay);
-    if (hit != null) {
-      if (surface != null) hit.surface = surface; // If the instance has its own surface, it overrides the object's.
-      hit.normal = invTransform.transpose().applyDirection(hit.normal).normalize();
-      hit.point = transform.apply(hit.point); // Transform the intersection point back to world space.
-    }
-    return hit;
-  }
-}
-
-class TriangleObject extends Object {
-  Surface surface;
-  Triangle triangle;
-
-  TriangleObject(Triangle triangle, Surface surface) {
-    this.surface = surface;
-    this.triangle = triangle;
-  }
-
-  Hit raycast(Ray ray) {
-    final float eps = 1e-5;
-    final Triangle tri = triangle; // For brevity.
-    final Vec3 N = tri.normal();
-    // Calculate `t` (the distance from the ray origin to the intersection point).
-    final float denom = N.dot(ray.direction);
-    if (abs(denom) < eps) return null; // Ray is parallel to the triangle.
-  
-    final float t = -(N.dot(ray.origin) - N.dot(tri.p1)) / denom;
-    if (t < 0) return null; // Intersects behind the ray's origin.
-  
-    // Check if the intersection point is inside the triangle.
-    final Vec3 p = ray.interp(t);
-    final Vec3 edge1 = tri.p2.sub(tri.p1), edge2 = tri.p3.sub(tri.p2), edge3 = tri.p1.sub(tri.p3);
-    final boolean
-      side1 = -N.dot(edge1.cross(p.sub(tri.p1))) < eps,
-      side2 = -N.dot(edge2.cross(p.sub(tri.p2))) < eps,
-      side3 = -N.dot(edge3.cross(p.sub(tri.p3))) < eps;
-  
-    return side1 && side2 && side3 ? new Hit(ray, t, triangle.normal(), surface) : null;
-  }
-}
-
-class BBoxObject extends Object {
-  Surface surface;
-  BBox bbox;
-   //<>//
-  BBoxObject(BBox bbox, Surface surface) {
-    this.surface = surface; //<>//
-    this.bbox = bbox;
-  }
 
   /*
   * Based on PBRTv4's
   * [Bounds3::IntersectP](https://github.com/mmp/pbrt-v4/blob/39e01e61f8de07b99859df04b271a02a53d9aeb2/src/pbrt/util/vecmath.h#L1546C1-L1572C1)
   */
-  Hit raycast(Ray ray) {
+  Intersection intersect(Ray ray) {
     final float eps = 1e-5f;
     float t0 = 0, t1 = Float.MAX_VALUE;
     for (int i = 0; i < 3; ++i) {
       final float d = ray.direction.at(i), o = ray.origin.at(i);
-      final float min = bbox.min.at(i), max = bbox.max.at(i);
+      final float min_val = min.at(i), max_val = max.at(i);
       final float invD = 1.f / d;
-      float tNear = (min - o) * invD, tFar = (max - o) * invD;
+      float tNear = (min_val - o) * invD, tFar = (max_val - o) * invD;
       if (tNear > tFar) {
         float temp = tNear;
         tNear = tFar;
@@ -237,11 +188,118 @@ class BBoxObject extends Object {
       if (t0 > t1) return null;
     }
 
-    final Vec3 norm = bbox.normal(ray.interp(t0));
+    final Vec3 norm = normal(ray.interp(t0));
     if (norm == null) throw new RuntimeException("Ray intersected BBox but could not determine the normal based on the intersection point.");
 
-    return new Hit(ray, t0, norm, surface);
+    return new Intersection(ray, t0, norm);
   }
+}
+
+// A `Hit` is an `Intersection` with rendering properties (currently just a surface).
+class Hit extends Intersection {
+  Surface surface;
+
+  Hit(Ray ray, float t, Vec3 normal, Surface surface) {
+    super(ray, t, normal);
+    this.surface = surface;
+  }
+  Hit(Intersection intersection, Surface surface) {
+    super(intersection.t, intersection.point, intersection.normal);
+    this.surface = surface;
+  }
+}
+
+abstract class Object {  
+  abstract Hit raycast(Ray ray);
+}
+
+abstract class GeometryObject extends Object {
+  Geometry geometry;
+  Surface surface;
+
+  GeometryObject(Geometry geometry, Surface surface) {
+    this.geometry = geometry;
+    this.surface = surface;
+  }
+
+  Hit raycast(Ray ray) {
+    final Intersection intersection = geometry.intersect(ray);
+    if (intersection != null) return new Hit(intersection, surface);
+    return null;
+  }
+}
+
+class InstancedObject extends Object {
+  Surface surface; // Overrides the object's surface if not null
+  Object object;
+  String name;
+  Mat4 transform, invTransform;
+
+  InstancedObject(Object object, Surface surface, String name, Mat4 transform) {
+    this.object = object;
+    this.surface = surface;
+    this.name = name;
+    this.transform = transform;
+    this.invTransform = transform.invert();
+    if (invTransform == null) throw new RuntimeException("Attempted to instance an object with an uninvertible transform.");
+  }
+
+  Hit raycast(Ray ray) {
+    final Ray transformedRay = ray.transform(invTransform);
+    final Hit hit = object.raycast(transformedRay);
+    if (hit != null) {
+      hit.normal = invTransform.transpose().applyDirection(hit.normal).normalize();
+      hit.point = transform.apply(hit.point); // Transform the point back to world space.
+      if (surface != null) hit.surface = surface;
+    }
+    return hit;
+  }
+}
+
+class TriangleObject extends GeometryObject {
+  TriangleObject(Triangle triangle, Surface surface) {
+    super(triangle, surface);
+  }
+}
+
+class BBoxObject extends GeometryObject {
+  BBoxObject(BBox bbox, Surface surface) {
+    super(bbox, surface);
+  }
+}
+
+// Bounding volume heirarchy acceleration data structure.
+class BhvObject extends Object {
+  class Node {
+    BBox bbox;
+    List<Object> objects;
+    List<Node> children;
+
+    Node(List<Object> objects) {
+      this.objects = objects;
+    }
+
+    Hit raycast(Ray ray) {
+      Intersection intersection = bbox.intersect(ray);
+      if (intersection == null) return null;
+      for (Node c : children) {
+        final Hit hit = c.raycast(ray);
+        if (hit != null) return hit;
+      }
+      return null;
+    }
+  }
+
+  Node root;
+  Surface surface;
+
+  BhvObject(List<Object> objects, Surface surface) {
+     // todo construct bvh
+    root = new Node(objects);
+    this.surface = surface;
+  }
+
+  Hit raycast(Ray ray) { return root.raycast(ray); }
 }
 
 class Scene {
@@ -251,6 +309,9 @@ class Scene {
   List<Light> lights;
   List<Object> objects;
   Map<String, Object> namedObjects; // Named objects are added to the main `objects` list when they are instanced.
+  // Active list of objects to be wrapped in an acceleration data structure.
+  // Non-null after `beginAccel` is called, and null again after `endAccel`.
+  List<Object> accelObjects = null;
 
   // Active accumulated triangle state:
   Surface surface = null;
@@ -273,30 +334,30 @@ class Scene {
     else throw new IllegalArgumentException("More than three vertices within a single begin/end block.");
   }
 
-  void clearVertices() {
-    tri_a = tri_b = tri_c = null;
-  }
+  void clearVertices() { tri_a = tri_b = tri_c = null; }
   void commitVertices() {
     if (surface == null || tri_a == null || tri_b == null || tri_c == null) {
       println("Warning: Encountered an `End` command without a surface and three points. No triangle added.");
       return;
     }
 
-    objects.add(new TriangleObject(new Triangle(tri_a, tri_b, tri_c), surface));
+    addObject(new TriangleObject(new Triangle(tri_a, tri_b, tri_c), surface));
   }
 
   void addBBox(BBox box) {
     final Mat4 transform = stack.top();
-    objects.add(new BBoxObject(new BBox(transform.apply(box.min), transform.apply(box.max)), surface));
+    addObject(new BBoxObject(new BBox(transform.apply(box.min), transform.apply(box.max)), surface));
   }
 
   void nameLatestObject(String name) {
-    if (objects.isEmpty()) {
-      println("Warning: Attempted to name the latest added object " + name + ", but no objects have been added to the scene.");
+    final Object object = popObject();
+    if (object == null) {
+      println("Warning: Attempted to name the latest added object " + name + ", but no " +
+        (accelObjects != null ? "accellerated " : "") + "objects have been added to the scene.");
       return;
     }
 
-    namedObjects.put(name, objects.remove(objects.size() - 1));
+    namedObjects.put(name, object);
   }
 
   // Create an instance of a named object and add that object to the list of scene objects.
@@ -307,8 +368,11 @@ class Scene {
       return;
     }
 
-    objects.add(new InstancedObject(namedObjects.get(name), name, stack.top(), surface));
+    addObject(new InstancedObject(namedObjects.get(name), surface, name, stack.top()));
   }
+
+  void beginAccel() { accelObjects = new ArrayList(); }
+  void endAccel() { accelObjects = null; }
 
   // Returns a hit for the intersecting object closest to the ray's origin,
   // or `null` if the ray does not intersect any object.
@@ -318,6 +382,16 @@ class Scene {
       .filter(Objects::nonNull)
       .min(Comparator.comparingDouble(hit -> hit.t))
       .orElse(null);
+  }
+
+  private void addObject(Object object) {
+    final List<Object> activeObjects = accelObjects != null ? accelObjects : objects;
+    activeObjects.add(object);
+  }
+  private Object popObject() {
+    final List<Object> activeObjects = accelObjects != null ? accelObjects : objects;
+    if (activeObjects.isEmpty()) return null;
+    return activeObjects.remove(activeObjects.size() - 1);
   }
 }
 
@@ -341,6 +415,8 @@ enum SceneCommandType {
   Box,
   NamedObject,
   Instance,
+  BeginAccel,
+  EndAccel,
 
   Read,
   Render
@@ -365,7 +441,7 @@ class BackgroundCommand extends SceneCommand {
     super(SceneCommandType.Background, name);
     this.c = new Color(r, g, b);
   }
-  
+
   Color get() { return c; }
 }
 
@@ -376,7 +452,7 @@ class FovCommand extends SceneCommand {
     super( SceneCommandType.Fov, name);
     this.degrees = degrees;
   }
-  
+
   float get() { return degrees; }
 }
 
@@ -387,7 +463,7 @@ class LightCommand extends SceneCommand {
     super(SceneCommandType.Light, name);
     this.light = new Light(new Vec3(x, y, z), new Color(r, g, b));
   }
-  
+
   Light get() { return light; }
 }
 
@@ -413,7 +489,7 @@ class VertexCommand extends SceneCommand {
     super(SceneCommandType.Vertex, name);
     this.position = new Vec3(x, y, z);
   }
-  
+
   Vec3 get() { return position; }
 }
 
@@ -487,6 +563,14 @@ class InstanceCommand extends SceneCommand {
   String get() { return objectName; }
 }
 
+class BeginAccelCommand extends SceneCommand {
+  BeginAccelCommand(String name) { super(SceneCommandType.Begin, name); }
+}
+
+class EndAccelCommand extends SceneCommand {
+  EndAccelCommand(String name) { super(SceneCommandType.End, name); }
+}
+
 class ReadCommand extends SceneCommand {
   final String fileName;
 
@@ -531,6 +615,8 @@ class SceneCommandParser {
       case Box: return new BoxCommand(name, float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
       case NamedObject: return new NamedObjectCommand(name, ts[1]);
       case Instance: return new InstanceCommand(name, ts[1]);
+      case BeginAccel: return new BeginAccelCommand(name);
+      case EndAccel: return new EndAccelCommand(name);
 
       case Read: return new ReadCommand(name, ts[1]);
       case Render: return new RenderCommand(name);
@@ -574,6 +660,8 @@ class SceneCommandParser {
       case "box": return SceneCommandType.Box;
       case "named_object": return SceneCommandType.NamedObject;
       case "instance": return SceneCommandType.Instance;
+      case "begin_accel": return SceneCommandType.BeginAccel;
+      case "end_accel": return SceneCommandType.EndAccel;
 
       case "read": return SceneCommandType.Read;
       case "render": return SceneCommandType.Render;
@@ -632,6 +720,12 @@ void interpreter(String filePath, Scene scene) {
         break;
       case Instance:
         scene.instanceObject(((InstanceCommand)command).get());
+        break;
+      case BeginAccel:
+        scene.beginAccel();
+        break;
+      case EndAccel:
+        scene.endAccel();
         break;
       case Read:
         interpreter(((ReadCommand)command).get(), scene);
@@ -693,5 +787,4 @@ void mousePressed() {
 }
 
 // you don't need to add anything in the "draw" function for this project
-void draw() {
-}
+void draw() {}
