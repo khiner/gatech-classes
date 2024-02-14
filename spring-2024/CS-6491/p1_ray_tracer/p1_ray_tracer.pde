@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 void setup() {
   size (300, 300);
@@ -86,6 +87,7 @@ class Intersection {
 
 abstract class Geometry {
   abstract Intersection intersect(Ray ray);
+  abstract BBox getBBox();
 }
 
 class Triangle extends Geometry {
@@ -108,7 +110,7 @@ class Triangle extends Geometry {
     final Vec3 N = normal();
     // Calculate `t` (the distance from the ray origin to the intersection point).
     final float denom = N.dot(ray.direction);
-    if (abs(denom) < eps) return null; // Ray is parallel to the triangle.
+    if (Math.abs(denom) < eps) return null; // Ray is parallel to the triangle.
   
     final float t = -(N.dot(ray.origin) - N.dot(p1)) / denom;
     if (t < 0) return null; // Intersects behind the ray's origin.
@@ -117,13 +119,17 @@ class Triangle extends Geometry {
     final Vec3 p = ray.interp(t);
     final Vec3 edge1 = p2.sub(p1), edge2 = p3.sub(p2), edge3 = p1.sub(p3);
     final boolean
-      side1 = -N.dot(edge1.cross(p.sub(p1))) < eps,
-      side2 = -N.dot(edge2.cross(p.sub(p2))) < eps,
-      side3 = -N.dot(edge3.cross(p.sub(p3))) < eps;
+      side1 = N.dot(edge1.cross(p.sub(p1))) > 0,
+      side2 = N.dot(edge2.cross(p.sub(p2))) > 0,
+      side3 = N.dot(edge3.cross(p.sub(p3))) > 0;
   
     if (side1 && side2 && side3) return new Intersection(ray, t, normal());
 
     return null;
+  }
+
+  BBox getBBox() {
+    return new BBox(Vec3.min(Vec3.min(p1, p2), p3), Vec3.max(Vec3.max(p1, p2), p3));
   }
 }
 
@@ -136,7 +142,10 @@ class BBox extends Geometry {
     this.max = max;
   }
 
-  // Approximate normal based on the closest axis-aligned plane.
+  int maxAxis() { return max.sub(min).maxAxis(); }
+  Vec3 center() { return min.add(max).div(2); }
+
+  // Normal based on the closest axis-aligned plane.
   Vec3 normal(Vec3 p) {
     final float eps = 1e-4;
 
@@ -154,7 +163,7 @@ class BBox extends Geometry {
   * Based on PBRTv4's
   * [Bounds3::IntersectP](https://github.com/mmp/pbrt-v4/blob/39e01e61f8de07b99859df04b271a02a53d9aeb2/src/pbrt/util/vecmath.h#L1546C1-L1572C1)
   */
-  Intersection intersect(Ray ray) {
+  Float intersectT(Ray ray) {
     final float eps = 1e-5;
 
     float t0 = 0, t1 = Float.MAX_VALUE;
@@ -175,11 +184,22 @@ class BBox extends Geometry {
       if (t0 > t1) return null;
     }
 
-    final Vec3 norm = normal(ray.interp(t0));
+    return t0;
+  }
+
+  Intersection intersect(Ray ray) {
+    final Float t = intersectT(ray);
+    if (t == null) return null;
+
+    final Vec3 norm = normal(ray.interp(t));
     if (norm == null) throw new RuntimeException("Ray intersected BBox but could not determine the normal based on the intersection point.");
 
-    return new Intersection(ray, t0, norm);
+    return new Intersection(ray, t, norm);
   }
+
+  boolean intersects(Ray ray) { return intersectT(ray) != null; }
+
+  BBox getBBox() { return this; }
 }
 
 // A `Hit` is an `Intersection` with rendering properties (currently just a surface).
@@ -200,8 +220,9 @@ class Hit extends Intersection {
 }
 
 // All objects rendered in a `Scene` inherit from `Object`.
-abstract class Object {  
+abstract class Object {
   abstract Hit raycast(Ray ray);
+  abstract BBox getBBox();
 }
 
 abstract class GeometryObject extends Object {
@@ -218,6 +239,8 @@ abstract class GeometryObject extends Object {
     if (intersection != null) return new Hit(intersection, surface);
     return null;
   }
+
+  BBox getBBox() { return geometry.getBBox(); }
 }
 
 class InstancedObject extends Object {
@@ -246,6 +269,12 @@ class InstancedObject extends Object {
     }
     return hit;
   }
+
+  BBox getBBox() {
+    BBox bbox = object.getBBox();
+    return new BBox(transform.transform(bbox.min), transform.transform(bbox.max));
+    //return object.getBBox();
+  }
 }
 
 class TriangleObject extends GeometryObject {
@@ -261,39 +290,87 @@ class BBoxObject extends GeometryObject {
 }
 
 // Bounding volume heirarchy acceleration data structure.
-class BhvObject extends Object {
+class BvhObject extends Object {
   class Node {
     final BBox bbox;
-    final List<Object> objects;
-    final List<Node> children;
+    final Node left, right;
+    final List<Object> objects; // Non-null only for leaf nodes
 
+    // For leaf node
     Node(BBox bbox, List<Object> objects) {
       this.bbox = bbox;
       this.objects = objects;
-      this.children = new ArrayList();
+      this.left = null;
+      this.right = null;
     }
 
-    Hit raycast(Ray ray) {
-      Intersection intersection = bbox.intersect(ray);
-      if (intersection == null) return null;
-      for (Node c : children) {
-        final Hit hit = c.raycast(ray);
-        if (hit != null) return hit;
-      }
-      return null;
+    // For internal node
+    Node(BBox bbox, Node left, Node right) {
+      this.bbox = bbox;
+      this.left = left;
+      this.right = right;
+      this.objects = null;
     }
+
+    boolean isLeaf() { return objects != null; }
   }
 
-  Node root;
-  Surface surface;
+  final Node root;
+  final Surface surface;
 
-  BhvObject(BBox bbox, List<Object> objects, Surface surface) {
-     // todo construct bvh
-    root = new Node(bbox, objects);
+  BvhObject(List<Object> objects, Surface surface) {
     this.surface = surface;
+    this.root = build(objects, 0, objects.size());
   }
 
-  Hit raycast(Ray ray) { return root.raycast(ray); }
+  BBox getBBox() { return root.bbox; }
+  Hit raycast(Ray ray) { return raycastNode(root, ray); }
+
+  private Node build(List<Object> objects, int start, int end) {
+    if (end - start <= 6) { // Leaf node condition
+      final List<Object> leafObjects = new ArrayList(objects.subList(start, end));
+      return new Node(getBBox(leafObjects), leafObjects);
+    }
+
+    // Simple split criterion: median of the bounding box's longest axis
+    final BBox bbox = getBBox(objects);
+    final int splitAxis = bbox.maxAxis();
+    objects.sort(Comparator.comparingDouble(o -> o.getBBox().center().at(splitAxis)));
+    final int mid = start + (end - start) / 2;
+    return new Node(bbox, build(objects, start, mid), build(objects, mid, end));
+  }
+
+  private BBox getBBox(List<Object> objects) {
+    // Compute the bounding box of a list of objects
+    Vec3 min = new Vec3(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+    Vec3 max = new Vec3(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
+    for (Object obj : objects) {
+      final BBox objBBox = obj.getBBox();
+      min = Vec3.min(min, objBBox.min);
+      max = Vec3.max(max, objBBox.max);
+    }
+    return new BBox(min, max);
+  }
+
+  private Hit raycastNode(Node node, Ray ray) {
+    if (node == null || !node.bbox.intersects(ray)) return null;
+
+    if (node.isLeaf()) {
+      // Check for intersection with all objects in the leaf node.
+      Hit closestHit = null;
+      for (Object obj : node.objects) {
+        final Hit hit = obj.raycast(ray);
+        if (hit != null && (closestHit == null || hit.t < closestHit.t)) closestHit = hit;
+      }
+      return closestHit;
+    }
+
+    // Recurse children.
+    final Hit leftHit = raycastNode(node.left, ray), rightHit = raycastNode(node.right, ray);
+    if (leftHit != null && rightHit != null) return leftHit.t < rightHit.t ? leftHit : rightHit;
+
+    return leftHit != null ? leftHit : rightHit;
+  }
 }
 
 class Scene {
@@ -312,8 +389,8 @@ class Scene {
   // when they are instanced with `createInstance`.
   Map<String, Object> namedObjects;
 
-  // Active accumulated triangle state:
   Surface surface = null;
+  // Active accumulated triangle state:
   Vec3 tri_a = null, tri_b = null, tri_c = null;
 
   Scene() {
@@ -371,7 +448,11 @@ class Scene {
   }
 
   void beginAccel() { accelObjects = new ArrayList(); }
-  void endAccel() { accelObjects = null; }
+  void endAccel() {
+    BvhObject bvh = new BvhObject(accelObjects, surface);
+    accelObjects = null;
+    addObject(bvh);
+  }
 
   // Returns a hit for the intersecting object closest to the ray's origin,
   // or `null` if the ray does not intersect any object.
@@ -384,8 +465,7 @@ class Scene {
   }
 
   private void addObject(Object object) {
-    final List<Object> activeObjects = accelObjects != null ? accelObjects : objects;
-    activeObjects.add(object);
+    (accelObjects != null ? accelObjects : objects).add(object);
   }
   private Object popObject() {
     final List<Object> activeObjects = accelObjects != null ? accelObjects : objects;
@@ -562,10 +642,10 @@ class InstanceCommand extends SceneCommand {
 }
 
 class BeginAccelCommand extends SceneCommand {
-  BeginAccelCommand() { super(SceneCommandType.Begin); }
+  BeginAccelCommand() { super(SceneCommandType.BeginAccel); }
 }
 class EndAccelCommand extends SceneCommand {
-  EndAccelCommand() { super(SceneCommandType.End); }
+  EndAccelCommand() { super(SceneCommandType.EndAccel); }
 }
 
 class ReadCommand extends SceneCommand {
@@ -584,87 +664,54 @@ class RenderCommand extends SceneCommand {
 }
 
 class SceneCommandParser {
-  SceneCommand parseTokens(String[] ts) {
+  SceneCommand parseCommand(String[] ts) {
     if (ts.length == 0) return null;
 
-    final String name = ts.length == 0 ? "none" : ts[0];
-    final SceneCommandType type = getType(name);
-    if (type == null) {
-      println("Warning: Unknown command type: " + name);
-      return null;
-    }
+    final String name = ts[0];
+    switch (name.toLowerCase()) {
+      case "background": return new BackgroundCommand(float(ts[1]), float(ts[2]), float(ts[3]));
+      case "fov": return new FovCommand(float(ts[1]));
+      case "light": return new LightCommand(float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
+      case "surface": return new SurfaceCommand(float(ts[1]), float(ts[2]), float(ts[3]));
 
-    switch (type) {
-      case Background: return new BackgroundCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-      case Fov: return new FovCommand(float(ts[1]));
-      case Light: return new LightCommand(float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
-      case Surface: return new SurfaceCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-      case Begin: return new BeginCommand();
-      case Vertex: return new VertexCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-      case End: return new EndCommand();
+      case "begin": return new BeginCommand();
+      case "vertex": return new VertexCommand(float(ts[1]), float(ts[2]), float(ts[3]));
+      case "end": return new EndCommand();
 
-      case Translate: return new TranslateCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-      case Scale: return new ScaleCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-      case Rotate: return new RotateCommand(float(ts[1]), int(ts[2]) == 1, int(ts[3]) == 1, int(ts[4]) == 1);
-      case Push: return new PushCommand();
-      case Pop: return new PopCommand();
+      case "translate": return new TranslateCommand(float(ts[1]), float(ts[2]), float(ts[3]));
+      case "scale": return new ScaleCommand(float(ts[1]), float(ts[2]), float(ts[3]));
+      case "rotate": return new RotateCommand(float(ts[1]), int(ts[2]) == 1, int(ts[3]) == 1, int(ts[4]) == 1);
+      case "push": return new PushCommand();
+      case "pop": return new PopCommand();
 
-      case Box: return new BoxCommand(float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
-      case NamedObject: return new NamedObjectCommand(ts[1]);
-      case Instance: return new InstanceCommand(ts[1]);
-      case BeginAccel: return new BeginAccelCommand();
-      case EndAccel: return new EndAccelCommand();
+      case "box": return new BoxCommand(float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
+      case "named_object": return new NamedObjectCommand(ts[1]);
+      case "instance": return new InstanceCommand(ts[1]);
+      case "begin_accel": return new BeginAccelCommand();
+      case "end_accel": return new EndAccelCommand();
 
-      case Read: return new ReadCommand(ts[1]);
-      case Render: return new RenderCommand();
-      default: return null;
+      case "read": return new ReadCommand(ts[1]);
+      case "render": return new RenderCommand();
+
+      default:
+        println("Warning: Unknown command type: " + name);
+        return null;
     }
   }
 
-  SceneCommand parseTokens(String tokens) { return parseTokens(splitTokens(tokens, " ")); }
+  SceneCommand parseCommand(String tokens) { return parseCommand(splitTokens(tokens, " ")); }
 
   // Assumes `filePath` is relative to `./data/`.
-  List<SceneCommand> parseFile(String filePath) {
+  Stream<SceneCommand> parseFile(String filePath) {
     final String[] lines = loadStrings(filePath);
     if (lines == null) {
       println("Error! Failed to read the file " + filePath);
-      return new ArrayList();
+      return Stream.empty();
     }
 
     return Arrays.stream(lines)
       .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#")) // Filter out empty lines and comments.
-      .map(this::parseTokens).filter(Objects::nonNull).collect(Collectors.toList());
-  }
-
-  // Returns null if there is no matching `SceneCommandType`.
-  SceneCommandType getType(String name) {
-    switch (name.toLowerCase()) {
-      case "background": return SceneCommandType.Background;
-      case "fov": return SceneCommandType.Fov;
-      case "light": return SceneCommandType.Light;
-      case "surface": return SceneCommandType.Surface;
-
-      case "begin": return SceneCommandType.Begin;
-      case "vertex": return SceneCommandType.Vertex;
-      case "end": return SceneCommandType.End;
-
-      case "translate": return SceneCommandType.Translate;
-      case "scale": return SceneCommandType.Scale;
-      case "rotate": return SceneCommandType.Rotate;
-      case "push": return SceneCommandType.Push;
-      case "pop": return SceneCommandType.Pop;
-
-      case "box": return SceneCommandType.Box;
-      case "named_object": return SceneCommandType.NamedObject;
-      case "instance": return SceneCommandType.Instance;
-      case "begin_accel": return SceneCommandType.BeginAccel;
-      case "end_accel": return SceneCommandType.EndAccel;
-
-      case "read": return SceneCommandType.Read;
-      case "render": return SceneCommandType.Render;
-
-      default: return null;
-    }
+      .map(this::parseCommand).filter(Objects::nonNull);
   }
 };
 
@@ -672,9 +719,7 @@ class SceneCommandParser {
 // Then, iterate through the commands, updating and drawing the provided scene according to the parsed commands.
 void interpret(String filePath, Scene scene) {
   final SceneCommandParser parser = new SceneCommandParser();
-  final List<SceneCommand> commands = parser.parseFile(filePath);
-
-  for (SceneCommand command : commands) {
+  parser.parseFile(filePath).forEach(command -> {
     switch (command.type) {
       case Background:
         scene.backgroundColor = ((BackgroundCommand)command).get();
@@ -730,7 +775,7 @@ void interpret(String filePath, Scene scene) {
         drawScene(scene);
         break;
     }
-  }
+  });
 }
 
 // Compute diffuse color at the hit point using the scene's light sources.
@@ -758,6 +803,7 @@ Color shadeDiffuse(Hit hit, Scene scene) {
 }
 
 void drawScene(Scene scene) {
+  println("Drawing scene");
   final Vec3 cameraPos = new Vec3(0, 0, 0);
   final float kw = tan(radians(scene.fovDegrees) / 2);
   final float kh = kw * (float(height) / float(width)); // Scale by aspect ratio.
