@@ -426,19 +426,17 @@ enum SceneCommandType {
 // All commands with data provide a single `get()` method returning an instance of their respective data type.
 abstract class SceneCommand {
   final SceneCommandType type;
-  final String name;
 
-  SceneCommand(SceneCommandType type, String name) {
+  SceneCommand(SceneCommandType type) {
     this.type = type;
-    this.name = name;
   }
 }
 
 class BackgroundCommand extends SceneCommand {
   final Color c;
 
-  BackgroundCommand(String name, float r, float g, float b) {
-    super(SceneCommandType.Background, name);
+  BackgroundCommand(float r, float g, float b) {
+    super(SceneCommandType.Background);
     this.c = new Color(r, g, b);
   }
 
@@ -448,8 +446,8 @@ class BackgroundCommand extends SceneCommand {
 class FovCommand extends SceneCommand {
   final float degrees;
 
-  FovCommand(String name, float degrees) {
-    super( SceneCommandType.Fov, name);
+  FovCommand(float degrees) {
+    super( SceneCommandType.Fov);
     this.degrees = degrees;
   }
 
@@ -459,8 +457,8 @@ class FovCommand extends SceneCommand {
 class LightCommand extends SceneCommand {
   final Light light;
 
-  LightCommand(String name, float x, float y, float z, float r, float g, float b) {
-    super(SceneCommandType.Light, name);
+  LightCommand(float x, float y, float z, float r, float g, float b) {
+    super(SceneCommandType.Light);
     this.light = new Light(new Vec3(x, y, z), new Color(r, g, b));
   }
 
@@ -470,8 +468,8 @@ class LightCommand extends SceneCommand {
 class SurfaceCommand extends SceneCommand {
   final Surface surface;
 
-  SurfaceCommand(String name, float dr, float dg, float db) {
-    super(SceneCommandType.Surface, name);
+  SurfaceCommand(float dr, float dg, float db) {
+    super(SceneCommandType.Surface);
     this.surface = new Surface(new Color(dr, dg, db));
   }
   
@@ -479,14 +477,14 @@ class SurfaceCommand extends SceneCommand {
 }
 
 class BeginCommand extends SceneCommand {
-  BeginCommand(String name) { super(SceneCommandType.Begin, name); }
+  BeginCommand() { super(SceneCommandType.Begin); }
 }
 
 class VertexCommand extends SceneCommand {
   final Vec3 position;
 
-  VertexCommand(String name, float x, float y, float z) {
-    super(SceneCommandType.Vertex, name);
+  VertexCommand(float x, float y, float z) {
+    super(SceneCommandType.Vertex);
     this.position = new Vec3(x, y, z);
   }
 
@@ -494,14 +492,14 @@ class VertexCommand extends SceneCommand {
 }
 
 class EndCommand extends SceneCommand {
-  EndCommand(String name) { super(SceneCommandType.End, name); }
+  EndCommand() { super(SceneCommandType.End); }
 }
 
 abstract class TransformCommand extends SceneCommand {
   final Mat4 transform;
 
-  TransformCommand(SceneCommandType type, String name, Mat4 transform) {
-    super(type, name);
+  TransformCommand(SceneCommandType type, Mat4 transform) {
+    super(type);
     this.transform = transform;
   }
 
@@ -509,33 +507,33 @@ abstract class TransformCommand extends SceneCommand {
 }
 
 class TranslateCommand extends TransformCommand {
-  TranslateCommand(String name, float tx, float ty, float tz) {
-    super(SceneCommandType.Translate, name,  Mat4.translate(tx, ty, tz));
+  TranslateCommand(float tx, float ty, float tz) {
+    super(SceneCommandType.Translate, Mat4.translate(tx, ty, tz));
   }
 }
 class ScaleCommand extends TransformCommand {
-  ScaleCommand(String name, float sx, float sy, float sz) {
-    super(SceneCommandType.Scale, name, Mat4.scale(sx, sy, sz));
+  ScaleCommand(float sx, float sy, float sz) {
+    super(SceneCommandType.Scale, Mat4.scale(sx, sy, sz));
   }
 }
 class RotateCommand extends TransformCommand {
-  RotateCommand(String name, float degrees, boolean x, boolean y, boolean z) {
-    super(SceneCommandType.Rotate, name, Mat4.rotate(radians(degrees), x, y, z));
+  RotateCommand(float degrees, boolean x, boolean y, boolean z) {
+    super(SceneCommandType.Rotate, Mat4.rotate(radians(degrees), x, y, z));
   }
 }
 
 class PushCommand extends SceneCommand {
-  PushCommand(String name) { super(SceneCommandType.Push, name); }
+  PushCommand() { super(SceneCommandType.Push); }
 }
 class PopCommand extends SceneCommand {
-  PopCommand(String name) { super(SceneCommandType.Pop, name); }
+  PopCommand() { super(SceneCommandType.Pop); }
 }
 
 class BoxCommand extends SceneCommand {
   final BBox box;
 
-  BoxCommand(String name, float xmin, float ymin, float zmin, float xmax, float ymax, float zmax) {
-    super(SceneCommandType.Box, name);
+  BoxCommand(float xmin, float ymin, float zmin, float xmax, float ymax, float zmax) {
+    super(SceneCommandType.Box);
     this.box = new BBox(new Vec3(xmin, ymin, zmin), new Vec3(xmax, ymax, zmax));
   }
   
@@ -543,39 +541,39 @@ class BoxCommand extends SceneCommand {
 }
 
 class NamedObjectCommand extends SceneCommand {
-  final String objectName;
+  final String name;
 
-  NamedObjectCommand(String commandName, String objectName) {
-    super(SceneCommandType.NamedObject, commandName);
-    this.objectName = objectName;
+  NamedObjectCommand(String name) {
+    super(SceneCommandType.NamedObject);
+    this.name = name;
   }
 
-  String get() { return objectName; }
+  String get() { return name; }
 }
-class InstanceCommand extends SceneCommand {
-  final String objectName;
 
-  InstanceCommand(String commandName, String objectName) {
-    super(SceneCommandType.Instance, commandName);
-    this.objectName = objectName;
+class InstanceCommand extends SceneCommand {
+  final String name;
+
+  InstanceCommand(String name) {
+    super(SceneCommandType.Instance);
+    this.name = name;
   }
 
-  String get() { return objectName; }
+  String get() { return name; }
 }
 
 class BeginAccelCommand extends SceneCommand {
-  BeginAccelCommand(String name) { super(SceneCommandType.Begin, name); }
+  BeginAccelCommand() { super(SceneCommandType.Begin); }
 }
-
 class EndAccelCommand extends SceneCommand {
-  EndAccelCommand(String name) { super(SceneCommandType.End, name); }
+  EndAccelCommand() { super(SceneCommandType.End); }
 }
 
 class ReadCommand extends SceneCommand {
   final String fileName;
 
-  ReadCommand(String name, String fileName) {
-    super(SceneCommandType.Read, name);
+  ReadCommand(String fileName) {
+    super(SceneCommandType.Read);
     this.fileName = fileName;
   }
 
@@ -583,7 +581,7 @@ class ReadCommand extends SceneCommand {
 }
 
 class RenderCommand extends SceneCommand {
-  RenderCommand(String name) { super(SceneCommandType.Render, name); }
+  RenderCommand() { super(SceneCommandType.Render); }
 }
 
 class SceneCommandParser {
@@ -598,28 +596,28 @@ class SceneCommandParser {
     }
 
     switch (type) {
-      case Background: return new BackgroundCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
-      case Fov: return new FovCommand(name, float(ts[1]));
-      case Light: return new LightCommand(name, float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
-      case Surface: return new SurfaceCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
-      case Begin: return new BeginCommand(name);
-      case Vertex: return new VertexCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
-      case End: return new EndCommand(name);
+      case Background: return new BackgroundCommand(float(ts[1]), float(ts[2]), float(ts[3]));
+      case Fov: return new FovCommand(float(ts[1]));
+      case Light: return new LightCommand(float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
+      case Surface: return new SurfaceCommand(float(ts[1]), float(ts[2]), float(ts[3]));
+      case Begin: return new BeginCommand();
+      case Vertex: return new VertexCommand(float(ts[1]), float(ts[2]), float(ts[3]));
+      case End: return new EndCommand();
 
-      case Translate: return new TranslateCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
-      case Scale: return new ScaleCommand(name, float(ts[1]), float(ts[2]), float(ts[3]));
-      case Rotate: return new RotateCommand(name, float(ts[1]), int(ts[2]) == 1, int(ts[3]) == 1, int(ts[4]) == 1);
-      case Push: return new PushCommand(name);
-      case Pop: return new PopCommand(name);
+      case Translate: return new TranslateCommand(float(ts[1]), float(ts[2]), float(ts[3]));
+      case Scale: return new ScaleCommand(float(ts[1]), float(ts[2]), float(ts[3]));
+      case Rotate: return new RotateCommand(float(ts[1]), int(ts[2]) == 1, int(ts[3]) == 1, int(ts[4]) == 1);
+      case Push: return new PushCommand();
+      case Pop: return new PopCommand();
 
-      case Box: return new BoxCommand(name, float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
-      case NamedObject: return new NamedObjectCommand(name, ts[1]);
-      case Instance: return new InstanceCommand(name, ts[1]);
-      case BeginAccel: return new BeginAccelCommand(name);
-      case EndAccel: return new EndAccelCommand(name);
+      case Box: return new BoxCommand(float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
+      case NamedObject: return new NamedObjectCommand(ts[1]);
+      case Instance: return new InstanceCommand(ts[1]);
+      case BeginAccel: return new BeginAccelCommand();
+      case EndAccel: return new EndAccelCommand();
 
-      case Read: return new ReadCommand(name, ts[1]);
-      case Render: return new RenderCommand(name);
+      case Read: return new ReadCommand(ts[1]);
+      case Render: return new RenderCommand();
       default: return null;
     }
   }
