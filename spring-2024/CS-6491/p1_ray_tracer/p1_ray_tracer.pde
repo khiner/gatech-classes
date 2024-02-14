@@ -31,8 +31,6 @@ void keyPressed() {
   interpret(String.format("s%02d.cli", cli_file_number), new Scene());
 }
 
-/**** Scene description ****/
-
 class Color {
   final float r, g, b; // In range [0, 1]
 
@@ -144,6 +142,7 @@ class BBox extends Geometry {
 
   int maxAxis() { return max.sub(min).maxAxis(); }
   Vec3 center() { return min.add(max).div(2); }
+  BBox union(BBox o) { return new BBox(Vec3.min(min, o.min), Vec3.max(max, o.max)); }
 
   // Normal based on the closest axis-aligned plane.
   Vec3 normal(Vec3 p) {
@@ -214,8 +213,8 @@ class Hit extends Intersection {
     super(ray, t, normal);
     this.surface = surface;
   }
-  Hit(Intersection intersection, Surface surface) {
-    this(intersection.t, intersection.point, intersection.normal, surface);
+  Hit(Intersection isect, Surface surface) {
+    this(isect.t, isect.point, isect.normal, surface);
   }
 }
 
@@ -235,8 +234,8 @@ abstract class GeometryObject extends Object {
   }
 
   Hit raycast(Ray ray) {
-    final Intersection intersection = geometry.intersect(ray);
-    if (intersection != null) return new Hit(intersection, surface);
+    final Intersection isect = geometry.intersect(ray);
+    if (isect != null) return new Hit(isect, surface);
     return null;
   }
 
@@ -273,7 +272,6 @@ class InstancedObject extends Object {
   BBox getBBox() {
     BBox bbox = object.getBBox();
     return new BBox(transform.transform(bbox.min), transform.transform(bbox.max));
-    //return object.getBBox();
   }
 }
 
@@ -315,6 +313,8 @@ class BvhObject extends Object {
     boolean isLeaf() { return objects != null; }
   }
 
+  final static int MaxLeafNodeObjectCount = 6;
+
   final Node root;
   final Surface surface;
 
@@ -327,7 +327,7 @@ class BvhObject extends Object {
   Hit raycast(Ray ray) { return raycastNode(root, ray); }
 
   private Node build(List<Object> objects, int start, int end) {
-    if (end - start <= 6) { // Leaf node condition
+    if (end - start <= MaxLeafNodeObjectCount) {
       final List<Object> leafObjects = new ArrayList(objects.subList(start, end));
       return new Node(getBBox(leafObjects), leafObjects);
     }
@@ -341,15 +341,10 @@ class BvhObject extends Object {
   }
 
   private BBox getBBox(List<Object> objects) {
-    // Compute the bounding box of a list of objects
-    Vec3 min = new Vec3(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
-    Vec3 max = new Vec3(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
-    for (Object obj : objects) {
-      final BBox objBBox = obj.getBBox();
-      min = Vec3.min(min, objBBox.min);
-      max = Vec3.max(max, objBBox.max);
-    }
-    return new BBox(min, max);
+    final float MAX = Float.MAX_VALUE;
+    return objects.stream()
+      .map(Object::getBBox)
+      .reduce(new BBox(new Vec3(MAX, MAX, MAX), new Vec3(-MAX, -MAX, -MAX)), BBox::union);
   }
 
   private Hit raycastNode(Node node, Ray ray) {
@@ -357,12 +352,11 @@ class BvhObject extends Object {
 
     if (node.isLeaf()) {
       // Check for intersection with all objects in the leaf node.
-      Hit closestHit = null;
-      for (Object obj : node.objects) {
-        final Hit hit = obj.raycast(ray);
-        if (hit != null && (closestHit == null || hit.t < closestHit.t)) closestHit = hit;
-      }
-      return closestHit;
+      return node.objects.stream()
+        .map(object -> object.raycast(ray))
+        .filter(Objects::nonNull)
+        .min(Comparator.comparingDouble(hit -> hit.t))
+        .orElse(null);
     }
 
     // Recurse children.
@@ -413,7 +407,7 @@ class Scene {
   void clearVertices() { tri_a = tri_b = tri_c = null; }
   void commitVertices() {
     if (surface == null || tri_a == null || tri_b == null || tri_c == null) {
-      println("Warning: Encountered an `End` command without a surface and three points. No triangle added.");
+      println("Warning: Committing vertices without a surface and three points. No triangle added.");
       return;
     }
 
@@ -474,306 +468,48 @@ class Scene {
   }
 }
 
-/**** Scene commands/parsing ****/
-
-enum SceneCommandType {
-  Background,
-  Fov,
-  Light,
-  Surface,
-  Begin,
-  Vertex,
-  End,
-
-  Translate,
-  Scale,
-  Rotate,
-  Push,
-  Pop,
-
-  Box,
-  NamedObject,
-  Instance,
-  BeginAccel,
-  EndAccel,
-
-  Read,
-  Render
-}
-
-// A `SceneCommand` is a complete, immutable, structured parsing of a textual scene command (a line in a `.cli` file).
-// All commands with data provide a single `get()` method returning an instance of their respective data type.
-abstract class SceneCommand {
-  final SceneCommandType type;
-
-  SceneCommand(SceneCommandType type) {
-    this.type = type;
-  }
-}
-
-class BackgroundCommand extends SceneCommand {
-  final Color c;
-
-  BackgroundCommand(float r, float g, float b) {
-    super(SceneCommandType.Background);
-    this.c = new Color(r, g, b);
+// Assumes `filePath` is relative to `./data/`.
+Stream<String> parseFile(String filePath) {
+  final String[] lines = loadStrings(filePath);
+  if (lines == null) {
+    println("Error! Failed to read the file " + filePath);
+    return Stream.empty();
   }
 
-  Color get() { return c; }
+  // Filter out empty lines and comments.
+  return Arrays.stream(lines).filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"));
 }
 
-class FovCommand extends SceneCommand {
-  final float degrees;
-
-  FovCommand(float degrees) {
-    super( SceneCommandType.Fov);
-    this.degrees = degrees;
-  }
-
-  float get() { return degrees; }
-}
-
-class LightCommand extends SceneCommand {
-  final Light light;
-
-  LightCommand(float x, float y, float z, float r, float g, float b) {
-    super(SceneCommandType.Light);
-    this.light = new Light(new Vec3(x, y, z), new Color(r, g, b));
-  }
-
-  Light get() { return light; }
-}
-
-class SurfaceCommand extends SceneCommand {
-  final Surface surface;
-
-  SurfaceCommand(float dr, float dg, float db) {
-    super(SceneCommandType.Surface);
-    this.surface = new Surface(new Color(dr, dg, db));
-  }
-  
-  Surface get() { return surface; }
-}
-
-class BeginCommand extends SceneCommand {
-  BeginCommand() { super(SceneCommandType.Begin); }
-}
-
-class VertexCommand extends SceneCommand {
-  final Vec3 position;
-
-  VertexCommand(float x, float y, float z) {
-    super(SceneCommandType.Vertex);
-    this.position = new Vec3(x, y, z);
-  }
-
-  Vec3 get() { return position; }
-}
-
-class EndCommand extends SceneCommand {
-  EndCommand() { super(SceneCommandType.End); }
-}
-
-abstract class TransformCommand extends SceneCommand {
-  final Mat4 transform;
-
-  TransformCommand(SceneCommandType type, Mat4 transform) {
-    super(type);
-    this.transform = transform;
-  }
-
-  Mat4 get() { return transform; }
-}
-
-class TranslateCommand extends TransformCommand {
-  TranslateCommand(float tx, float ty, float tz) {
-    super(SceneCommandType.Translate, Mat4.translate(tx, ty, tz));
-  }
-}
-class ScaleCommand extends TransformCommand {
-  ScaleCommand(float sx, float sy, float sz) {
-    super(SceneCommandType.Scale, Mat4.scale(sx, sy, sz));
-  }
-}
-class RotateCommand extends TransformCommand {
-  RotateCommand(float degrees, boolean x, boolean y, boolean z) {
-    super(SceneCommandType.Rotate, Mat4.rotate(radians(degrees), x, y, z));
-  }
-}
-
-class PushCommand extends SceneCommand {
-  PushCommand() { super(SceneCommandType.Push); }
-}
-class PopCommand extends SceneCommand {
-  PopCommand() { super(SceneCommandType.Pop); }
-}
-
-class BoxCommand extends SceneCommand {
-  final BBox box;
-
-  BoxCommand(float xmin, float ymin, float zmin, float xmax, float ymax, float zmax) {
-    super(SceneCommandType.Box);
-    this.box = new BBox(new Vec3(xmin, ymin, zmin), new Vec3(xmax, ymax, zmax));
-  }
-  
-  BBox get() { return box; }
-}
-
-class NamedObjectCommand extends SceneCommand {
-  final String name;
-
-  NamedObjectCommand(String name) {
-    super(SceneCommandType.NamedObject);
-    this.name = name;
-  }
-
-  String get() { return name; }
-}
-
-class InstanceCommand extends SceneCommand {
-  final String name;
-
-  InstanceCommand(String name) {
-    super(SceneCommandType.Instance);
-    this.name = name;
-  }
-
-  String get() { return name; }
-}
-
-class BeginAccelCommand extends SceneCommand {
-  BeginAccelCommand() { super(SceneCommandType.BeginAccel); }
-}
-class EndAccelCommand extends SceneCommand {
-  EndAccelCommand() { super(SceneCommandType.EndAccel); }
-}
-
-class ReadCommand extends SceneCommand {
-  final String fileName;
-
-  ReadCommand(String fileName) {
-    super(SceneCommandType.Read);
-    this.fileName = fileName;
-  }
-
-  String get() { return fileName; }
-}
-
-class RenderCommand extends SceneCommand {
-  RenderCommand() { super(SceneCommandType.Render); }
-}
-
-class SceneCommandParser {
-  SceneCommand parseCommand(String[] ts) {
-    if (ts.length == 0) return null;
-
-    final String name = ts[0];
-    switch (name.toLowerCase()) {
-      case "background": return new BackgroundCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-      case "fov": return new FovCommand(float(ts[1]));
-      case "light": return new LightCommand(float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
-      case "surface": return new SurfaceCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-
-      case "begin": return new BeginCommand();
-      case "vertex": return new VertexCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-      case "end": return new EndCommand();
-
-      case "translate": return new TranslateCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-      case "scale": return new ScaleCommand(float(ts[1]), float(ts[2]), float(ts[3]));
-      case "rotate": return new RotateCommand(float(ts[1]), int(ts[2]) == 1, int(ts[3]) == 1, int(ts[4]) == 1);
-      case "push": return new PushCommand();
-      case "pop": return new PopCommand();
-
-      case "box": return new BoxCommand(float(ts[1]), float(ts[2]), float(ts[3]), float(ts[4]), float(ts[5]), float(ts[6]));
-      case "named_object": return new NamedObjectCommand(ts[1]);
-      case "instance": return new InstanceCommand(ts[1]);
-      case "begin_accel": return new BeginAccelCommand();
-      case "end_accel": return new EndAccelCommand();
-
-      case "read": return new ReadCommand(ts[1]);
-      case "render": return new RenderCommand();
-
-      default:
-        println("Warning: Unknown command type: " + name);
-        return null;
-    }
-  }
-
-  SceneCommand parseCommand(String tokens) { return parseCommand(splitTokens(tokens, " ")); }
-
-  // Assumes `filePath` is relative to `./data/`.
-  Stream<SceneCommand> parseFile(String filePath) {
-    final String[] lines = loadStrings(filePath);
-    if (lines == null) {
-      println("Error! Failed to read the file " + filePath);
-      return Stream.empty();
-    }
-
-    return Arrays.stream(lines)
-      .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#")) // Filter out empty lines and comments.
-      .map(this::parseCommand).filter(Objects::nonNull);
-  }
-};
-
-// Parse the text in a scene description file into a list of `SceneCommand`s.
+// Parse the text in a scene description file into its commands.
 // Then, iterate through the commands, updating and drawing the provided scene according to the parsed commands.
 void interpret(String filePath, Scene scene) {
-  final SceneCommandParser parser = new SceneCommandParser();
-  parser.parseFile(filePath).forEach(command -> {
-    switch (command.type) {
-      case Background:
-        scene.backgroundColor = ((BackgroundCommand)command).get();
-        break;
-      case Fov:
-        scene.fovDegrees = ((FovCommand)command).get();
-        break;
-      case Light:
-        scene.lights.add(((LightCommand)command).get());
-        break;
-      case Surface:
-        scene.surface = ((SurfaceCommand)command).get();
-        break;
-      case Begin:
-        scene.clearVertices();
-        break;
-      case Vertex:
-        scene.addVertex(((VertexCommand)command).get());
-        break;
-      case End:
-        scene.commitVertices();
-        break;
-      case Translate:
-      case Scale:
-      case Rotate:
-        scene.stack.apply(((TransformCommand)command).get());
-        break;
-      case Push:
-        scene.stack.push();
-        break;
-      case Pop:
-        scene.stack.pop();
-        break;
-      case Box:
-        scene.addBBox(((BoxCommand)command).get());
-        break;
-      case NamedObject:
-        scene.nameLatestObject(((NamedObjectCommand)command).get());
-        break;
-      case Instance:
-        scene.createInstance(((InstanceCommand)command).get());
-        break;
-      case BeginAccel:
-        scene.beginAccel();
-        break;
-      case EndAccel:
-        scene.endAccel();
-        break;
-      case Read:
-        interpret(((ReadCommand)command).get(), scene);
-        break;
-      case Render:
-        drawScene(scene);
-        break;
+  parseFile(filePath).forEach(tokens -> {
+    final String[] ts = splitTokens(tokens, " ");
+    final String name = ts[0];
+    switch (name) {
+      case "background": scene.backgroundColor = new Color(float(ts[1]), float(ts[2]), float(ts[3])); break;
+      case "fov": scene.fovDegrees = float(ts[1]); break;
+      case "light": scene.lights.add(new Light(new Vec3(float(ts[1]), float(ts[2]), float(ts[3])), new Color(float(ts[4]), float(ts[5]), float(ts[6])))); break;
+      case "surface": scene.surface = new Surface(new Color(float(ts[1]), float(ts[2]), float(ts[3]))); break;
+
+      case "begin": scene.clearVertices(); break;
+      case "vertex": scene.addVertex(new Vec3(float(ts[1]), float(ts[2]), float(ts[3]))); break;
+      case "end": scene.commitVertices(); break;
+
+      case "translate": scene.stack.apply(Mat4.translate(float(ts[1]), float(ts[2]), float(ts[3]))); break;
+      case "scale": scene.stack.apply(Mat4.scale(float(ts[1]), float(ts[2]), float(ts[3]))); break;
+      case "rotate": scene.stack.apply(Mat4.rotate(radians(float(ts[1])), int(ts[2]) == 1, int(ts[3]) == 1, int(ts[4]) == 1)); break;
+      case "push": scene.stack.push(); break;
+      case "pop": scene.stack.pop(); break;
+
+      case "box": scene.addBBox(new BBox(new Vec3(float(ts[1]), float(ts[2]), float(ts[3])), new Vec3(float(ts[4]), float(ts[5]), float(ts[6])))); break;
+      case "named_object": scene.nameLatestObject(ts[1]); break;
+      case "instance": scene.createInstance(ts[1]); break;
+      case "begin_accel": scene.beginAccel(); break;
+      case "end_accel": scene.endAccel(); break;
+
+      case "read": interpret(ts[1], scene); break;
+      case "render": drawScene(scene); break;
     }
   });
 }
