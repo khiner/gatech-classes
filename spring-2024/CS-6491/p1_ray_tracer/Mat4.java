@@ -14,13 +14,13 @@ public class Mat4 {
     data[0] = data[5] = data[10] = data[15] = 1;
   }
 
-  // Copy constructor
-  public Mat4(Mat4 other) { this.data = other.data.clone(); }
-
   public Mat4(PMatrix3D other) {
     data = new float[16];
     other.get(data);
   }
+
+  // Copy constructor
+  public Mat4(Mat4 other) { this.data = other.data.clone(); }
 
   public Mat4 invert() {
     PMatrix3D pmat4 = new PMatrix3D();
@@ -45,20 +45,20 @@ public class Mat4 {
       for (int col = 0; col < 4; col++) {
         result.data[row * 4 + col] = 0;
         for (int k = 0; k < 4; k++) {
-            result.data[row * 4 + col] += this.data[row * 4 + k] * other.data[k * 4 + col];
+          result.data[row * 4 + col] += this.data[row * 4 + k] * other.data[k * 4 + col];
         }
       }
     }
     return result;
   }
 
-  public Vec3 apply(Vec3 v) {
-    float x = v.x * data[0] + v.y * data[1] + v.z * data[2] + data[3];
-    float y = v.x * data[4] + v.y * data[5] + v.z * data[6] + data[7];
-    float z = v.x * data[8] + v.y * data[9] + v.z * data[10] + data[11];
-    float w = v.x * data[12] + v.y * data[13] + v.z * data[14] + data[15];
+  public Vec3 transform(Vec3 v) {
+    float x = v.x*data[0] + v.y*data[1] + v.z*data[2] + data[3];
+    float y = v.x*data[4] + v.y*data[5] + v.z*data[6] + data[7];
+    float z = v.x*data[8] + v.y*data[9] + v.z*data[10] + data[11];
+    float w = v.x*data[12] + v.y*data[13] + v.z*data[14] + data[15];
 
-    // Convert back from homogeneous coordinates to 3D coordinates
+    // Convert back from homogeneous coordinates to 3D coordinates.
     if (w != 1.0 && w != 0.0) {
       x /= w;
       y /= w;
@@ -69,12 +69,15 @@ public class Mat4 {
   }
 
   // Transform the direction without translation.
-  public Vec3 applyDirection(Vec3 v) {
-    float x = v.x * data[0] + v.y * data[1] + v.z * data[2];
-    float y = v.x * data[4] + v.y * data[5] + v.z * data[6];
-    float z = v.x * data[8] + v.y * data[9] + v.z * data[10];
-    return new Vec3(x, y, z);
+  public Vec3 transformDirection(Vec3 v) {
+    return new Vec3(
+      v.x*data[0] + v.y*data[1] + v.z*data[2],
+      v.x*data[4] + v.y*data[5] + v.z*data[6],
+      v.x*data[8] + v.y*data[9] + v.z*data[10]
+    );
   }
+
+  public Ray transformRay(Ray ray) { return new Ray(transform(ray.origin), transformDirection(ray.direction)); }
 
   public static Mat4 translate(float tx, float ty, float tz) {
     Mat4 result = new Mat4();
@@ -93,8 +96,8 @@ public class Mat4 {
   }
 
   public static Mat4 rotateX(float angle) {
-    Mat4 result = new Mat4();
     final float cos = (float)Math.cos(angle), sin = (float)Math.sin(angle);
+    Mat4 result = new Mat4();
     result.data[5] = cos;
     result.data[6] = -sin;
     result.data[9] = sin;
@@ -103,8 +106,8 @@ public class Mat4 {
   }
 
   public static Mat4 rotateY(float angle) {
-    Mat4 result = new Mat4();
     final float cos = (float)Math.cos(angle), sin = (float)Math.sin(angle);
+    Mat4 result = new Mat4();
     result.data[0] = cos;
     result.data[2] = sin;
     result.data[8] = -sin;
@@ -113,8 +116,8 @@ public class Mat4 {
   }
 
   public static Mat4 rotateZ(float angle) {
-    Mat4 result = new Mat4();
     final float cos = (float)Math.cos(angle), sin = (float)Math.sin(angle);
+    Mat4 result = new Mat4();
     result.data[0] = cos;
     result.data[1] = -sin;
     result.data[4] = sin;
