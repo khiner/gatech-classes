@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.Comparator;
 
-import java.io.*; 
-
 class Scene {
   Mat4Stack stack = new Mat4Stack();
   float fovDegrees = 0;

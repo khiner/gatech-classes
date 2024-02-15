@@ -1,5 +1,274 @@
-# Create a scene that includes many, many instances of one of the large meshes:
-# bunny, buddha, dragon, or lucy.
+# Create a scene that includes many instances of one or more of the large meshes
+
+fov 80
+
+# blue background
+
+background 0.3 0.3 .9
+
+# light sources 
+
+light  3 4  0  .2 .2 .2
+light -1 2  0  .8 .8 .8
+
+# these two triangles acts as a ground plane
+
+surface  .8 .8 .8
+
+begin
+vertex -100 -1 -100
+vertex  100 -1 -100
+vertex  100 -1  100
+end
+
+begin
+vertex  100 -1  100
+vertex -100 -1  100
+vertex -100 -1 -100
+end
+
+# one tree (named object)
+
+surface  .2 .9 .3
+push
+scale 0.022 0.022 0.022
+translate 0 -8 0
+rotate 270  1 0 0
+
+begin_accel
+read pine_tree_230k.cli
+end_accel
+named_object tree
+pop
+
+# Tree rows
+
+# First row
+push
+translate 0 0 -10
+
+push
+translate -8 0 0
+instance tree
+pop
+
+push
+translate -6 0 0
+instance tree
+pop
+
+push
+translate -4 0 0
+instance tree
+pop
+
+push
+translate -2 0 0
+instance tree
+pop
+
+push
+translate 0 0 0
+instance tree
+pop
+
+push
+translate 2 0 0
+instance tree
+pop
+
+push
+translate 4 0 0
+instance tree
+pop
+
+push
+translate 6 0 0
+instance tree
+pop
+
+push
+translate 8 0 0
+instance tree
+pop
+pop
+
+# Second row
+push
+translate 0 0 -8
+
+push
+translate -6 0 0
+instance tree
+pop
+
+push
+translate -4 0 0
+instance tree
+pop
+
+push
+translate -2 0 0
+instance tree
+pop
+
+push
+translate 0 0 0
+instance tree
+pop
+
+push
+translate 2 0 0
+instance tree
+pop
+
+push
+translate 4 0 0
+instance tree
+pop
+
+push
+translate 6 0 0
+instance tree
+pop
+pop
+
+# Third row
+push
+translate 0 0 -6
+
+push
+translate -4 0 0
+instance tree
+pop
+
+push
+translate -2 0 0
+instance tree
+pop
+
+push
+translate 0 0 0
+instance tree
+pop
+
+push
+translate 2 0 0
+instance tree
+pop
+
+push
+translate 4 0 0
+instance tree
+pop
+pop
+
+# Fourth row
+push
+translate 0 0 -4
+
+push
+translate -2 0 0
+instance tree
+pop
+
+push
+translate 0 0 0
+instance tree
+pop
+
+push
+translate 2 0 0
+instance tree
+pop
+pop
+
+surface  0.44 .55 .66
+push
+translate 0 -0.85 0
+scale 0.010 0.010 0.010
+rotate 270  1 0 0
+
+begin_accel
+read totoro_200k.cli
+end_accel
+named_object totoro
+pop
+
+
+# Totoro rows
+
+# First row
+push
+translate 0 0 -3
+
+push
+translate -2 0 0
+instance totoro
+pop
+
+push
+translate -1 0 0
+instance totoro
+pop
+
+instance totoro
+
+push
+translate 1 0 0
+instance totoro
+pop
+
+push
+translate 2 0 0
+instance totoro
+pop
+pop
+
+# Second row
+push
+translate 0 0 -2
+translate 0 -0.2 0
+scale 0.8 0.8 0.8
+
+push
+translate -1.5 0 0
+instance totoro
+pop
+
+push
+translate -0.5 0 0
+instance totoro
+pop
+
+push
+translate 0.5 0 0
+instance totoro
+pop
+
+push
+translate 1.5 0 0
+instance totoro
+pop
+pop
+
+# Third row
+push
+translate 0 0 -1.5
+translate 0 -0.45 0
+scale 0.6 0.6 0.6
+
+push
+translate -1 0 0
+instance totoro
+pop
+
+instance totoro
+
+push
+translate 1 0 0
+instance totoro
+pop
+pop
 
 render
-

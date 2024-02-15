@@ -15,7 +15,7 @@ void setup() {
 static Integer charToCliFileNumber(char ch) {
   if (ch >= '1' && ch <= '9') return ch - '0';
   if (ch == '0') return 10;
-  if (ch == 'a') return 11;
+  if (ch >= 'a' && ch <= 'd') return ch - 'a' + 11;
   return null;
 }
 
@@ -37,8 +37,6 @@ void interpret(String filePath, Scene scene) {
   final String[] lines = loadStrings(filePath);
   if (lines == null) throw new IllegalArgumentException("Failed to read the file " + filePath);
 
-  println("Interpretting " + filePath);
-  reset_timer();
   Arrays.stream(lines)
     // Filter out empty lines and comments.
     .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
@@ -105,7 +103,6 @@ void interpret(String filePath, Scene scene) {
       interpret(ts[1], scene);
       break;
     case "render":
-      print_timer();
       drawScene(scene);
       break;
     }
@@ -161,5 +158,4 @@ void mousePressed() {
 }
 
 // you don't need to add anything in the "draw" function for this project
-void draw() {
-}
+void draw() {}
