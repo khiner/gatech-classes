@@ -36,7 +36,5 @@ class Triangle extends Geometry {
     return null;
   }
 
-  BBox getBBox() {
-    return new BBox(Vec3.min(Vec3.min(p1, p2), p3), Vec3.max(Vec3.max(p1, p2), p3));
-  }
+  BBox getBBox() { return new BBox(Vec3.min(Vec3.min(p1, p2), p3), Vec3.max(Vec3.max(p1, p2), p3)); }
 }

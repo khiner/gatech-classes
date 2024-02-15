@@ -36,7 +36,10 @@ class BBox extends Geometry {
     for (int i = 0; i < 3; ++i) {
       final float d = ray.direction.at(i), o = ray.origin.at(i);
       final float min_val = min.at(i), max_val = max.at(i);
+      // This will be Infinity when d == 0, and subsequent calculations work out correctly.
+      // Even though ops involving Inf/NaN can be slow, in my testing this is faster than introducing branching.
       final float invD = 1.f / d;
+
       float tNear = (min_val - o) * invD, tFar = (max_val - o) * invD;
       if (tNear > tFar) {
         float temp = tNear;
@@ -55,7 +58,8 @@ class BBox extends Geometry {
 
   Intersection intersect(Ray ray) {
     final Float t = intersectT(ray);
-    if (t == null) return null;
+    if (t == null || t == 0) return null;
+
 
     final Vec3 norm = normal(ray.interp(t));
     if (norm == null) throw new RuntimeException("Ray intersected BBox but could not determine the normal based on the intersection point.");

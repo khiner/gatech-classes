@@ -9,6 +9,7 @@ class Intersection {
     this.point = point;
     this.normal = normal;
   }
+
   Intersection(Ray ray, float t, Vec3 normal) {
     this(t, ray.interp(t), normal.dot(ray.direction) > 0 ? normal.flip() : normal); // Ensure the normal is facing the camera.
   }

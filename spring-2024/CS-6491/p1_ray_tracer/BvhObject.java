@@ -26,9 +26,7 @@ class BvhObject extends Object {
       this.objects = null;
     }
 
-    boolean isLeaf() {
-      return objects != null;
-    }
+    boolean isLeaf() { return objects != null; }
   }
 
   final static int MaxLeafNodeObjectCount = 6;
@@ -41,12 +39,8 @@ class BvhObject extends Object {
     this.root = build(objects, 0, objects.size());
   }
 
-  BBox getBBox() {
-    return root.bbox;
-  }
-  Hit raycast(Ray ray) {
-    return raycastNode(root, ray);
-  }
+  BBox getBBox() { return root.bbox; }
+  Hit raycast(Ray ray) { return raycastNode(root, ray); }
 
   private Node build(List<Object> objects, int start, int end) {
     if (end - start <= MaxLeafNodeObjectCount) {

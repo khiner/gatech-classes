@@ -26,23 +26,24 @@ void keyPressed() {
   interpret(String.format("s%02d.cli", cli_file_number), new Scene());
 }
 
-// Assumes `filePath` is relative to `./data/`.
-Stream<String> parseFile(String filePath) {
-  final String[] lines = loadStrings(filePath);
-  if (lines == null) {
-    println("Error! Failed to read the file " + filePath);
-    return Stream.empty();
-  }
-
-  // Filter out empty lines and comments.
-  return Arrays.stream(lines).filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"));
-}
+int timer;
+void reset_timer() { timer = millis(); }
+void print_timer() { println("timer = " + (millis() - timer)/1000.0 + "s"); }
 
 // Parse the text in a scene description file into its commands.
 // Then, iterate through the commands, updating and drawing the provided scene according to the parsed commands.
+// Assumes `filePath` is relative to `./data/`.
 void interpret(String filePath, Scene scene) {
-  parseFile(filePath).forEach(tokens -> {
-    final String[] ts = splitTokens(tokens, " ");
+  final String[] lines = loadStrings(filePath);
+  if (lines == null) throw new IllegalArgumentException("Failed to read the file " + filePath);
+
+  println("Interpretting " + filePath);
+  reset_timer();
+  Arrays.stream(lines)
+    // Filter out empty lines and comments.
+    .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("#"))
+    .map(tokens -> splitTokens(tokens, " "))
+    .forEach(ts -> {
     final String name = ts[0];
     switch (name) {
     case "background":
@@ -104,11 +105,11 @@ void interpret(String filePath, Scene scene) {
       interpret(ts[1], scene);
       break;
     case "render":
+      print_timer();
       drawScene(scene);
       break;
     }
-  }
-  );
+  });
 }
 
 // Compute diffuse color at the hit point using the scene's light sources.
@@ -120,43 +121,38 @@ Color shadeDiffuse(Hit hit, Scene scene) {
   final Color diffuse = hit.surface.diffuse;
   return scene.lights.stream()
     .filter(light -> {
-    // If the shadow ray intersects a scene object _before_ it hits the light,
-    // the light does _not_ contribute to this point.
-    final Vec3 pToL = light.position.sub(P), pToLDir = pToL.normalize();
-    // Start the shadow ray epsilon away from the surface to prevent "immediately" hitting the surface _at_ `P`.
-    final Ray shadowRay = new Ray(P.add(pToLDir.mult(1e-4)), pToLDir);
-    final Hit shadowHit = scene.raycast(shadowRay);
-    return shadowHit == null || shadowHit.t >= pToL.length();
-  }
-  )
-  .map(light -> {
-    final Vec3 lightDir = light.position.sub(P).normalize();
-    return diffuse.mult(light.c).mult(max(N.dot(lightDir), 0));
-  }
-  )
-  .reduce(new Color(0, 0, 0), Color::add);
+      // If the shadow ray intersects a scene object _before_ it hits the light,
+      // the light does _not_ contribute to this point.
+      final Vec3 pToL = light.position.sub(P), pToLDir = pToL.normalize();
+      // Start the shadow ray epsilon away from the surface to prevent "immediately" hitting the surface _at_ `P`.
+      final Ray shadowRay = new Ray(P.add(pToLDir.mult(1e-4)), pToLDir);
+      final Hit shadowHit = scene.raycast(shadowRay);
+      return shadowHit == null || shadowHit.t >= pToL.length();
+    })
+    .map(light -> {
+      final Vec3 lightDir = light.position.sub(P).normalize();
+      return diffuse.mult(light.c).mult(max(N.dot(lightDir), 0));
+    })
+    .reduce(new Color(0, 0, 0), Color::add);
 }
 
 void drawScene(Scene scene) {
   println("Drawing scene");
+  reset_timer();
   final Vec3 cameraPos = new Vec3(0, 0, 0);
   final float kw = tan(radians(scene.fovDegrees) / 2);
   final float kh = kw * (float(height) / float(width)); // Scale by aspect ratio.
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      final Vec3 viewPlanePos = new Vec3(
-        (x - width / 2.0) * (2 * kw / width),
-        (y - height / 2.0) * (-2 * kh / height),
-        -1
-        );
+      final Vec3 viewPlanePos = new Vec3((x - width/2.0) * (2*kw / width), (y - height/2.0) * (-2*kh / height), -1);
       // This ray starts at the camera and points at the pixel on the view plane.
       final Ray cameraRay = new Ray(cameraPos, viewPlanePos.normalize());
       final Hit hit = scene.raycast(cameraRay);
       final Color c = shadeDiffuse(hit, scene).mult(255);
-
-      set(x, y, color(c.r, c.g, c.b)); // Set the color of the pixel
+      set(x, y, color(c.r, c.g, c.b));
     }
   }
+  print_timer();
 }
 
 // prints mouse location clicks, for help in debugging

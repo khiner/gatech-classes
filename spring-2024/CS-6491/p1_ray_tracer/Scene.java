@@ -5,52 +5,39 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.Comparator;
 
+import java.io.*; 
+
 class Scene {
-  Mat4Stack stack;
-  float fovDegrees;
-  Color backgroundColor;
-  List<Light> lights;
-  List<Object> objects;
+  Mat4Stack stack = new Mat4Stack();
+  float fovDegrees = 0;
+  Color backgroundColor = new Color(0, 0, 0);
+  List<Light> lights = new ArrayList();
+  List<Object> objects = new ArrayList();
 
   // Active list of objects to be wrapped in an acceleration data structure.
   // Non-null after `beginAccel` is called, and null again after `endAccel`.
-  // When non-null, all objects are added to `accelObjects` instead of `objects`.
+  // When `accelObjects != null`, all objects are added to `accelObjects` instead of `objects`.
   List<Object> accelObjects = null;
 
   // Named objects are added to the active objects list (`objects` or `accelObjects`)
   // when they are instanced with `createInstance`.
-  Map<String, Object> namedObjects;
+  Map<String, Object> namedObjects = new HashMap();
 
   Surface surface = null;
   // Active accumulated triangle state:
-  Vec3 tri_a = null, tri_b = null, tri_c = null;
-
-  Scene() {
-    stack = new Mat4Stack();
-    fovDegrees = 0;
-    backgroundColor = new Color(0, 0, 0);
-    lights = new ArrayList();
-    objects = new ArrayList();
-    namedObjects = new HashMap();
-  }
+  int tri_i = 0; // Current triangle vertex index (0/1/2)
+  Vec3[] tri_verts = {null, null, null};
 
   void addVertex(Vec3 vertex) {
-    vertex = stack.top().transform(vertex);
-    if (tri_a == null) tri_a = vertex;
-    else if (tri_b == null) tri_b = vertex;
-    else if (tri_c == null) tri_c = vertex;
-    else throw new IllegalArgumentException("More than three vertices within a single begin/end block.");
+    tri_i = (tri_i + 1) % 3;
+    tri_verts[tri_i] = stack.top().transform(vertex);
   }
 
-  void clearVertices() {
-    tri_a = tri_b = tri_c = null;
-  }
+  void clearVertices() { tri_i = -1; }
   void commitVertices() {
-    if (surface == null || tri_a == null || tri_b == null || tri_c == null) {
-      throw new IllegalArgumentException("Committing vertices without a surface and three points. No triangle added.");
-    }
+    if (tri_i == -1 || tri_i > 2) throw new IllegalArgumentException("Committing vertices without adding three vertices first. No triangle added.");
 
-    addObject(new GeometryObject(new Triangle(tri_a, tri_b, tri_c), surface));
+    addObject(new GeometryObject(new Triangle(tri_verts[0], tri_verts[1], tri_verts[2]), surface));
   }
 
   void addBBox(BBox box) {
@@ -78,9 +65,7 @@ class Scene {
     addObject(new InstancedObject(namedObjects.get(name), surface, name, stack.top()));
   }
 
-  void beginAccel() {
-    accelObjects = new ArrayList();
-  }
+  void beginAccel() { accelObjects = new ArrayList(); }
   void endAccel() {
     BvhObject bvh = new BvhObject(accelObjects, surface);
     accelObjects = null;

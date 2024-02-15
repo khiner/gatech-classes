@@ -1,10 +1,12 @@
 class GeometryObject extends Object {
   final Geometry geometry;
   final Surface surface;
+  final BBox bbox;
 
   GeometryObject(Geometry geometry, Surface surface) {
     this.geometry = geometry;
     this.surface = surface;
+    this.bbox = geometry.getBBox();
   }
 
   Hit raycast(Ray ray) {
@@ -13,7 +15,5 @@ class GeometryObject extends Object {
     return null;
   }
 
-  BBox getBBox() {
-    return geometry.getBBox();
-  }
+  BBox getBBox() { return bbox; }
 }
