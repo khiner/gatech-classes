@@ -7,6 +7,9 @@ class BBox extends Geometry {
     this.max = max;
   }
 
+  static final float MAX = Float.MAX_VALUE;
+  static final BBox EMPTY = new BBox(new Vec3(MAX,MAX,MAX), new Vec3(-MAX,-MAX,-MAX));
+
   int maxAxis() { return max.sub(min).maxAxis(); }
   Vec3 center() { return min.add(max).div(2); }
   BBox union(BBox o) { return new BBox(Vec3.min(min, o.min), Vec3.max(max, o.max)); }
@@ -32,7 +35,7 @@ class BBox extends Geometry {
   Float intersectT(Ray ray) {
     final float eps = 1e-5f;
 
-    float t0 = 0, t1 = Float.MAX_VALUE;
+    float t0 = 0, t1 = MAX;
     for (int i = 0; i < 3; ++i) {
       final float d = ray.direction.at(i), o = ray.origin.at(i);
       final float min_val = min.at(i), max_val = max.at(i);

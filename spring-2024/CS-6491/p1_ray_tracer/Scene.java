@@ -76,7 +76,7 @@ class Scene {
   // or `null` if the ray does not intersect any object.
   Hit raycast(Ray ray) {
     return objects.stream()
-      .map(object -> object.raycast(ray))
+      .map(o -> o.raycast(ray))
       .filter(Objects::nonNull)
       .min(Comparator.comparingDouble(hit -> hit.t))
       .orElse(null);

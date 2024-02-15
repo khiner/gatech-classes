@@ -5,71 +5,72 @@ import java.util.Objects;
 
 // Bounding volume heirarchy acceleration data structure.
 class BvhObject extends Object {
-  class Node {
-    final BBox bbox;
-    final Node left, right;
-    final List<Object> objects; // Non-null only for leaf nodes
+    class Node {
+        final BBox bbox;
+        final Node left, right;
+        final int start, end; // Index range for child objects into `BvhObject.objects`, valid only for leaf nodes
 
-    // For leaf node
-    Node(BBox bbox, List<Object> objects) {
-      this.bbox = bbox;
-      this.objects = objects;
-      this.left = null;
-      this.right = null;
+        // Constructor for leaf nodes
+        Node(BBox bbox, int start, int end) {
+            this.bbox = bbox;
+            this.start = start;
+            this.end = end;
+            this.left = this.right = null;
+        }
+
+        // Constructor for internal nodes
+        Node(BBox bbox, Node left, Node right) {
+            this.bbox = bbox;
+            this.left = left;
+            this.right = right;
+            this.start = this.end = -1;
+        }
+
+        boolean isLeaf() { return left == null && right == null; }
     }
 
-    // For internal node
-    Node(BBox bbox, Node left, Node right) {
-      this.bbox = bbox;
-      this.left = left;
-      this.right = right;
-      this.objects = null;
-    }
-
-    boolean isLeaf() { return objects != null; }
-  }
-
-  final static int MaxLeafNodeObjectCount = 6;
+  // Higher values means bigger bounding boxes with more objects inside them.
+  final static int MaxLeafNodeObjectCount = 4;
 
   final Node root;
   final Surface surface;
+  final List<Object> objects;
 
   BvhObject(List<Object> objects, Surface surface) {
+    this.objects = objects;
     this.surface = surface;
-    this.root = build(objects, 0, objects.size());
+    this.root = build(0, objects.size());
   }
 
   BBox getBBox() { return root.bbox; }
   Hit raycast(Ray ray) { return raycastNode(root, ray); }
 
-  private Node build(List<Object> objects, int start, int end) {
-    if (end - start <= MaxLeafNodeObjectCount) {
-      final List<Object> leafObjects = new ArrayList(objects.subList(start, end));
-      return new Node(getBBox(leafObjects), leafObjects);
-    }
+  private Node build(int start, int end) {
+    final BBox bbox = getBBox(this.objects.subList(start, end));
+    if (end - start <= MaxLeafNodeObjectCount) return new Node(bbox, start, end);
 
-    // Simple split criterion: median of the bounding box's longest axis
-    final BBox bbox = getBBox(objects);
+    // Sort this range of objects (in place) based on their center along the split axis.
     final int splitAxis = bbox.maxAxis();
-    objects.sort(Comparator.comparingDouble(o -> o.getBBox().center().at(splitAxis)));
-    final int mid = start + (end - start) / 2;
-    return new Node(bbox, build(objects, start, mid), build(objects, mid, end));
+    this.objects.subList(start, end).sort(Comparator.comparingDouble(o -> o.getBBox().center().at(splitAxis)));
+
+    final int mid = start + (end - start)/2;
+    return new Node(bbox, build(start, mid), build(mid, end));
   }
 
-  private BBox getBBox(List<Object> objects) {
-    final float MAX = Float.MAX_VALUE;
-    return objects.stream()
-      .map(Object::getBBox)
-      .reduce(new BBox(new Vec3(MAX, MAX, MAX), new Vec3(-MAX, -MAX, -MAX)), BBox::union);
-  }
+  private BBox getBBox(List<Object> objects) { return objects.stream().map(Object::getBBox).reduce(BBox.EMPTY, BBox::union); }
 
   private Hit raycastNode(Node node, Ray ray) {
     if (node == null || !node.bbox.intersects(ray)) return null;
 
     if (node.isLeaf()) {
+      // Uncomment to draw leaf bounding boxes insteaad of the objects inside them.
+      //final Intersection isect = node.bbox.intersect(ray);
+      //if (isect != null) return new Hit(isect, surface);
+      //return null;
+
       // Check for intersection with all objects in the leaf node.
-      return node.objects.stream()
-        .map(object -> object.raycast(ray))
+      return objects.subList(node.start, node.end).stream()
+        .map(o -> o.raycast(ray))
         .filter(Objects::nonNull)
         .min(Comparator.comparingDouble(hit -> hit.t))
         .orElse(null);

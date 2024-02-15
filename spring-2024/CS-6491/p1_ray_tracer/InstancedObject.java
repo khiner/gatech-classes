@@ -26,7 +26,7 @@ class InstancedObject extends Object {
   }
 
   BBox getBBox() {
-    BBox bbox = object.getBBox();
+    final BBox bbox = object.getBBox();
     return new BBox(transform.transform(bbox.min), transform.transform(bbox.max));
   }
 }
