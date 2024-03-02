@@ -577,7 +577,7 @@ Special cases:
 genus:0 1 2 3 $\to$ $\Chi$: 2 0 -2 -4
 
 - V: X
-- T: X X
+- F: X X
 - E: X X X
 
 Let $\bar{D}$ be average degree (valence) of vertices.
@@ -588,4 +588,162 @@ So, for triangle meshes, average valence $\approx$ 6
 
 Quadrilaterals: $\bar{D} = 4$
 
+
+## Mon Feb 19
+
+Line segments
+
+Q(t) = p1 + t(p2-p1) = (1-t)p1 + tp2
+here, _weights_ l1(t) = 1-t, l2(t) = t
+
+l1(t)+l2(t)=1, non-negative if 0 <= t <= 1
+
+Q(t) is convex comb. of p1 and p2
+
+### Quadratic (degree 2) Bezier curve
+
+3 control points: p1,p2,p3
+
+t=0.7, subdivide p1,p2 and p2,p3 by 0.7, draw a line between those points, and subdivide _that_ line at 0.7 - that point is Q(t=0.7)
+
+- Q(t) = S1(t)P1 + S2(t)P2 + S3(t)P3
+- S1(t) = (1-t)^2
+- S2(t) = 2t(1-t)
+- S3(t) = t^2
+- $\implies$ S1+S2+S3=1
+
+### Cubic (degree 3) Bezier curve
+
+4 control points: p1,p2,p3,p4
+
+1) independent tangent control at endpoints
+2) curve inside convex hull of control points
+3) curve interpolates the points p1 and p4
+4) curve is tangent to p1-p2 at t=0, and tangent to p3-p4 at t=1
+
+subdivide each line by t, then you have two lines then you do the same subdivision as Quadratic Bezier to get Q(t) on a line between those two lines
+
+- Q(t) = B1(t)P1 + B2(t)P2 + B3(t)P3 + B4(t)P4
+- B1(t) = (1-t)^3
+- B2(t) = 3t(1-t)^2
+- B3(t) = 3t^2(1-t)
+- B4(t) = t^3
+- $\implies$ B1+B2+B3+B4=1
+
+
+## Wed Feb 21
+
+### B-splines
+
+- curve does not pass through control points
+- cubic b-splines, c2 continuous
+- sliding windows of points (4 at a time)
+
+- S1(t) = 1/6 (1-t)^3
+- S2(t) = 1/6 (3t^3 - 6t^2 + 4)
+- S3(t) = 1/6 (-3t^2 + 3t^2 + 3t + 1)
+- S4(t) = 1/6 t^3
+- $\implies$ S1+S2+S3+S4=1
+
+### Subdivision Surfaces
+
+Given: base mesh (polygons)
+Result: smooth surface
+
+First published: 1978 Catmull-Clark, Doo-Sabin
+
+#### Loop Subdivision (Triangles)
+
+(not loops! invented by Charles Loop, lol)
+C2 continuous nearly everywhere
+
+Subdivision:
+1) compute locs of new verts (associated with edges)
+2) move positions of old verts, too
+3) make smaller triangles 1->4
+
+New edge assoc. vertex:
+v = 3/8 (v1 + v2) + 1/8 (v3 + v4)
+
+k is valence of v
+
+new vertex: v':
+v' = (1-k\beta)v + \beta(v1+v2+...+vk)
+\beta = 3/(8k) for k > 3, \beta=3/16 if k = 3
+
+(1-k/beta) + /beta k = 1
+
+only c1 continuous (at the limit) at "extraordinary points" (non-6 valence)
+
+
+## Fri Feb 23
+
+Butterfly interpolation
+
+...
+
+### Catmul-Clark
+
+New face vertices for polygon faces
+
+quad: v = 1/4(v1+v2+v3+v4)
+k-gon: v = (centroid) = \frac{1}{k} \sum_{i=1}^k{v_i}
+
+Let E = 1/k (e1+e2+...+ek)
+    F = 1/k (f1+f2+...+fk)
+
+v' = 2E/k + F/k + v(k-3)/k
+k is valence of vertex v
+
+Most vertices valence 4
+
+Crease Marking - can "tag" an edge to be sharp
+
+Semi-Sharp Edges: Use sharp edge rule S times,
+with S = 0 for no sharpness, S = 1 a little sharper, etc.
+
+
+## Mon Feb 26
+
+### Smoothing
+
+#### 1D function smoothing
+
+use 2nd derivative to find min+max and use these: decrease/increase function
+
+f_new = f_old + \lambda f'', 0 <= \lambda <= 1
+
+#### 2D curve smoothing
+
+push convex parts in, pull convcave parts out
+
+Approximate curve as points p_i
+
+1st derivative
+- t_{i-1} = p_i - p_{i-1}
+- t_i = p_{i+1}-p_i
+
+2nd derivative (Laplacian)
+\Delta p_i = 1/2 (t_i - t_{i-1}) (defference of tangents)
+    = 1/2[(p_{i+1} - p_i) - (p_i - p_{i-1})]
+    = 1/2(p_{i+1}+p_{i-1}) - p_i (First term is avg of neighbors)
+
+p_i += \lambda \Delta p_i
+
+#### 3D mesh smoothing
+
+same, w/ \Delta v = v_c - v,
+where v_c is center vertex
+
+Don't move vertices one at a time!
+(Keep old positions while calculating new ones and replace all at once.)
+
+Fix shrinkage: Alternate shrinking and inflating (Gabriel Taubin)
+
+Repeat:
+    v += \lambda \Delta v   \lambda > 0 (shrink)
+    v += \mu \Delta v   \mu < 0 (inflate)
+    \lambda = 0.6307, \mu = -0.67315
+
+**kesen** - Ke-Sen Huang - siggraph paper archives
 
