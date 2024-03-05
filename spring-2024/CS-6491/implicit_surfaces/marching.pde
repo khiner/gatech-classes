@@ -10,10 +10,36 @@ float vmin = -2, vmax =  2;
 float[] corners = new float[8];  // values at corners
 PVector[] p = new PVector[8];    // 3D locations of corners
 
-// our current implicit function, to be used by marching cubes
-ImplicitInterface implicit_func = null;
+// This is a functional interface for defining implicit functions.
+@FunctionalInterface
+interface ImplicitInterface {
+  float at(float x, float y, float z);
+}
+
+abstract class SurfaceInstance {
+  ImplicitInterface implicit_func;
+  PVector col;
+  
+  SurfaceInstance(ImplicitInterface implicit_func, PVector col) {
+    this.implicit_func = implicit_func;
+    this.col = col;
+  }
+}
 
 Triangles triangles;
+
+List<SurfaceInstance> instances;
+
+// blobby function
+float wyvill(float d) { return d < 1 ? (float)Math.pow(1 - d*d, 3) : 0; }
+
+// our current implicit function, to be used by marching cubes
+ImplicitInterface implicit_func = (x, y, z) -> {
+  if (instances.isEmpty()) return 0;
+  if (instances.size() == 1) return instances.get(0).implicit_func.at(x, y, z);
+  return (float)instances.stream().mapToDouble(instance -> wyvill(instance.implicit_func.at(x, y, z))).sum();
+};
+
 // extract an isosurface based on the current implicit function
 void isosurface() { 
   resetTimer(); // we are going to time the isosurface extraction process
@@ -111,7 +137,7 @@ void processCube(float isolevel) {
 }
 
 // Estimate the gradient of the implicit function at (x, y, z), using finite differences.
-PVector gradient(PVector p) {
+PVector calcGradient(PVector p) {
   final float h = 0.001f;
   return new PVector(
     (implicit_func.at(p.x + h, p.y, p.z) - implicit_func.at(p.x - h, p.y, p.z)) / (2*h),
@@ -120,19 +146,31 @@ PVector gradient(PVector p) {
   );
 }
 
+PVector calcColor(PVector p) {
+  if (instances.isEmpty()) return new PVector(1, 1, 1);
+  if (instances.size() == 1) return instances.get(0).col;
+
+  PVector blended = new PVector(0, 0, 0);
+  float total = 0;
+  for (SurfaceInstance instance : instances) {
+    final float w = wyvill(instance.implicit_func.at(p.x, p.y, p.z));
+    total += w;
+    blended.add(PVector.mult(instance.col, w));
+  }
+  // Normalize the blended color by the total weight
+  if (total > 0) blended.div(total);
+  return blended;
+}
+
 // linearly interpolate values across an edge, and add the new point as a vertex
 int VertexInterp(float isolevel, PVector p1, PVector p2, float valp1, float valp2) {
-  if (abs(isolevel - valp1) < 0.00001) return triangles.addVertex(p1.copy(), gradient(p1));
-  if (abs(isolevel - valp2) < 0.00001) return triangles.addVertex(p2.copy(), gradient(p2));
-  if (abs(valp1 - valp2) < 0.00001) return triangles.addVertex(p1.copy(), gradient(p1));
-
   final float t = (isolevel - valp1) / (valp2 - valp1);
   final PVector p = new PVector(
     p1.x + t*(p2.x - p1.x),
     p1.y + t*(p2.y - p1.y),
     p1.z + t*(p2.z - p1.z)
   );
-  return triangles.addVertex(p, gradient(p));
+  return triangles.addVertex(p, calcGradient(p), calcColor(p));
 }
 
 // edge table that says which edges cross the iso-surface threshold,

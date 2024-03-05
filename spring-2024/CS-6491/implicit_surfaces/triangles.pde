@@ -7,10 +7,14 @@ class Vertex {
   PVector normal;  // surface normal
   float r,g,b;     // color
 
-  Vertex(PVector p, PVector n) {
+  Vertex(PVector p, PVector n, PVector c) {
     pos = p;
     normal = n;
+    r = c.x;
+    g = c.y;
+    b = c.z;
   }
+  color getColor() { return color(r*255, g*255, b*255); }
 }
 
 class Triangle {
@@ -37,8 +41,8 @@ class Triangles {
 
   void add(int i1, int i2, int i3) { triangles.add(new Triangle(i1, i2, i3)); }
 
-  int addVertex(PVector p, PVector n) {
-    verts.add(new Vertex(p, n));
+  int addVertex(PVector p, PVector n, PVector c) {
+    verts.add(new Vertex(p, n, c));
     return verts.size() - 1;
   }
 
@@ -47,10 +51,13 @@ class Triangles {
       final Vertex v1 = verts.get(t.i1), v2 = verts.get(t.i2), v3 = verts.get(t.i3);
       beginShape();
       if (draw_flags.smooth_normals) normal(v1.normal.x, v1.normal.y, v1.normal.z);
+      fill(v1.getColor());
       vertex(v1.pos.x, v1.pos.y, v1.pos.z);
       if (draw_flags.smooth_normals) normal(v2.normal.x, v2.normal.y, v2.normal.z);
+      fill(v2.getColor());
       vertex(v2.pos.x, v2.pos.y, v2.pos.z);
       if (draw_flags.smooth_normals) normal(v3.normal.x, v3.normal.y, v3.normal.z);
+      fill(v3.getColor());
       vertex(v3.pos.x, v3.pos.y, v3.pos.z);
       endShape(CLOSE);
     }

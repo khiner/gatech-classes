@@ -1,15 +1,28 @@
 // Create polygonalized implicit surfaces.
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import java.lang.FunctionalInterface;
 
-// This is a functional interface for defining implicit functions.
-@FunctionalInterface
-interface ImplicitInterface {
-  float at(float x, float y, float z);
-}
+/** Specific implicit functions and helpers **/
 
-// Implicit function for a sphere at the origin.
-ImplicitInterface a_sphere = (x, y, z) -> sqrt(x*x + y*y + z*z);
+// ImplicitInterface sphere = (x, y, z) -> sqrt(x*x + y*y + z*z);
+
+class Ellipsoid extends SurfaceInstance {
+  Ellipsoid(PVector center, PVector radii, PVector col) {
+    super((x, y, z) -> {
+      float dx = (center.x - x)/radii.x, dy = (center.y - y)/radii.y, dz = (center.z - z)/radii.z;
+      return sqrt(dx*dx + dy*dy + dz*dz);
+    }, col);
+  }
+
+  Ellipsoid(PVector center, float radius, PVector col) { this(center, new PVector(radius, radius, radius), col); }
+}
 
 class Vec2 {
   final float x, y;
@@ -34,6 +47,35 @@ class Vec2 {
 Vec2 prev_mouse_pos = new Vec2();
 PMatrix3D rot_mat;
 
+Random rand = new Random();
+PVector randVec(float scale) {
+  return new PVector(
+    rand.nextFloat()*scale - scale/2,
+    rand.nextFloat()*scale - scale/2,
+    rand.nextFloat()*scale - scale/2
+  );
+}
+
+// Based on https://stackoverflow.com/a/7898685/780425
+// (I hope it's fine to include this external code since it's not relevant to the subject matter!)
+PVector hsvToRgb(float hue, float saturation, float v) {
+    int h = (int)(hue*6);
+    float f = hue*6 - h;
+    float p = v*(1 - saturation);
+    float q = v*(1 - f*saturation);
+    float t = v*(1 - (1 - f)*saturation);
+    switch (h) {
+      case 0: return new PVector(v, t, p);
+      case 1: return new PVector(q, v, p);
+      case 2: return new PVector(p, v, t);
+      case 3: return new PVector(p, q, v);
+      case 4: return new PVector(t, p, v);
+      case 5: return new PVector(v, p, q);
+      default: throw new RuntimeException("Something went wrong when converting from HSV to RGB. Input was " + hue + ", " + saturation + ", " + v);
+    }
+}
+PVector randCol() { return hsvToRgb(rand.nextFloat(), 0.4, 1.0); }
+
 // camera parameters
 final float CAMERA_DISTANCE_DEFAULT = 6;
 float camera_distance = CAMERA_DISTANCE_DEFAULT;
@@ -54,7 +96,7 @@ void setup() {
   rot_mat.reset();
   
   // specify our implicit function is that of a sphere, then do isosurface extraction
-  implicit_func = a_sphere;
+  instances = List.of(new Ellipsoid(new PVector(0, 0, 0), 1, new PVector(1, 1, 1)));
   iso_surface_threshold = 1.0;
   isosurface();
 }
@@ -97,10 +139,9 @@ void mouseDragged() {
   prev_mouse_pos = new_mouse_pos;
   if (mouse_delta.x == 0 && mouse_delta.y == 0) return;
 
-  final Vec2 mouse_delta_norm = mouse_delta.normalized();
-  PMatrix3D rmat = (PMatrix3D)getMatrix();
-  rmat.reset();
-  rmat.rotate(0.005*mouse_delta.length(), mouse_delta_norm.y, mouse_delta_norm.x, 0);
+  PMatrix3D rmat = new PMatrix3D();
+  // Note: The rotation axes do not need to be normalized.
+  rmat.rotate(0.005*mouse_delta.length(), mouse_delta.y, mouse_delta.x, 0);
   rot_mat.preApply(rmat);
 }
 
@@ -111,7 +152,7 @@ void keyPressed() {
     else if (keyCode == DOWN) camera_distance /= 0.9;
     return;
   }
-  
+
   switch(key) {
     case 'e': draw_flags.edges = !draw_flags.edges; break;
     case 'n': draw_flags.smooth_normals = !draw_flags.smooth_normals; break;
@@ -136,10 +177,40 @@ void keyPressed() {
       break;
     case '1':
       iso_surface_threshold = 1.0;
-      implicit_func = a_sphere;
+      instances = List.of(new Ellipsoid(new PVector(0, 0, 0), 1, new PVector(1, 1, 1)));
       isosurface();
       break;
-    case '2': break;
+    case '!':
+      iso_surface_threshold = 1.0;
+      camera_distance = CAMERA_DISTANCE_DEFAULT;
+      rot_mat.reset();
+      rot_mat.rotate(PI/6, -1, 0, 0);
+      rot_mat.rotate(PI/18, 0, 0, -1);
+
+      instances = List.of(new Ellipsoid(new PVector(0, 0, 0), new PVector(1, 1.0/3.0, 1), new PVector(1, 1, 1)));
+      isosurface();
+      break;
+    case '2':
+      iso_surface_threshold = 0.2;
+      camera_distance = CAMERA_DISTANCE_DEFAULT;
+      rot_mat.reset();
+
+      // Draw pairs of blobby spheres that are partially blended together.
+      // Draw one pair so that they are close together, and another where they have a small bridge connecting them.
+      instances = Stream.of(
+          new PVector(-0.6f, -1f, 0f), new PVector(0.6f, -1f, 0f),
+          new PVector(-0.7f, 1f, 0f), new PVector(0.7f, 1f, 0f))
+        .map(p -> new Ellipsoid(p, 1.0, new PVector(1, 1, 1)))
+        .collect(Collectors.toList());
+      isosurface();
+      break;
+    case '@':
+      iso_surface_threshold = 0.25;
+
+      // Draw 10 randomly placed/colored blobby spheres.
+      instances = Stream.generate(() -> new Ellipsoid(randVec(3), 0.7, randCol())).limit(10).collect(Collectors.toList());
+      isosurface();
+      break;
   }
 }
 
