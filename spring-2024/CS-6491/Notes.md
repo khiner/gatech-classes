@@ -747,3 +747,44 @@ Repeat:
 
 **kesen** - Ke-Sen Huang - siggraph paper archives
 
+## Mon Mar 4
+
+### Radiometry
+
+Reflectance constant of proportionality:
+Bidirectional Reflectance Distribution Function (BRDF)
+$$\rho(k_i,k_o) = \frac{\text{outgoing light towards}\ k_o}{\text{incoming light from}\ k_i} = \frac{dL(x,k_o)}{L(x,k_i)\cos(\theta)dk_i}$$
+Describes how a material reflects light.
+
+Function of 4 variables: $\rho(k_i,k_o), k_i = (\theta_i,\phi_i)$
+
+Hemisphere = $\Omega$
+- All possible incoming + outgoing directions in the hemisphere.
+- Incoming light at a point $p$ on surface. Hemisphere $\Omega$ centered at $p$.
+- Angle $\theta$ around the pole, from the top
+- Angle $\phi$ around base
+
+BRDF Laws:
+1) Helmholtz reciprocity: $\rho(k_1,k_2) = \rho(k_2,k_1)$
+  - photons travel on the same path forward and backward
+2) Conservation of energy:
+$$\int_{k_i \in \Omega}{\rho(k_i,k_o)cos\theta_i dk_i} \leq 1$$
+- Energy out is $\leq$ incoming energy
+
+- Light falling on surface:
+    -  $\theta$: Angle of surface relative to incoming light
+    - $A$: 1D unit area of surface _perpendicular to light_
+    - $D$ = 1D unit area of surface = $A / cos(\theta)$
+
+For many surfaces, $\phi_i$ (incoming angle) can be ignored $\to$ isotropic surfaces
+- For isotropic surfaces, $\rho(\theta_i, \theta_o, \phi_o)$ - 3D functions
+- Anisotropic surfaces: more complex (brushed metal, velvet, some fabrics, hair)
+
+Easier to show 2D diagrams of BRDFs: (slice of hemisphere)
+
+- Half circle, with zero at top, -90deg left and 90deg right
+- Incoming light dir: $\theta_i$
+- Reflects off surface in multiple directions ("specular" glossy/fairly shiny surface)
+- Diffuse surface: Outgoing light scattered in all directions.
+- Perfect mirror surface: All outgoing light reflects in a single, mirrored direction: $\theta_o = -\theta_i$
+
