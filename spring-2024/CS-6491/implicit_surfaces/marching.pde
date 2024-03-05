@@ -13,10 +13,11 @@ PVector[] p = new PVector[8];    // 3D locations of corners
 // our current implicit function, to be used by marching cubes
 ImplicitInterface implicit_func = null;
 
+Triangles triangles;
 // extract an isosurface based on the current implicit function
 void isosurface() { 
-  resetTimer();  // we are going to time the isosurface extraction process
-  initTriangles();
+  resetTimer(); // we are going to time the isosurface extraction process
+  triangles = new Triangles();
   
   // allocate list of positions for the corners of the cube
   for (int i = 0; i < 8; i++) p[i] = new PVector(0, 0, 0);
@@ -36,9 +37,7 @@ void isosurface() {
         getPosition(p[7],   i, j+1, k+1);
         
         // determine implicit function values at each cube corner
-        for (int m = 0; m < 8; m++) {
-          corners[m] = implicit_func.getValue (p[m].x, p[m].y, p[m].z);
-        }
+        for (int m = 0; m < 8; m++) corners[m] = implicit_func.at(p[m].x, p[m].y, p[m].z);
 
         // create the triangles of this cube
         processCube(iso_surface_threshold);
@@ -46,7 +45,7 @@ void isosurface() {
     }
   }
 
-  println("tris verts: " + triangles.size() + " " + verts.size());
+  println("tris verts: " + triangles.triangleCount() + " " + triangles.vertexCount());
   printTimer();
 }
 
@@ -107,28 +106,33 @@ void processCube(float isolevel) {
 
   int[] tri_indices = triTable[cubeindex];
   for (int i = 0; tri_indices[i] != -1; i += 3) {
-    int i1 = ind[tri_indices[i]];
-    int i2 = ind[tri_indices[i+1]];
-    int i3 = ind[tri_indices[i+2]];
-    addTriangle(i1, i2, i3);
+    triangles.add(ind[tri_indices[i]], ind[tri_indices[i+1]], ind[tri_indices[i+2]]);
   }
+}
+
+// Estimate the gradient of the implicit function at (x, y, z), using finite differences.
+PVector gradient(PVector p) {
+  final float h = 0.001f;
+  return new PVector(
+    (implicit_func.at(p.x + h, p.y, p.z) - implicit_func.at(p.x - h, p.y, p.z)) / (2*h),
+    (implicit_func.at(p.x, p.y + h, p.z) - implicit_func.at(p.x, p.y - h, p.z)) / (2*h),
+    (implicit_func.at(p.x, p.y, p.z + h) - implicit_func.at(p.x, p.y, p.z - h)) / (2*h)
+  );
 }
 
 // linearly interpolate values across an edge, and add the new point as a vertex
 int VertexInterp(float isolevel, PVector p1, PVector p2, float valp1, float valp2) {
-  float t;
-  PVector p = new PVector(0, 0, 0);
+  if (abs(isolevel - valp1) < 0.00001) return triangles.addVertex(p1.copy(), gradient(p1));
+  if (abs(isolevel - valp2) < 0.00001) return triangles.addVertex(p2.copy(), gradient(p2));
+  if (abs(valp1 - valp2) < 0.00001) return triangles.addVertex(p1.copy(), gradient(p1));
 
-  if (abs(isolevel - valp1) < 0.00001) return (addVertex(p1));
-  if (abs(isolevel - valp2) < 0.00001) return (addVertex(p2));
-  if (abs(valp1 - valp2) < 0.00001) return (addVertex (p1));
-     
-  t = (isolevel - valp1) / (valp2 - valp1);
-  p.x = p1.x + t*(p2.x - p1.x);
-  p.y = p1.y + t*(p2.y - p1.y);
-  p.z = p1.z + t*(p2.z - p1.z);
-  
-  return addVertex(p);
+  final float t = (isolevel - valp1) / (valp2 - valp1);
+  final PVector p = new PVector(
+    p1.x + t*(p2.x - p1.x),
+    p1.y + t*(p2.y - p1.y),
+    p1.z + t*(p2.z - p1.z)
+  );
+  return triangles.addVertex(p, gradient(p));
 }
 
 // edge table that says which edges cross the iso-surface threshold,

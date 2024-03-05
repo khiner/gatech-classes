@@ -1,9 +1,20 @@
 // Create polygonalized implicit surfaces.
 
-// for object rotation by mouse
+import java.lang.FunctionalInterface;
+
+// This is a functional interface for defining implicit functions.
+@FunctionalInterface
+interface ImplicitInterface {
+  float at(float x, float y, float z);
+}
+
+// Implicit function for a sphere at the origin.
+ImplicitInterface a_sphere = (x, y, z) -> sqrt(x*x + y*y + z*z);
+
 class Vec2 {
-  float x = 0, y = 0;
-  Vec2() {}
+  final float x, y;
+
+  Vec2() { this.x = this.y = 0; }
   Vec2(float x, float y) {
     this.x = x;
     this.y = y;
@@ -13,6 +24,8 @@ class Vec2 {
   Vec2 sub(Vec2 o) { return new Vec2(x - o.x, y - o.y); }
   Vec2 mult(float scalar) { return new Vec2(x*scalar, y*scalar); }
   Vec2 div(float scalar) { return new Vec2(x/scalar, y/scalar); } 
+  Vec2 flipX() { return new Vec2(-this.x, this.y); }
+  Vec2 flipY() { return new Vec2(this.x, -this.y); }
 
   float length() { return sqrt(x*x + y*y); }
   Vec2 normalized() { return div(length()); }
@@ -32,7 +45,6 @@ class DrawFlags {
 
 DrawFlags draw_flags = new DrawFlags();
 float iso_surface_threshold = 1;
-int timer;
 
 void setup() {
   size(750, 750, OPENGL);
@@ -68,7 +80,7 @@ void draw() {
   specular(0, 0, 0); // turn off specular highlights
   shininess(1.0);
   applyMatrix(rot_mat); // rotate the object using the global rotation matrix
-  drawSurface(); // draw the polygons from the implicit surface
+  triangles.draw(); // draw the polygons from the implicit surface
   
   popMatrix();
 }
@@ -81,55 +93,56 @@ void mouseDragged() {
   if (!mousePressed) return;
 
   final Vec2 new_mouse_pos = new Vec2(mouseX, mouseY);
-  Vec2 mouse_delta = new_mouse_pos.sub(prev_mouse_pos);
-  mouse_delta.y *= -1;
+  final Vec2 mouse_delta = new_mouse_pos.sub(prev_mouse_pos).flipY();
+  prev_mouse_pos = new_mouse_pos;
   if (mouse_delta.x == 0 && mouse_delta.y == 0) return;
 
-  prev_mouse_pos = new_mouse_pos;
-
-  float mouse_delta_len = mouse_delta.length();
-  mouse_delta = mouse_delta.normalized();
+  final Vec2 mouse_delta_norm = mouse_delta.normalized();
   PMatrix3D rmat = (PMatrix3D)getMatrix();
   rmat.reset();
-  rmat.rotate(0.005*mouse_delta_len, mouse_delta.y, mouse_delta.x, 0);
+  rmat.rotate(0.005*mouse_delta.length(), mouse_delta_norm.y, mouse_delta_norm.x, 0);
   rot_mat.preApply(rmat);
 }
 
 // handle keystrokes
-void keyPressed()
-{
+void keyPressed() {
   if (key == CODED) {
     if (keyCode == UP) camera_distance *= 0.9;
     else if (keyCode == DOWN) camera_distance /= 0.9;
     return;
   }
   
-  if (key == 'e') draw_flags.edges = !draw_flags.edges;
-  if (key == 'n') draw_flags.smooth_normals = !draw_flags.smooth_normals;
-  if (key == 'r') {  // reset camera view and rotation
-    rot_mat.reset();
-    camera_distance = CAMERA_DISTANCE_DEFAULT;
+  switch(key) {
+    case 'e': draw_flags.edges = !draw_flags.edges; break;
+    case 'n': draw_flags.smooth_normals = !draw_flags.smooth_normals; break;
+    case 'r': // reset camera view and rotation
+      rot_mat.reset();
+      camera_distance = CAMERA_DISTANCE_DEFAULT;
+      break;
+    case 'w': // write triangles to a file
+      String filename = "implicit_mesh.cli";
+      triangles.write(filename);
+      println("wrote triangles to file: " + filename);
+      break;
+    case ',': // decrease the grid resolution
+      if (gsize > 10) {
+        gsize -= 10;
+        isosurface();
+      }
+      break;
+    case '.': // increase the grid resolution
+      gsize += 10;
+      isosurface();
+      break;
+    case '1':
+      iso_surface_threshold = 1.0;
+      implicit_func = a_sphere;
+      isosurface();
+      break;
+    case '2': break;
   }
-  if (key == 'w') { // write triangles to a file
-    String filename = "implicit_mesh.cli";
-    writeTriangles(filename);
-    println ("wrote triangles to file: " + filename);
-  }
-  if (key == ',' && gsize > 10) { // decrease the grid resolution
-    gsize -= 10;
-    isosurface();
-  }
-  if (key == '.') { // increase the grid resolution
-    gsize += 10;
-    isosurface();
-  }
-  if (key == '1') {
-    iso_surface_threshold = 1.0;
-    implicit_func = a_sphere;
-    isosurface();
-  }
-  if (key == '2') {}
 }
 
-void resetTimer() { timer = millis(); }
-void printTimer() { println("elapsed ms: " + ((millis() - timer) / 1000.0)); }
+int timer_start_ms;
+void resetTimer() { timer_start_ms = millis(); }
+void printTimer() { println("elapsed ms: " + ((millis() - timer_start_ms) / 1000.0)); }

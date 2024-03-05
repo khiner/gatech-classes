@@ -2,73 +2,72 @@
 
 import java.util.List;
 
-List<Vertex> verts;
-List<Triangle> triangles;
-
 class Vertex {
   PVector pos;     // position
   PVector normal;  // surface normal
   float r,g,b;     // color
 
-  Vertex (float x, float y, float z) {
-    pos = new PVector(x, y, z);
+  Vertex(PVector p, PVector n) {
+    pos = p;
+    normal = n;
   }
 }
 
 class Triangle {
-  int v1, v2, v3;
+  int i1, i2, i3;
   
   Triangle(int i1, int i2, int i3) {
-    v1 = i1;
-    v2 = i2;
-    v3 = i3;
+    this.i1 = i1;
+    this.i2 = i2;
+    this.i3 = i3;
   }
 }
 
-// initialize our list of triangles
-void initTriangles() {
-  verts = new ArrayList();
-  triangles = new ArrayList();
-}
+class Triangles {
+  List<Vertex> verts;
+  List<Triangle> triangles;
 
-// create a new triangle with the given vertex indices
-void addTriangle(int i1, int i2, int i3) {
-  triangles.add(new Triangle(i1, i2, i3));
-}
-
-// add a vertex to the vertex list
-int addVertex(PVector p) {
-  int index = verts.size();
-  Vertex v = new Vertex(p.x, p.y, p.z);
-  verts.add (v);
-  return (index);
-}
-
-// draw the triangles of the surface
-void drawSurface() {
-  for (int i = 0; i < triangles.size(); i++) {
-    Triangle t = triangles.get(i);
-    Vertex v1 = verts.get(t.v1), v2 = verts.get(t.v2), v3 = verts.get(t.v3);
-    beginShape();
-    // add "normal" command before each vertex to use per-vertex (smooth) normals
-    vertex(v1.pos.x, v1.pos.y, v1.pos.z);
-    vertex(v2.pos.x, v2.pos.y, v2.pos.z);
-    vertex(v3.pos.x, v3.pos.y, v3.pos.z);
-    endShape(CLOSE);
+  Triangles() {
+    verts = new ArrayList();
+    triangles = new ArrayList();
   }
-}
 
-// write triangles to a text file
-void writeTriangles(String filename) {
-  PrintWriter out = createWriter(filename);
-  for (int i = 0; i < triangles.size(); i++) {
-    Triangle t = triangles.get(i);
-    Vertex v1 = verts.get(t.v1), v2 = verts.get(t.v2), v3 = verts.get(t.v3);
-    out.println();
-    out.println ("begin");
-    out.println ("vertex " + v1.pos.x + " " + v1.pos.y + " " + v1.pos.z);
-    out.println ("vertex " + v2.pos.x + " " + v2.pos.y + " " + v2.pos.z);
-    out.println ("vertex " + v3.pos.x + " " + v3.pos.y + " " + v3.pos.z);
-    out.println ("end");
+  int triangleCount() { return triangles.size(); }
+  int vertexCount() { return verts.size(); }
+
+  void add(int i1, int i2, int i3) { triangles.add(new Triangle(i1, i2, i3)); }
+
+  int addVertex(PVector p, PVector n) {
+    verts.add(new Vertex(p, n));
+    return verts.size() - 1;
+  }
+
+  void draw() {
+    for (Triangle t : triangles) {
+      final Vertex v1 = verts.get(t.i1), v2 = verts.get(t.i2), v3 = verts.get(t.i3);
+      beginShape();
+      if (draw_flags.smooth_normals) normal(v1.normal.x, v1.normal.y, v1.normal.z);
+      vertex(v1.pos.x, v1.pos.y, v1.pos.z);
+      if (draw_flags.smooth_normals) normal(v2.normal.x, v2.normal.y, v2.normal.z);
+      vertex(v2.pos.x, v2.pos.y, v2.pos.z);
+      if (draw_flags.smooth_normals) normal(v3.normal.x, v3.normal.y, v3.normal.z);
+      vertex(v3.pos.x, v3.pos.y, v3.pos.z);
+      endShape(CLOSE);
+    }
+  }
+
+  // write triangles to a text file
+  void write(String filename) {
+    PrintWriter out = createWriter(filename);
+    for (Triangle t : triangles) {
+      final Vertex v1 = verts.get(t.i1), v2 = verts.get(t.i2), v3 = verts.get(t.i3);
+      out.println();
+      out.println("begin");
+      out.println("vertex " + v1.pos.x + " " + v1.pos.y + " " + v1.pos.z);
+      out.println("vertex " + v2.pos.x + " " + v2.pos.y + " " + v2.pos.z);
+      out.println("vertex " + v3.pos.x + " " + v3.pos.y + " " + v3.pos.z);
+      out.println("end");
+    }
+    out.close();
   }
 }
