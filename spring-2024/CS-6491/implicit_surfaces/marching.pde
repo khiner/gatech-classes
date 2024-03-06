@@ -2,6 +2,12 @@
 //
 // Marching cubes code based on:  http://paulbourke.net/geometry/polygonise/
 
+import java.util.Optional;
+
+// Convenience helpers
+PVector vec(float x, float y) { return new PVector(x, y); }
+PVector vec(float x, float y, float z) { return new PVector(x, y, z); }
+
 // grid size for marching cubes
 int gsize = 40;
 float vmin = -2, vmax =  2;
@@ -13,32 +19,91 @@ PVector[] p = new PVector[8];    // 3D locations of corners
 // This is a functional interface for defining implicit functions.
 @FunctionalInterface
 interface ImplicitInterface {
-  float at(float x, float y, float z);
+  float at(PVector p);
 }
 
-abstract class SurfaceInstance {
-  ImplicitInterface implicit_func;
-  PVector col;
-  
-  SurfaceInstance(ImplicitInterface implicit_func, PVector col) {
-    this.implicit_func = implicit_func;
-    this.col = col;
+@FunctionalInterface
+interface WarpInterface {
+  PVector apply(PVector p);
+}
+
+abstract class ImplicitBoolean implements ImplicitInterface {
+  ImplicitInterface a, b;
+
+  ImplicitBoolean(ImplicitInterface a, ImplicitInterface b) {
+    this.a = a;
+    this.b = b;
   }
 }
 
-Triangles triangles;
+class Rotation {
+  final float angle;
+  final PVector axes;
 
-List<SurfaceInstance> instances;
+  Rotation(float angle, float x, float y, float z) {
+    this.angle = angle;
+    this.axes = vec(x,  y, z);
+  }
+}
+
+final PVector DEFAULT_COL = vec(1, 1, 1);
+
+class Primitive implements ImplicitInterface {
+  final ImplicitInterface implicit_func;
+  final PMatrix3D transform; // Transforms the input coordinates.
+  final PVector col;
+
+  final List<WarpInterface> warps = new ArrayList<WarpInterface>();
+  
+  Primitive(ImplicitInterface implicit_func, PVector col, PVector pos, PVector scale, Optional<Rotation> rot) {
+    this.implicit_func = implicit_func;
+    this.col = col;
+    this.transform = new PMatrix3D();
+    this.transform.scale(1/scale.x, 1/scale.y, 1/scale.z);
+    if (rot.isPresent()) this.transform.rotate(rot.get().angle, rot.get().axes.x, rot.get().axes.y, rot.get().axes.z);
+    this.transform.translate(-pos.x, -pos.y, -pos.z);
+  }
+  Primitive(ImplicitInterface implicit_func, PVector col, PVector pos, float scale, Rotation rot) {
+    this(implicit_func, col, pos, vec(scale, scale, scale), Optional.of(rot));
+  }
+  Primitive(ImplicitInterface implicit_func, PVector col, PVector pos, PVector scale) { this(implicit_func, col, pos, scale, Optional.empty()); }
+  Primitive(ImplicitInterface implicit_func, PVector col, PVector pos, float scale) { this(implicit_func, col, pos, vec(scale, scale, scale)); }
+  Primitive(ImplicitInterface implicit_func, PVector col, PVector pos) { this(implicit_func, col, pos, vec(1, 1, 1), Optional.empty()); }
+  Primitive(ImplicitInterface implicit_func, PVector col) { this(implicit_func, col, vec(0, 0, 0)); }
+  Primitive(ImplicitInterface implicit_func) { this(implicit_func, DEFAULT_COL); }
+  Primitive(ImplicitInterface implicit_func, float scale) { this(implicit_func, DEFAULT_COL, vec(0, 0, 0), scale); }
+
+  Primitive addWarp(WarpInterface warp) {
+    warps.add(warp);
+    return this;
+  }
+
+  float at(PVector p) {
+    final PVector transformed_p = transform.mult(p, null);
+    final PVector warped_p = warps.stream().reduce(transformed_p, (acc, warp) -> warp.apply(acc), (p1, p2) -> p2);
+    return implicit_func.at(warped_p);
+  }
+}
+
+List<Primitive> primitives;
+
+void setPrimitives(List<Primitive> _primitives) {
+  primitives = _primitives;
+  isosurface();
+}
+void setPrimitive(Primitive instance) { setPrimitives(List.of(instance)); }
 
 // blobby function
-float wyvill(float d) { return d < 1 ? (float)Math.pow(1 - d*d, 3) : 0; }
+double wyvill(double d) { return d <= 1 ? Math.pow(1 - d*d, 3) : 0; }
 
 // our current implicit function, to be used by marching cubes
-ImplicitInterface implicit_func = (x, y, z) -> {
-  if (instances.isEmpty()) return 0;
-  if (instances.size() == 1) return instances.get(0).implicit_func.at(x, y, z);
-  return (float)instances.stream().mapToDouble(instance -> wyvill(instance.implicit_func.at(x, y, z))).sum();
+ImplicitInterface implicit_func = p -> {
+  if (primitives.isEmpty()) return 0;
+  if (primitives.size() == 1) return primitives.get(0).at(p);
+  return (float)primitives.stream().mapToDouble(instance -> instance.at(p)).map(v -> wyvill(v)).sum();
 };
+
+Triangles triangles;
 
 // extract an isosurface based on the current implicit function
 void isosurface() { 
@@ -46,7 +111,7 @@ void isosurface() {
   triangles = new Triangles();
   
   // allocate list of positions for the corners of the cube
-  for (int i = 0; i < 8; i++) p[i] = new PVector(0, 0, 0);
+  for (int i = 0; i < 8; i++) p[i] = vec(0, 0, 0);
 
   // loop through all the cells of a grid
   for (int i = 0; i < gsize; i++) {
@@ -63,7 +128,7 @@ void isosurface() {
         getPosition(p[7],   i, j+1, k+1);
         
         // determine implicit function values at each cube corner
-        for (int m = 0; m < 8; m++) corners[m] = implicit_func.at(p[m].x, p[m].y, p[m].z);
+        for (int m = 0; m < 8; m++) corners[m] = implicit_func.at(p[m]);
 
         // create the triangles of this cube
         processCube(iso_surface_threshold);
@@ -139,21 +204,21 @@ void processCube(float isolevel) {
 // Estimate the gradient of the implicit function at (x, y, z), using finite differences.
 PVector calcGradient(PVector p) {
   final float h = 0.001f;
-  return new PVector(
-    (implicit_func.at(p.x + h, p.y, p.z) - implicit_func.at(p.x - h, p.y, p.z)) / (2*h),
-    (implicit_func.at(p.x, p.y + h, p.z) - implicit_func.at(p.x, p.y - h, p.z)) / (2*h),
-    (implicit_func.at(p.x, p.y, p.z + h) - implicit_func.at(p.x, p.y, p.z - h)) / (2*h)
+  return vec(
+    (implicit_func.at(vec(p.x + h, p.y, p.z)) - implicit_func.at(vec(p.x - h, p.y, p.z))) / (2*h),
+    (implicit_func.at(vec(p.x, p.y + h, p.z)) - implicit_func.at(vec(p.x, p.y - h, p.z))) / (2*h),
+    (implicit_func.at(vec(p.x, p.y, p.z + h)) - implicit_func.at(vec(p.x, p.y, p.z - h))) / (2*h)
   );
 }
 
 PVector calcColor(PVector p) {
-  if (instances.isEmpty()) return new PVector(1, 1, 1);
-  if (instances.size() == 1) return instances.get(0).col;
+  if (primitives.isEmpty()) return vec(1, 1, 1);
+  if (primitives.size() == 1) return primitives.get(0).col;
 
-  PVector blended = new PVector(0, 0, 0);
+  PVector blended = vec(0, 0, 0);
   float total = 0;
-  for (SurfaceInstance instance : instances) {
-    final float w = wyvill(instance.implicit_func.at(p.x, p.y, p.z));
+  for (Primitive instance : primitives) {
+    final float w = (float)wyvill(instance.at(p));
     total += w;
     blended.add(PVector.mult(instance.col, w));
   }
@@ -165,7 +230,7 @@ PVector calcColor(PVector p) {
 // linearly interpolate values across an edge, and add the new point as a vertex
 int VertexInterp(float isolevel, PVector p1, PVector p2, float valp1, float valp2) {
   final float t = (isolevel - valp1) / (valp2 - valp1);
-  final PVector p = new PVector(
+  final PVector p = vec(
     p1.x + t*(p2.x - p1.x),
     p1.y + t*(p2.y - p1.y),
     p1.z + t*(p2.z - p1.z)
