@@ -54,6 +54,9 @@ class Primitive implements ImplicitInterface {
     if (rot.isPresent()) this.transform.rotate(rot.get().angle, rot.get().axes.x, rot.get().axes.y, rot.get().axes.z);
     this.transform.translate(-pos.x, -pos.y, -pos.z);
   }
+  Primitive(ImplicitInterface implicit_func, PVector col, PVector pos, PVector scale, Rotation rot) {
+    this(implicit_func, col, pos, scale, Optional.of(rot));
+  }
   Primitive(ImplicitInterface implicit_func, PVector col, PVector pos, float scale, Rotation rot) {
     this(implicit_func, col, pos, vec(scale, scale, scale), Optional.of(rot));
   }
@@ -77,7 +80,12 @@ class Primitive implements ImplicitInterface {
 }
 
 class PrimitiveGroup implements ImplicitInterface {
-  List<Primitive> primitives = new ArrayList();
+  List<Primitive> primitives;
+
+  PrimitiveGroup() {}
+  PrimitiveGroup(List<Primitive> primitives) {
+    this.primitives = primitives;
+  }
 
   // Remember to call `isosurface` to draw!
   void set(List<Primitive> primitives) { this.primitives = primitives; }
@@ -102,7 +110,7 @@ class PrimitiveGroup implements ImplicitInterface {
     PVector blended = vec(0, 0, 0);
     float total = 0;
     for (Primitive instance : primitives) {
-      final float w = (float)wyvill(instance.at(p));
+      float w = (float)wyvill(instance.at(p));
       total += w;
       blended.add(PVector.mult(instance.col, w));
     }

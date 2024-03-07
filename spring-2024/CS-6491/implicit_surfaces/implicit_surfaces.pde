@@ -73,6 +73,28 @@ class TaperX implements WarpInterface {
   private float k(float x) { return (1 - t(x))*k_1 + t(x)*k_2; }
 }
 
+// Scale based on y position.
+class TaperY implements WarpInterface {
+  final float k_1, k_2, y_min, y_max; // Tapering factor
+
+  TaperY(float y_min, float y_max, float k_1, float k_2) {
+    this.k_1 = k_1;
+    this.k_2 = k_2;
+    this.y_min = y_min;
+    this.y_max = y_max;
+  }
+
+  PVector apply(PVector p) { return vec(p.x/k(p.y), p.y, p.z/k(p.y)); }
+
+  private float t(float y) {
+    if (y < y_min) return 0;
+    if (y_min <= y  || y <= y_max) return (y - y_min)/(y_max - y_min);
+    return 1;
+  }
+
+  private float k(float y) { return (1 - t(y))*k_1 + t(y)*k_2; }
+}
+
 enum BooleanOp { Union, Intersection, Difference };
 
 class ImplicitBoolean implements ImplicitInterface {
@@ -111,7 +133,29 @@ class ImplicitMorph implements ImplicitInterface {
 float morph_t = 0.5; // Press '8' to decrease and '9' to increase.
 void incMorph(float by) {
   morph_t = max(0, min(1, morph_t + by));
-  setPrimitive(new Primitive(new ImplicitMorph(sphere, new Primitive(new LineSegment(vec(0, 0, -vmax), vec(0, 0.0, vmax)), 0.5), morph_t)));
+  iso_surface_threshold = 0.5;
+  // I know I'm not supposed to union the line segments.
+  // I can get perfect morphing results between a sphere and a single line segment,
+  // but for some reason, my `PrimitiveGroup` abstraction breaks it,
+  // even though the group _and_ the sphere both render fine on their own.
+  setPrimitive(new Primitive(
+      new ImplicitMorph(new Primitive(sphere, 2),
+        new ImplicitBoolean(BooleanOp.Union,
+          new Primitive(new LineSegment(vec(-2, 0, 0), vec(2, 0, 0)), 0.5),
+          new ImplicitBoolean(BooleanOp.Union,
+            new Primitive(new LineSegment(vec(0, -2, 0), vec(0, 2, 0)), 0.5),
+            new Primitive(new LineSegment(vec(0, 0, -2), vec(0, 0, 2)), 0.5)
+            )
+          ), morph_t)
+  ));
+  //setPrimitive(new Primitive(
+  //    new ImplicitMorph(new Primitive(sphere, 2),
+  //      new PrimitiveGroup(List.of(
+  //        new Primitive(new LineSegment(vec(-2, 0, 0), vec(2, 0, 0)), 0.5),
+  //        new Primitive(new LineSegment(vec(0, -2, 0), vec(0, 2, 0)), 0.5),
+  //        new Primitive(new LineSegment(vec(0, 0, -2), vec(0, 0, 2)), 0.5)
+  //      )), morph_t)
+  //));
 }
 
 Vec2 prev_mouse_pos = new Vec2();
@@ -276,6 +320,7 @@ void keyPressed() {
       break;
     case '@':
       resetScene(0.4);
+      camera_distance = CAMERA_DISTANCE_DEFAULT * 1.5;
       // Draw 10 randomly placed/colored blobby spheres.
       setPrimitives(Stream.generate(() -> new Primitive(sphere, randCol(), randVec(3))).limit(10).collect(Collectors.toList()));
       break;
@@ -351,6 +396,57 @@ void keyPressed() {
       break;
     case '9':
       incMorph(0.1);
+      break;
+    case '0':
+      resetScene(0.25);
+      camera_distance = CAMERA_DISTANCE_DEFAULT * 1.5;
+      PVector trunkColor = new PVector(0.65f, 0.32f, 0.17f), leafColor = new PVector(0, 0.8f, 0),
+        groundColor = new PVector(0.59, 0.75, 0.28);
+
+      // A branch is a tapered and scaled line segment.
+      // Note: Top is negative!
+      Primitive branch = new Primitive(new LineSegment(
+          vec(0, 0, 0), vec(0, -2, 0)), // Extends along y axis
+          trunkColor,
+          new PVector(0, 0, 0), // Starts at origin
+          new PVector(0.5, 1, 0.5) // Nonuniform scaling (skinny)
+        ).addWarp(new TaperY(-2.2, 0, 0.3, 1)); // Thinner at top than bottom
+
+      // The trunk is a big branch... or branches are small trunks.
+      Primitive trunk = new Primitive(branch, trunkColor, new PVector(0, 1, 0));
+
+      List<Primitive> branches = Arrays.asList(
+        new Primitive(branch, trunkColor, new PVector(0, -0.7, 0), 0.2, new Rotation((PI/4)/2, 1, 0, 1)),
+        new Primitive(branch, trunkColor, new PVector(0, -0.3, 0), 0.3, new Rotation(-PI/4, 0, 0, 1)),
+        new Primitive(branch, trunkColor, new PVector(0, -0.0, 0), 0.4, new Rotation(PI/2, 1, 1, 0)),
+        new Primitive(branch, trunkColor, new PVector(0, -0.2, 0), 0.6, new Rotation(PI/8, 0, 1, 1)),
+        new Primitive(branch, trunkColor, new PVector(0, 0, 0), 0.6, new Rotation(PI/4, 0, 0, 1)),
+        new Primitive(branch, trunkColor, new PVector(0, 0.2, 0), 0.7, new Rotation(-PI/4, 1, 0, 1))
+      );
+
+      // Leaves: A few squished spheres, kind of like a cloud on the tree
+      List<Primitive> leaves = Stream.of(
+        vec(-0.2, -1.5, -0.25),
+        vec(-1.1, -1.3, -0.2),
+        vec(0.9, -1.1, -0.8),
+        vec(0.5, -1.2, -0.1),
+        vec(0.3, -1.0, 0.5),
+        vec(-0.4, -0.7, 0.7)
+      ).map(pos -> 
+        new Primitive(sphere, leafColor, pos, vec(1, (rand.nextFloat() + 1) * 0.3, 1)) // Squished along y axis
+      ).collect(Collectors.toList());
+
+      Primitive ground = new Primitive(sphere, groundColor, new PVector(0, 4, 0), 4);
+      setPrimitives(Stream.concat(
+        Stream.of(trunk),
+        Stream.concat(
+          branches.stream(),
+          Stream.concat(
+            leaves.stream(),
+            Stream.of(ground))
+        )
+      ).collect(Collectors.toList()));
+
       break;
   }
 }
