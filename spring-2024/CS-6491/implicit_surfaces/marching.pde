@@ -27,15 +27,6 @@ interface WarpInterface {
   PVector apply(PVector p);
 }
 
-abstract class ImplicitBoolean implements ImplicitInterface {
-  ImplicitInterface a, b;
-
-  ImplicitBoolean(ImplicitInterface a, ImplicitInterface b) {
-    this.a = a;
-    this.b = b;
-  }
-}
-
 class Rotation {
   final float angle;
   final PVector axes;
@@ -48,11 +39,11 @@ class Rotation {
 
 final PVector DEFAULT_COL = vec(1, 1, 1);
 
+// Implicit function with color, position, scale, and rotation.
 class Primitive implements ImplicitInterface {
   final ImplicitInterface implicit_func;
-  final PMatrix3D transform; // Transforms the input coordinates.
   final PVector col;
-
+  final PMatrix3D transform; // Transforms the input coordinates.
   final List<WarpInterface> warps = new ArrayList<WarpInterface>();
   
   Primitive(ImplicitInterface implicit_func, PVector col, PVector pos, PVector scale, Optional<Rotation> rot) {
@@ -85,23 +76,54 @@ class Primitive implements ImplicitInterface {
   }
 }
 
-List<Primitive> primitives;
+class PrimitiveGroup implements ImplicitInterface {
+  List<Primitive> primitives = new ArrayList();
+
+  // Remember to call `isosurface` to draw!
+  void set(List<Primitive> primitives) { this.primitives = primitives; }
+
+  // blobby function
+  double wyvill(double d) { return d <= 1 ? Math.pow(1 - d*d, 3) : 0; }
+
+  // Estimate the gradient of the implicit function at (x, y, z), using finite differences.
+  PVector calcGradient(PVector p) {
+    final float h = 0.001f;
+    return vec(
+      (at(vec(p.x + h, p.y, p.z)) - at(vec(p.x - h, p.y, p.z))) / (2*h),
+      (at(vec(p.x, p.y + h, p.z)) - at(vec(p.x, p.y - h, p.z))) / (2*h),
+      (at(vec(p.x, p.y, p.z + h)) - at(vec(p.x, p.y, p.z - h))) / (2*h)
+    );
+  }
+
+  PVector calcColor(PVector p) {
+    if (primitives.isEmpty()) return vec(1, 1, 1);
+    if (primitives.size() == 1) return primitives.get(0).col;
+  
+    PVector blended = vec(0, 0, 0);
+    float total = 0;
+    for (Primitive instance : primitives) {
+      final float w = (float)wyvill(instance.at(p));
+      total += w;
+      blended.add(PVector.mult(instance.col, w));
+    }
+    if (total > 0) blended.div(total); // Normalize the blended color by the total weight.
+    return blended;
+  }
+
+  float at(PVector p) {
+    if (primitives.isEmpty()) return 0;
+    if (primitives.size() == 1) return primitives.get(0).at(p);
+    return (float)primitives.stream().mapToDouble(instance -> instance.at(p)).map(v -> wyvill(v)).sum();
+  }
+}
+
+PrimitiveGroup primitives = new PrimitiveGroup();
 
 void setPrimitives(List<Primitive> _primitives) {
-  primitives = _primitives;
+  primitives.set(_primitives);
   isosurface();
 }
-void setPrimitive(Primitive instance) { setPrimitives(List.of(instance)); }
-
-// blobby function
-double wyvill(double d) { return d <= 1 ? Math.pow(1 - d*d, 3) : 0; }
-
-// our current implicit function, to be used by marching cubes
-ImplicitInterface implicit_func = p -> {
-  if (primitives.isEmpty()) return 0;
-  if (primitives.size() == 1) return primitives.get(0).at(p);
-  return (float)primitives.stream().mapToDouble(instance -> instance.at(p)).map(v -> wyvill(v)).sum();
-};
+void setPrimitive(Primitive primitive) { setPrimitives(List.of(primitive)); }
 
 Triangles triangles;
 
@@ -128,7 +150,7 @@ void isosurface() {
         getPosition(p[7],   i, j+1, k+1);
         
         // determine implicit function values at each cube corner
-        for (int m = 0; m < 8; m++) corners[m] = implicit_func.at(p[m]);
+        for (int m = 0; m < 8; m++) corners[m] = primitives.at(p[m]);
 
         // create the triangles of this cube
         processCube(iso_surface_threshold);
@@ -201,32 +223,6 @@ void processCube(float isolevel) {
   }
 }
 
-// Estimate the gradient of the implicit function at (x, y, z), using finite differences.
-PVector calcGradient(PVector p) {
-  final float h = 0.001f;
-  return vec(
-    (implicit_func.at(vec(p.x + h, p.y, p.z)) - implicit_func.at(vec(p.x - h, p.y, p.z))) / (2*h),
-    (implicit_func.at(vec(p.x, p.y + h, p.z)) - implicit_func.at(vec(p.x, p.y - h, p.z))) / (2*h),
-    (implicit_func.at(vec(p.x, p.y, p.z + h)) - implicit_func.at(vec(p.x, p.y, p.z - h))) / (2*h)
-  );
-}
-
-PVector calcColor(PVector p) {
-  if (primitives.isEmpty()) return vec(1, 1, 1);
-  if (primitives.size() == 1) return primitives.get(0).col;
-
-  PVector blended = vec(0, 0, 0);
-  float total = 0;
-  for (Primitive instance : primitives) {
-    final float w = (float)wyvill(instance.at(p));
-    total += w;
-    blended.add(PVector.mult(instance.col, w));
-  }
-  // Normalize the blended color by the total weight
-  if (total > 0) blended.div(total);
-  return blended;
-}
-
 // linearly interpolate values across an edge, and add the new point as a vertex
 int VertexInterp(float isolevel, PVector p1, PVector p2, float valp1, float valp2) {
   final float t = (isolevel - valp1) / (valp2 - valp1);
@@ -235,7 +231,7 @@ int VertexInterp(float isolevel, PVector p1, PVector p2, float valp1, float valp
     p1.y + t*(p2.y - p1.y),
     p1.z + t*(p2.z - p1.z)
   );
-  return triangles.addVertex(p, calcGradient(p), calcColor(p));
+  return triangles.addVertex(p, primitives.calcGradient(p), primitives.calcColor(p));
 }
 
 // edge table that says which edges cross the iso-surface threshold,

@@ -9,8 +9,6 @@ import java.util.stream.Stream;
 
 import java.lang.FunctionalInterface;
 
-// Positioning, scaling, and rotation happens in `Primitive`.
-
 ImplicitInterface sphere = p -> p.mag();
 
 class LineSegment implements ImplicitInterface {
@@ -75,47 +73,45 @@ class TaperX implements WarpInterface {
   private float k(float x) { return (1 - t(x))*k_1 + t(x)*k_2; }
 }
 
-abstract class BooleanCombination implements ImplicitInterface {
-  ImplicitInterface a, b;
+enum BooleanOp { Union, Intersection, Difference };
 
-  BooleanCombination(ImplicitInterface a, ImplicitInterface b) {
+class ImplicitBoolean implements ImplicitInterface {
+  final BooleanOp op;
+  final ImplicitInterface a, b;
+
+  ImplicitBoolean(BooleanOp op, ImplicitInterface a, ImplicitInterface b) {
+    this.op = op;
     this.a = a;
     this.b = b;
   }
-}
 
-class ImplicitUnion extends ImplicitBoolean {
-  ImplicitUnion(ImplicitInterface a, ImplicitInterface b) { super(a, b); }
-  float at(PVector p) { return min(a.at(p), b.at(p)); }
-}
-
-class ImplicitIntersection extends ImplicitBoolean {
-  ImplicitIntersection(ImplicitInterface a, ImplicitInterface b) { super(a, b); }
-  float at(PVector p) { return max(a.at(p), b.at(p)); }
-}
-
-class ImplicitSubtraction extends ImplicitBoolean {
-  ImplicitSubtraction(ImplicitInterface a, ImplicitInterface b) { super(a, b); }
-  float at(PVector p) { return max(a.at(p), vmax-b.at(p)); }
-}
-
-class Vec2 {
-  final float x, y;
-
-  Vec2() { this.x = this.y = 0; }
-  Vec2(float x, float y) {
-    this.x = x;
-    this.y = y;
+  float at(PVector p) {
+    switch (op) {
+      case Union: return min(a.at(p), b.at(p));
+      case Intersection: return max(a.at(p), b.at(p));
+      case Difference: return max(a.at(p), vmax-b.at(p));
+      default: return min(a.at(p), b.at(p)); // Default to union. (Why doesn't Java see this is exhaustive?)
+    }
   }
+}
 
-  Vec2 add(Vec2 o) { return new Vec2(x + o.x, y + o.y); }
-  Vec2 sub(Vec2 o) { return new Vec2(x - o.x, y - o.y); }
-  Vec2 mult(float scalar) { return new Vec2(x*scalar, y*scalar); }
-  Vec2 div(float scalar) { return new Vec2(x/scalar, y/scalar); } 
-  Vec2 flipX() { return new Vec2(-this.x, this.y); }
-  Vec2 flipY() { return new Vec2(this.x, -this.y); }
+class ImplicitMorph implements ImplicitInterface {
+  final ImplicitInterface a, b;
+  final float t;
 
-  float length() { return sqrt(x*x + y*y); }
+  ImplicitMorph(ImplicitInterface a, ImplicitInterface b, float t) {
+    this.a = a;
+    this.b = b;
+    this.t = t;
+  }
+  
+  float at(PVector p) { return (1 - t)*a.at(p) + t*b.at(p); }
+}
+
+float morph_t = 0.5; // Press '8' to decrease and '9' to increase.
+void incMorph(float by) {
+  morph_t = max(0, min(1, morph_t + by));
+  setPrimitive(new Primitive(new ImplicitMorph(sphere, new Primitive(new LineSegment(vec(0, 0, -vmax), vec(0, 0.0, vmax)), 0.5), morph_t)));
 }
 
 Vec2 prev_mouse_pos = new Vec2();
@@ -177,9 +173,8 @@ void setup() {
   rot_mat.reset();
   
   // specify our implicit function is that of a sphere, then do isosurface extraction
-  primitives = List.of(new Primitive(sphere));
   iso_surface_threshold = 1.0;
-  isosurface();
+  setPrimitives(List.of(new Primitive(sphere)));
 }
 
 void draw() {
@@ -338,7 +333,7 @@ void keyPressed() {
       rot_mat.rotate(PI/16, -1, 0, 0);
       rot_mat.rotate(PI/16, 0, 0, -1);
       setPrimitive(new Primitive(
-        new ImplicitIntersection(
+        new ImplicitBoolean(BooleanOp.Intersection,
           new Primitive(sphere, DEFAULT_COL, vec(0, 0.5, 0)), new Primitive(sphere, DEFAULT_COL, vec(0, -0.5, 0))
         )
       ));
@@ -346,18 +341,16 @@ void keyPressed() {
     case '&':
       resetScene(1.0);
       setPrimitive(new Primitive(
-        new ImplicitSubtraction(
-          sphere, new Primitive(new LineSegment(vec(0, 0, -vmax), vec(0, 0.0, vmax)), 0.5)
+        new ImplicitBoolean(BooleanOp.Difference,
+          sphere, new Primitive(new LineSegment(vec(0, 0, -vmax*2), vec(0, 0.0, vmax*2)), 0.5)
         )
       ));
       break;
     case '8':
-      resetScene(1.0);
-      setPrimitive(new Primitive(
-        new ImplicitSubtraction(
-          sphere, new Primitive(new LineSegment(vec(0, 0, -vmax), vec(0, 0.0, vmax)), 0.5)
-        )
-      ));
+      incMorph(-0.1);
+      break;
+    case '9':
+      incMorph(0.1);
       break;
   }
 }
