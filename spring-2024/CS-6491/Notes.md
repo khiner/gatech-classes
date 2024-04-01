@@ -327,7 +327,7 @@ scale shape by k -> divide(x,y,z) by k
 ...
 
 t(x) = {
-    0    x < x_min>
+    0    x < x_min
     (x-x_min)/(x_max-x_min)    x_min <= x <= x_max
     1    x > x_max
 }
@@ -788,3 +788,345 @@ Easier to show 2D diagrams of BRDFs: (slice of hemisphere)
 - Diffuse surface: Outgoing light scattered in all directions.
 - Perfect mirror surface: All outgoing light reflects in a single, mirrored direction: $\theta_o = -\theta_i$
 
+
+## Wed Mar 6
+
+### Distributed (Distribution) Ray Tracing
+
+Siggraph 1984: Rob Cook, ...
+
+Soft rendering effects:
+    - soft shadows
+    - glossy reflection (between perfect mirror and diffuse)
+    - motion blur
+    - depth of field
+
+Soft shadows, with area light
+    - Umbra: Total shadow
+    - Penumbra: Partial shadow
+
+Traditional ray tracing:
+    - From eye to point light, one path
+    - bool visible(P,L)
+    - C = (N\dot L)visible(P,L)
+
+Distribution ray tracing:
+    - From eye to area light
+    - C=1/n sum_i(visible(P,L_i)) Na \dot L_i
+    - where to shoot rays from eye?
+        - jittered sampling, pick a random point within each grid cell on area light
+        - rejection sampling, reject points sampled outside of desired area
+        - combine the two.
+        - (best: blue noise sampling)
+
+Glossy reflection
+    - Don't only bounce as a perfect mirror. Avg. multiple scatters (BRDF)
+    - Mirror: C = diffuse + k_refl C_refl
+    - Glossy: C = diffuse + avg(k_refl C_R_i)
+
+Motion blur
+    - Ray through view plane
+    - Perform multiple intersections with a single ray w/ _multiple timestamps_
+    - Jitter sample points in time within "shutter" window
+
+DOF:
+    - Pinhole camera forms upside-down image from light passing only through the pinhole
+    - Let's widen the hole into the box. 2D plane parallel to the lens. Lens bends the rays to a focal point on the film plane. Points _not_ on focal plane don't converge to a focal point. (Circle of Confusion)
+    1) where would light hit if it went exactly through the middle of the lens? Call that P.
+    2) Pick another point in the lens, not in the middle, and direct a ray to P.
+    3) Send many rays from different points on the lens to P, average them all
+
+## Fri Mar 8
+
+### Global illumination
+
+Distribution ray tracing sums over multiple light paths:
+- multiple shadow rays
+- multiple reflected rays (glossy)
+
+The two above both approximate the _Reflectance Equation_:
+$$L(x,k_o) = \int_{k_i \in \Omega}{\rho(k_i,k_o)L(x,k_i) \cos(\theta_i) dk_i},$$
+where $L(x,k_o)$ is the outgoing radiance, $k_i \in \Omega, k_i = (\theta_i, \phi_i)$ is all directions around the hemisphere, $\rho(k_i,k_o)$ is the fraction of incoming light that reflects to $k_o$, $L(x,k_i)$ is the incoming light to $x$ from $k_i$, $\cos(\theta_i)$ is the area-weighted photon density, and $dk_i$ is the differential solid angle.
+
+$\rho$ is constant for diffuse surfaces.
+
+### Surface reflectance types
+
+- diffuse (D): light scatters in all directions equally
+- rough specular (glossy) (S): "specular lobe", _mostly_ bouncing in the mirror direction
+- mirror (ideal specular) (S): Exact mirror reflections
+
+Heckbert light path notation:
+    - L (light)
+    - D (diffuse surface)
+    - S (specular/glossy/mirror surface)
+    - E (eye or camera)
+
+Regular expressions:
+    - A|B (A or B)
+    - A* (zero or more A's)
+    - A+ (one or more A's)
+
+One bounce model: Path = LDE
+
+Multiple bounces (closed room, diffuse environment): LD*E
+
+Classical: LDE is calculated, LSDE is omitted (how to fix?)
+
+Caustics: Bright spot from bending through lens.
+- Path: LSSDE (SS = into and out of lens)
+- Classical ray tracing has no caustics
+
+
+## Mon Mar 11
+
+### The rendering equation
+
+Jim Kajiya, Giggraph 1986
+
+Given:
+- scene geometry
+- BRDF's
+- light sources (emitting geometry)
+
+Determine:
+- light that reaches the eye
+
+Approach: start from the refl. equation (integral over directions), and convert to integral over points in scene
+- solid angles -> areas on surface
+- add visibility term $V(x, x') \in (0, 1)$ (is the path blocked?)
+- add light sources
+- some directions turn into points
+
+$$dk_i = \frac{\cos{\theta_o} dA}{|x-x'|^2}$$
+$G(x,x') = \frac{\cos{\theta_i}\cos{\theta_o}}{|x-x'|^2}$$
+"geometry" term
+
+
+$x'$ is the surface reflection point, $x$ is the point in the scene, $dA$ is the differential surface area, $\theta_o$ is the surface normal angle
+
+$$L(x',k') = L_e(x',k') + \int_{x \in S}{\rho(k,k')L(x,k)V(x,x')G(x,x')dA}$$
+
+- $L$: outgoing light from $x'$ to eye
+- $L_e$: emitted light from $x'$
+- $x \in S$: over all surfaces
+- $\rho$: reflectence (brdf)
+- $V$: visibility term
+- $G$: geometry term
+- $dA$: differential area
+
+```
+Radiance get_radiance(ray):
+    cast ray into scene, hit point x with direction k
+    radiance = emit_radiance(x, k)
+    for each light source x' in direction k':
+        if sees_light(x, light):
+            radiance += weight_radiance(brdf(k,k'), light_radiance)
+
+    if random < reflect_prob(x):
+        create reflected_ray, direction k'
+        radiance += weight_radiance(brdf(k, k'), get_radiance(reflected_ray))
+    else
+        create refracted_ray, direction k'
+        radiance += weight_radiance(brdf(k, k'), get_radiance(refracted_ray))
+
+    return radiance
+```
+
+## Wed Mar 13
+
+### Photon mapping
+
+#### Pass 1
+
+- trace photons from light
+- store photons at surfaces
+- effects:
+    - caustics
+    - indirect diffuse illumination
+    - participating media (e.g. shafts of light in fog)
+
+Caustics: light focussed by lens/mirror (specular surfaces)
+1) shoot photons from lights
+2) view scene from eye, show concentrations of photons
+
+Photons:
+- amount of energy
+- store location where they hit on diffisue surface
+- store direction of travel (when we have non-diffuse surfaces)
+
+Store photons using kd-trees. works for _any_ shaped surfaces
+
+##### k-D trees
+
+Support fast proximity queries (e.g. gimme the 10 nearest photons)
+
+- stored split planes
+- cycle through x,y,z
+- stop splitting when last split has few photons
+
+#### Caustics Pass 2
+
+- shoot rays from eye
+- calcuate diffuse illum. normally ($c = c_r c_l (N \cdot L)$)
+- add the photons' contribution - photon density:
+    - find nearest N photons (e.g. N=50)
+    - density proportional to needed search radius
+- use thise to determine if it's a bright spot
+
+Indirect diffuse Illumination
+- Pass 1
+1) shoot photons from light, bounce them off diffuse survaces (in a random direction)
+    - don't store the first hit from the light source
+    - photons can bounce more than once
+    - bounce prob. based on reflectance of material (Russian Roulette sampling)
+2) render from eye, adding indirect term
+- Pass 2
+- Final gather
+    - k_eye - density estimation at each scene point to estimate L(x_1,k_1) (light leaving)
+    - Irradiance: $L(x,k_{eye}) = \sum_i{\rho(k_i,k_{eye})L(x,k_i)}$
+    - Irradiance caching (Greg Ward) - need more detail at e.g. wall corners, under objects, so only do final gather in those places and interpolate
+        - Estimate distance + normal change at nearby cache points
+
+
+## Fri Mar 15
+
+Anti-Aliasing
+
+Aliasing: High frequency components of a sampled signal misidentified as lower frequencies.
+
+Jagged edges of polygons is an example of _spatial_ aliasing.
+Also moire patterns of grids.
+- samples: pixel colors
+- signal: ideal image
+- frequency components: regularly spaced pixels
+    - isn't the analagous to the _time domain_, not the _frequency domain_?
+      Frequency domain analog would be the color it's aliased to.
+Corrected:
+- time components: pixel spacing
+- frequency component: pixel color
+
+- use grayscale to correct
+- box filter (not ideal)
+    - area-weighted filter
+    - value = volume under the box
+
+triangle filter give us sub-pixel precision
+
+
+## Mon Mar 25
+
+Project, rasterize, z=buffer
+
+Perspective projection:
+
+y'/1 = y/|z|
+
+x' = x/|z|
+
+y' goes up to p', the height y' where we see point p intersecting the view plane at y' = p'
+
+
+rasterization: turn simple geometry into pixels
+(e.g. lines, triangles, ...)
+- given: 2D  vertices of triangle
+- calc pixels in triangle, and find min+max x & y coords
+- then, fill in each pixel in the area _inside the triangle_
+
+
+z-buffer: visible surface determination
+
+framebuffer: pixel colors (2d array)
+z-buffer: z or depth value per-pixel
+
+as we rasterize, each pixel has "depth" recorded
+
+for each pixel in window (x, y)
+    setz(x, y, far)
+
+for each triangle in scene
+    for each pixel in triangle
+        if pz < bufferz(x,y)
+            write_pixel(x,y, r,g,b)
+            setz(x,y, pz)
+
+ray tracing:
+for each pixel x,y
+    create ray R
+    for each object o_i
+        is o_i closest along ray R?
+
+rasterization
+for each triangle o_i
+    for each pixel in triangle o_i
+        is pz closest at x,y?
+
+
+## Wed Mar 27
+
+Vertex processors (programmable!)
+- can calculate per-vertex shading
+
+Rasterizer: (not programmable)
+- converts screen-space geometry (e.g. triangles) to fragments
+- interpolates per-vertex info
+
+
+NVidia GPUs
+
+- gpu chip
+    - (many streaming multiprocessors, executing different instructions)
+        - each multiprocessors has many cores ("CUDA cores")
+        - SIMD (each core acts on different vertices/fragments but doing the same operations)
+
+
+## Mon Apr 1
+
+Rexture maps
+
+texture - vary color across surface
+
+examples:
+- wood grain
+- photo on book jacket
+- carpet pattern
+
+texture space / screen space
+
+texture (image) space: s/t (or u/v), s \in [0,1], t \in [0,1] (for example)
+
+texel (short for "texture element") ~= pixel
+
+Render textured polygons
+1) Interpolate s and t across polygon
+2) Find color from texture at (s,t) - texture lookup
+3) Color the given pixel using texel color and shading
+
+Interpolate s and t across poly: barycentric coordinates
+
+triangle p1, p2, p3, with barycentric coords (s1,t1), (s2,t2), (s3,t3)
+p in center. \alpha, \beta, \gamma are the areas of the three sections of the triangle split by p
+
+s = \alpha s1 + \beta s2 + \gamma s3
+
+Perspective: x' = x/|z|, y' = y/|z|, z' = 1/|z|
+
+1) divide s and t by z to give s' and t'
+2) interpolate s' and t' across poly. (barycentric)
+3) divide s' and t' by z' (per pixel) -> s and t
+4) perform texture lookup and shade
+
+if we round texture coords to integer: locations = nearest neighbor lookup
+- gives blocky/pixelated results
+
+instead, average over the 4 nearest texels to given point
+- bilinear/trilinear interpolation: interp across x dim, then y
+    r = r0 + b(r1 - r0), with r1 = r01 + a(r11 - r01), and r0 = r00 + a(r10 - r00)
+
+Texture minification - avoid sparkling, scintillation
+- create multiple textures at different resolutions, low pass filter
+- mipmap - image pyramid + trilinear interpolation (bilinear across texture dims and then linear across neighbor in image hierarchy)
+- how to pick resolutions?
+    - want: one pixel on screen space
+    - square pixel in screen space maps to a quadrilateral in texture space.
+    - pixel footprint: turn the quadrilateral projection into an elipse, calculate a differential step length d, and choose texture size based on d

@@ -1,0 +1,94 @@
+\documentclass{article}
+\usepackage{amsmath,amsfonts,amssymb,graphicx}
+\begin{document}
+
+\title{Homework Set \#7 – PHYS 6260}
+\author{Prof. John Wise \& GTA Alisha Vira}
+\date{Due Wednesday, March 27th, 11:59pm (Submit GitHub URL to Canvas; all code on GitHub)}
+\maketitle
+
+\section*{Instructions}
+\begin{itemize}
+    \item Your assignment should be uploaded as a Jupyter notebook for both Problems.
+    \item Please use the template notebook uploaded on Canvas and GitHub as a starter.
+    \item Comment your code through inline comments with \# or markdown blocks where the latter option is preferred.
+    \item In the problem descriptions “programs” are referring to single or multiple code blocks in a notebook.
+    \item The materials that you are required to include are indicated at the end of each problem next to the check symbol: $\square\checkmark$
+\end{itemize}
+
+\section*{Problem 1: Physics Informed Neural Networks (80 points total)}
+Here you will complete a code that solves Burger’s Equation with a traditional finite differencing PDE solver and then use that solution to train a Physics Informed Neural Network (PINN) to approximate the solution. We have provided most of the code in both approaches in the HW7.ipynb notebook and you will complete the missing sections marked with \textbf{COMPLETE HERE}. If you desire, you may change other portions of the code and restructure it, but this is not necessary to complete the problem.
+
+Burger’s Equation is a fundamental non-linear PDE that has many applications in fluid dynamics, traffic flow, and applied mathematics, to name a few. We will consider the 1D case of its viscous version:
+\begin{equation}
+    \frac{\partial u}{\partial t} + u \frac{\partial u}{\partial x} - \nu \frac{\partial^2 u}{\partial x^2} = 0 \tag{1}
+\end{equation}
+where $\nu$ is the kinematic viscosity or diffusion coefficient. In the application of fluid flow, the field $u(x, t)$ describes the fluid velocity at some position $x$ and time $t$. It is usually the prototypical PDE that one solves when testing hydrodynamics solvers before moving to more realistic PDEs, i.e., Euler’s and Navier-Stokes equations. In its evolution, any smooth fluid flow will develop a discontinuity approximating a shock.
+
+\subsection*{(a) (10 points)}
+In the \texttt{BurgerSolver} class, complete the missing code in the solver routine to implement the Forward Time Upwind Space (FTUS) method that we used in Homework Set \#4. Recall that it is a stable method for the advection equation where any first spatial derivative is always evaluated “upwind”, that is, in the direction of the velocity which is $u$ for Burger’s Equation:
+\begin{align}
+    \frac{\partial u}{\partial x} &= \frac{1}{\Delta x}(u^n_i - u^n_{i-1}) & (u > 0) \tag{2} \\
+    \frac{\partial u}{\partial x} &= \frac{1}{\Delta x}(u^n_{i+1} - u^n_i) & (u < 0) \tag{3}
+\end{align}
+for the $i$th cell at timestep $n$. For the second derivative term, you can use a first-order accurate finite difference.
+
+Given an initial condition of $u(x, 0) = -\sin(\pi x)$, boundary conditions of $u(0, t) = 0$, a domain $[-1, 1]$ that is discretized into $N = 1000$ points, and $\nu = 0.01$, evolve the system for 1 second.
+\begin{itemize}
+    \item[$\square$] Plot $u(x)$ at a time $t = 0.2s$ and $t = 1s$.
+    \item[$\square$] Plot the space-time diagram $u(x, t)$ as an image colored by the values of $u$, which will be the basis for the PINN in the remaining questions.
+\end{itemize}
+
+\subsection*{(b) (20 points)}
+Here we will be training a neural network with one hidden layer on the training set provided by the solution in part (a). The \texttt{BurgerSolver.random\_sample()} routine returns $N$ random solutions $u$ within the simulation $(x, t)$ domain. The provided \texttt{NeuralNetwork} class is based on the one showed during lectures. Using a loss function provided in the “exact” method in set loss function:
+\begin{equation}
+    L_{\text{exact}} = z - y  \tag{4}
+\end{equation}
+where $z$ and $y$ are the predicted and true values respectively. Train the neural network with $10,000$ random data samples in $50$ epochs with a learning rate $\eta = 0.1$ for $k = 2, 5, 10, 40, and 100$ nodes in the hidden layer.
+\begin{itemize}
+    \item[$\square$] Plot the loss curve as a function of epochs for these values of $k$ which is returned by the solve routine. You should plot all five curves on a single plot.
+    \item[$\square$] Describe if the model is adequately converging during the training and the differences between the models with different values of $k$.
+    \item[$\square$] Create an image plot of the predicted solution $\hat{u}(x, t)$ with $k = 40$ using the predict routine in the \texttt{NeuralNetwork} class. Note: Your predicted model may not be that accurate but it should be smooth.
+    \item[$\square$] Create another image plot the relative differences with your solution in part (a).
+\end{itemize}
+
+\subsection*{(c) (20 points)}
+Now we will incorporate the boundary and initial conditions into the loss function $L = L_{\text{exact}} + L_{\text{bc}} + L_{\text{ic}}$ where
+\begin{align}
+    L_{\text{bc}} &= \frac{1}{N_c} \sum_{i=1}^{N_c} \left[z_i - u(0, t)\right]^2 \tag{5}\\
+    L_{\text{ic}} &= \frac{1}{N_c} \sum_{i=1}^{N_c} \left[z_i - u(x, 0)\right]^2
+\end{align}
+where $z_i$ are $N_c = 50$ predicted values on the boundaries and initial time. These are set in the routines \texttt{return\_bc\_loss} and \texttt{return\_ic\_loss}. Use $k = 40$ nodes in the hidden layer and the same hyperparameters as in part (b).
+\begin{itemize}
+    \item[$\square$] Plot the loss curve for this model and compare it against your loss curve found in part (b) for $k = 40$.
+    \item[$\square$] Create an image plot of the predicted solution $\hat{u}(x, t)$.
+    \item[$\square$] Create another image plot the relative differences with your solution in part (a).
+\end{itemize}
+
+\subsection*{(d) (30 points)}
+Finally, we will include the residual of Burger’s Equation in the loss function so that $L = L_{\text{exact}} + L_{\text{bc}} + L_{\text{ic}} + L_{\text{res}}$ where
+\begin{equation}
+    L_{\text{res}} = \frac{\partial \hat{u}}{\partial t} + \hat{u}\frac{\partial \hat{u}}{\partial x} - \nu \frac{\partial^2 \hat{u}}{\partial x^2} \tag{6}
+\end{equation}
+This is more difficult to compute because we need the derivatives of the predicted solution $\hat{u}$. For this, you will need to modify the routine \texttt{return\_deriv} to return these derivatives. Here, you will predict nearby points at each combination of $(x \pm \Delta x/2, t \pm \Delta t/2)$ with $\Delta t = \Delta x = 10^{-3}$ and use central differencing to compute the derivatives.
+\begin{itemize}
+    \item[$\square$] Plot the loss curve for this model and compare it against your loss curve found in part (c).
+    \item[$\square$] Create an image plot of the predicted solution $\hat{u}(x, t)$.
+    \item[$\square$] Create another image plot the relative differences with your solution in part (a).
+\end{itemize}
+In my experience, this model does no better than the model in part (c). What could be some solutions to better improve the model if given more freedom when constructing the neural network architecture?
+
+\section*{Problem 2: Application question (20 points total)}
+There are four different methods that can be used to incorporate physics into neural networks:
+\begin{enumerate}
+    \item Train the model on a large amount of data and let the NN learn the constraints. No physics laws fed into the NN so it may require a lot of training to obtain the results.
+    \item Enforce physical laws as a hard constraint in the NN architecture or during the optimization. But it can be difficult to train the NN with such constraints.
+    \item Use penalty methods and add the physics model as a residual to the loss. This is the method that you used for problem 1 of this homework. This is simpler to implement and works with any NN architecture.
+    \item Use a combination of observation data as well as physical constraints. These physical constraints are added as soft penalty terms to the residual loss function.
+\end{enumerate}
+There are some problems in physics which are better suited for a particular method. For example, it would be useful to use the first method to classify different types of solar activity from satellite data where the physics driving these events are complex and unknown but there are distinctive patterns in the optical signatures. Pick one example physics problem and describe why this application is best suited to be solved using one of the four ways to use physics-informed neural networks.
+\begin{itemize}
+    \item[$\square$] For full credit, you should pick an example that is not the same as problem one or your final project. You should also explain how you would incorporate the physics into the NN in a quantitative way with the specific governing equations or laws.
+\end{itemize}
+
+\end{document}

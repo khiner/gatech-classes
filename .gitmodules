@@ -44,3 +44,6 @@
 [submodule "spring-2024/PHYS-6260/homework-6-khiner"]
 	path = spring-2024/PHYS-6260/homework-6-khiner
 	url = git@github.com:gt-phys6260-sp22/homework-6-khiner.git
+[submodule "spring-2024/PHYS-6260/homework-7-khiner"]
+	path = spring-2024/PHYS-6260/homework-7-khiner
+	url = git@github.com:gt-phys6260-sp22/homework-7-khiner.git
