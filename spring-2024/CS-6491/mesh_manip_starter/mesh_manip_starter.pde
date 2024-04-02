@@ -34,7 +34,6 @@ void draw() {
   shininess(1.0);
   
   applyMatrix(rot_mat); // Rotate the object using the global rotation matrix
-  scale(-1, 1, 1);
 
   // THIS IS WHERE YOU SHOULD DRAW YOUR MESH
 
@@ -93,4 +92,9 @@ void keyPressed() {
   else if (key == 'f' && mesh != null) mesh.toggleSmoothShading();
   else if (key == 'w' && mesh != null) mesh.toggleRandomColors();
   else if (key == 'e' && mesh != null) mesh.toggleEdges();
+  else if (key == 'v' && mesh != null) mesh.toggleEdgeDebug();
+  else if (key == 'n' && mesh != null) mesh.moveDebugEdge(EdgeMove.Next);
+  else if (key == 'p' && mesh != null) mesh.moveDebugEdge(EdgeMove.Previous);
+  else if (key == 'o' && mesh != null) mesh.moveDebugEdge(EdgeMove.Opposite);
+  else if (key == 's' && mesh != null) mesh.moveDebugEdge(EdgeMove.Swing);
 }

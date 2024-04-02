@@ -11,7 +11,7 @@ Random rand = new Random();
 class Vertex {
   final PVector position;
   PVector normal;
-  HalfEdge halfEdge; // One outgoing half-edge
+  HalfEdge edge; // One outgoing half-edge
 
   Vertex(float x, float y, float z) {
     this.position = new PVector(x, y, z);
@@ -19,15 +19,14 @@ class Vertex {
 }
 
 class Face {
-  HalfEdge halfEdge; // One half-edge in the face
+  HalfEdge edge; // One half-edge in the face
   PVector normal;
   color col = color(255, 255, 255);
 }
 
 class HalfEdge {
   final Vertex target; // The vertex the edge points to
-  HalfEdge next;
-  HalfEdge opposite;
+  HalfEdge next, opposite;
   Face face; // The face left of the edge
 
   HalfEdge(Vertex target) {
@@ -62,13 +61,17 @@ color randCol() {
   return color(v.x * 255, v.y * 255, v.z * 255);
 }
 
+enum EdgeMove { Next, Previous, Opposite, Swing }
 
 class Mesh {
   List<Vertex> vertices = new ArrayList<>();
   List<Face> faces = new ArrayList<>();
-  List<HalfEdge> halfEdges = new ArrayList<>();
+  List<HalfEdge> edges = new ArrayList<>();
 
   boolean smoothShading = false, randomColors = false, renderEdges = false;
+
+  HalfEdge debugEdge = null; // Current visualized edge.
+  boolean showDebugEdge = false; // Visualize the `currEdge`
 
   void toggleSmoothShading() { smoothShading = !smoothShading; }
   void toggleRandomColors() {
@@ -78,40 +81,44 @@ class Mesh {
     }
   }
   void toggleEdges() { renderEdges = !renderEdges; }
+  void toggleEdgeDebug() {
+    showDebugEdge = !showDebugEdge;
+    if (showDebugEdge && debugEdge == null && !edges.isEmpty()) debugEdge = edges.get(0);
+  }
 
   void addFace(int[] vertexIndices) {
     Face face = new Face();
-    HalfEdge firstHalfEdge = null, prevHalfEdge = null;
+    HalfEdge firstEdge = null, prevEdge = null;
     for (int i = 0; i < vertexIndices.length; i++) {
       Vertex currentVertex = vertices.get(vertexIndices[i]);
-      HalfEdge halfEdge = new HalfEdge(currentVertex);
-      if (i == 0) firstHalfEdge = halfEdge;
-      else prevHalfEdge.next = halfEdge;
+      HalfEdge edge = new HalfEdge(currentVertex);
+      if (i == 0) firstEdge = edge;
+      else prevEdge.next = edge;
       
-      halfEdge.face = face;
-      if (currentVertex.halfEdge == null) currentVertex.halfEdge = halfEdge;
+      edge.face = face;
+      if (currentVertex.edge == null) currentVertex.edge = edge;
       
-      halfEdges.add(halfEdge);
-      prevHalfEdge = halfEdge;
+      edges.add(edge);
+      prevEdge = edge;
     }
 
-    prevHalfEdge.next = firstHalfEdge; // Close the loop.
-    face.halfEdge = firstHalfEdge;
+    prevEdge.next = firstEdge; // Close the loop.
+    face.edge = firstEdge;
     faces.add(face);
   }
   
   // Set opposite half-edges
   void setOpposites() {
     Map<String, HalfEdge> edgeMap = new HashMap<>();
-    for (HalfEdge he : halfEdges) {
-      final String edgeKey = he.target.position + " " + he.next.target.position;
-      final String oppositeKey = he.next.target.position + " " + he.target.position;
+    for (HalfEdge edge : edges) {
+      final String edgeKey = edge.target.position + " " + edge.next.target.position;
+      final String oppositeKey = edge.next.target.position + " " + edge.target.position;
       if (edgeMap.containsKey(oppositeKey)) {
-        HalfEdge oppositeHalfEdge = edgeMap.get(oppositeKey);
-        he.opposite = oppositeHalfEdge;
-        oppositeHalfEdge.opposite = he;
+        HalfEdge oppositeEdge = edgeMap.get(oppositeKey);
+        edge.opposite = oppositeEdge;
+        oppositeEdge.opposite = edge;
       } else {
-        edgeMap.put(edgeKey, he);
+        edgeMap.put(edgeKey, edge);
       }
     }
   }
@@ -120,21 +127,45 @@ class Mesh {
     for (Vertex vertex : vertices) vertex.normal = new PVector();
 
     for (Face face : faces) {
-      HalfEdge edge1 = face.halfEdge, edge2 = edge1.next, edge3 = edge2.next;
-      final PVector v1 = PVector.sub(edge1.target.position, edge2.target.position);
-      final PVector v2 = PVector.sub(edge1.target.position, edge3.target.position);
-      face.normal = v2.cross(v1).normalize();
+      HalfEdge edge1 = face.edge, edge2 = edge1.next, edge3 = edge2.next;
+      final PVector v1 = PVector.sub(edge2.target.position, edge1.target.position);
+      final PVector v2 = PVector.sub(edge3.target.position, edge1.target.position);
+      face.normal = v1.cross(v2).normalize();
 
       // Accumulate vertex normals (we normalize later).
       do {
         edge1.target.normal.add(face.normal);
         edge1 = edge1.next;
-      } while (edge1 != face.halfEdge);
+      } while (edge1 != face.edge);
     }
 
     // Normalize vertex normals
     for (Vertex vertex : vertices) vertex.normal.normalize();
   }
+
+  void moveDebugEdge(EdgeMove move) { debugEdge = getEdge(debugEdge, move); }
+
+  HalfEdge getEdge(HalfEdge edge, EdgeMove move) {
+    if (edge == null) return null;
+
+    switch (move) {
+      case Next: return getNextEdge(edge);
+      case Previous: return getPreviousEdge(edge);
+      case Opposite: return getOppositeEdge(edge);
+      case Swing: return getSwingEdge(edge);
+      default: return null;
+    }
+  }
+
+  HalfEdge getNextEdge(HalfEdge edge) { return edge.next; }
+  HalfEdge getPreviousEdge(HalfEdge currentEdge) {
+    // Iterate over face edges to find the one whose `next is `currentEdge`.
+    HalfEdge edge = currentEdge;
+    while (edge.next != currentEdge) edge = edge.next;
+    return edge;
+  }
+  HalfEdge getOppositeEdge(HalfEdge edge) { return edge.opposite; }
+  HalfEdge getSwingEdge(HalfEdge edge) { return edge.opposite != null ? edge.opposite.next : null; }
 
   void draw() {
     for (Face face : faces) {
@@ -143,7 +174,7 @@ class Mesh {
       else noStroke();
 
       beginShape();
-      HalfEdge edge = face.halfEdge;
+      HalfEdge edge = face.edge;
       do {
         if (smoothShading) {
           normal(edge.target.normal.x, edge.target.normal.y, edge.target.normal.z);
@@ -154,8 +185,42 @@ class Mesh {
         Vertex v = edge.target;
         vertex(v.position.x, v.position.y, v.position.z);
         edge = edge.next;
-      } while (edge != face.halfEdge);
+      } while (edge != face.edge);
       endShape(CLOSE);
+    }
+    
+    if (debugEdge != null && showDebugEdge) {
+      visualizeDirectedEdge(debugEdge);
+    }
+  }
+
+  void visualizeDirectedEdge(HalfEdge edge) {
+    if (edge == null || !showDebugEdge) return;
+
+    final int numSpheres = 3;
+    final int sphereSteps = 15;
+    final float sphereStepRatio = 1.f/sphereSteps;
+
+    final Vertex start = edge.target, end = edge.next.target;
+    final PVector
+      edgeVec = PVector.sub(end.position, start.position),
+      sphereStep = PVector.mult(edgeVec, sphereStepRatio),
+      sphereStart = PVector.add(start.position, PVector.mult(sphereStep, (1 + sphereSteps - numSpheres)/2.f));
+    final float
+      sphereStepMag = sphereStep.mag(),
+      sphereRadMin = sphereStepMag/2,
+      sphereRadMax = sphereStepMag, sphereRadInc = (sphereRadMax - sphereRadMin)/(numSpheres - 1);
+    final PVector
+      sphereOffset = PVector.cross(edge.face.normal, edgeVec.copy().normalize(), null).normalize().mult(sphereStepMag);
+
+    fill(255, 100, 100);
+    // Draw spheres along the edge.
+    for (int i = 0; i < numSpheres; i++) {
+      PVector pos = PVector.add(sphereStart, PVector.mult(sphereStep, i)).add(sphereOffset);
+      pushMatrix();
+      translate(pos.x, pos.y, pos.z);
+      sphere(sphereRadMin + (numSpheres - i - 1)*sphereRadInc);
+      popMatrix();
     }
   }
 }
