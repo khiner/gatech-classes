@@ -2,7 +2,11 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Random;
+
 import processing.core.PVector;
+
+Random rand = new Random();
 
 class Vertex {
   final PVector position;
@@ -17,6 +21,7 @@ class Vertex {
 class Face {
   HalfEdge halfEdge; // One half-edge in the face
   PVector normal;
+  color col = color(255, 255, 255);
 }
 
 class HalfEdge {
@@ -30,24 +35,58 @@ class HalfEdge {
   }
 }
 
+// Convenience helpers
+PVector vec(float x, float y) { return new PVector(x, y); }
+PVector vec(float x, float y, float z) { return new PVector(x, y, z); }
+
+// Based on https://stackoverflow.com/a/7898685/780425
+PVector hsvToRgb(float hue, float saturation, float v) {
+    int h = (int)(hue*6);
+    float f = hue*6 - h;
+    float p = v*(1 - saturation);
+    float q = v*(1 - f*saturation);
+    float t = v*(1 - (1 - f)*saturation);
+    switch (h) {
+      case 0: return vec(v, t, p);
+      case 1: return vec(q, v, p);
+      case 2: return vec(p, v, t);
+      case 3: return vec(p, q, v);
+      case 4: return vec(t, p, v);
+      case 5: return vec(v, p, q);
+      default: throw new RuntimeException("Something went wrong when converting from HSV to RGB. Input was " + hue + ", " + saturation + ", " + v);
+    }
+}
+
+color randCol() {
+  PVector v = hsvToRgb(rand.nextFloat(), 0.4, 1.0);
+  return color(v.x * 255, v.y * 255, v.z * 255);
+}
+
+
 class Mesh {
   List<Vertex> vertices = new ArrayList<>();
   List<Face> faces = new ArrayList<>();
   List<HalfEdge> halfEdges = new ArrayList<>();
 
-  boolean useSmoothShading = false;
+  boolean smoothShading = false, randomColors = false, renderEdges = false;
+
+  void toggleSmoothShading() { smoothShading = !smoothShading; }
+  void toggleRandomColors() {
+    randomColors = !randomColors;
+    for (Face face : faces) {
+      face.col = randomColors ? randCol()  : color(255, 255, 255);
+    }
+  }
+  void toggleEdges() { renderEdges = !renderEdges; }
 
   void addFace(int[] vertexIndices) {
     Face face = new Face();
-    HalfEdge firstHalfEdge = null;
-    HalfEdge prevHalfEdge = null;
-
+    HalfEdge firstHalfEdge = null, prevHalfEdge = null;
     for (int i = 0; i < vertexIndices.length; i++) {
       Vertex currentVertex = vertices.get(vertexIndices[i]);
       HalfEdge halfEdge = new HalfEdge(currentVertex);
       if (i == 0) firstHalfEdge = halfEdge;
       else prevHalfEdge.next = halfEdge;
-
       
       halfEdge.face = face;
       if (currentVertex.halfEdge == null) currentVertex.halfEdge = halfEdge;
@@ -64,7 +103,6 @@ class Mesh {
   // Set opposite half-edges
   void setOpposites() {
     Map<String, HalfEdge> edgeMap = new HashMap<>();
-
     for (HalfEdge he : halfEdges) {
       final String edgeKey = he.target.position + " " + he.next.target.position;
       final String oppositeKey = he.next.target.position + " " + he.target.position;
@@ -100,10 +138,14 @@ class Mesh {
 
   void draw() {
     for (Face face : faces) {
+      fill(face.col);
+      if (renderEdges) stroke(0); // Black edges
+      else noStroke();
+
       beginShape();
       HalfEdge edge = face.halfEdge;
       do {
-        if (useSmoothShading) {
+        if (smoothShading) {
           normal(edge.target.normal.x, edge.target.normal.y, edge.target.normal.z);
         } else {
           normal(face.normal.x, face.normal.y, face.normal.z);
@@ -133,8 +175,7 @@ Mesh loadMesh(String filename) {
   
   // Read faces.
   for (int i = 0; i < numFaces; i++) {
-    final int lineIndex = i + numVertices + 2;
-    words = split(lines[lineIndex], " ");
+    words = split(lines[i + numVertices + 2], " ");
 
     final int nVerts = int(words[0]);
     int[] vertexIndices = new int[nVerts];

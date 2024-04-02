@@ -28,9 +28,6 @@ void draw() {
   directionalLight(152, 152, 152, 0, 0, -1);
   
   pushMatrix();
-
-  stroke(0); // Draw polygons with black edges
-  fill(200, 200, 200); // Set the polygon color to white
   
   ambient(200, 200, 200);
   specular(0, 0, 0); // Turn off specular highlights
@@ -93,5 +90,7 @@ void keyPressed() {
   else if (key == '5') readMesh("star.ply");
   else if (key == '6') readMesh("torus.ply");
   else if (key == '7') readMesh("s.ply");
-  else if (key == 'f' && mesh != null) mesh.useSmoothShading = !mesh.useSmoothShading;
+  else if (key == 'f' && mesh != null) mesh.toggleSmoothShading();
+  else if (key == 'w' && mesh != null) mesh.toggleRandomColors();
+  else if (key == 'e' && mesh != null) mesh.toggleEdges();
 }
