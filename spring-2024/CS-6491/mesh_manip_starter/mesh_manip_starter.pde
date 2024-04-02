@@ -3,6 +3,7 @@
 // For object rotation by mouse
 int mouseX_old = 0, mouseY_old = 0;
 PMatrix3D rot_mat;
+Mesh mesh;
 
 // Camera parameters
 final float DEFAULT_CAMERA_DISTANCE = 6.0;
@@ -36,16 +37,18 @@ void draw() {
   shininess(1.0);
   
   applyMatrix(rot_mat); // Rotate the object using the global rotation matrix
-  
+  scale(-1, 1, 1);
+
   // THIS IS WHERE YOU SHOULD DRAW YOUR MESH
 
-  beginShape();
-  vertex(-1, 1, 0);
-  vertex(1, 1, 0);
-  vertex(0, -1, 0);
-  endShape(CLOSE);
+  if (mesh != null) mesh.draw();
     
   popMatrix();
+}
+
+void mousePressed() {
+  mouseX_old = mouseX;
+  mouseY_old = mouseY;
 }
 
 // Change the object rotation matrix while the mouse is being dragged
@@ -68,6 +71,10 @@ void mouseDragged() {
   mouseY_old = mouseY;
 }
 
+void readMesh(String filename) {
+  mesh = loadMesh(filename);
+}
+
 // handle keystrokes
 void keyPressed() {
   if (key == CODED) {
@@ -86,4 +93,5 @@ void keyPressed() {
   else if (key == '5') readMesh("star.ply");
   else if (key == '6') readMesh("torus.ply");
   else if (key == '7') readMesh("s.ply");
+  else if (key == 'f' && mesh != null) mesh.useSmoothShading = !mesh.useSmoothShading;
 }
