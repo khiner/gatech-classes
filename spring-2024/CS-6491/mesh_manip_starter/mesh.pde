@@ -13,8 +13,11 @@ class Vertex {
   PVector normal;
   HalfEdge edge; // One outgoing half-edge
 
+  Vertex(PVector position) {
+    this.position = position;
+  }
   Vertex(float x, float y, float z) {
-    this.position = new PVector(x, y, z);
+    this(new PVector(x, y, z));
   }
 }
 
@@ -94,10 +97,10 @@ class Mesh {
       HalfEdge edge = new HalfEdge(currentVertex);
       if (i == 0) firstEdge = edge;
       else prevEdge.next = edge;
-      
+
       edge.face = face;
       if (currentVertex.edge == null) currentVertex.edge = edge;
-      
+
       edges.add(edge);
       prevEdge = edge;
     }
@@ -167,33 +170,6 @@ class Mesh {
   HalfEdge getOppositeEdge(HalfEdge edge) { return edge.opposite; }
   HalfEdge getSwingEdge(HalfEdge edge) { return edge.opposite != null ? edge.opposite.next : null; }
 
-  void draw() {
-    for (Face face : faces) {
-      fill(face.col);
-      if (renderEdges) stroke(0); // Black edges
-      else noStroke();
-
-      beginShape();
-      HalfEdge edge = face.edge;
-      do {
-        if (smoothShading) {
-          normal(edge.target.normal.x, edge.target.normal.y, edge.target.normal.z);
-        } else {
-          normal(face.normal.x, face.normal.y, face.normal.z);
-        }
-
-        Vertex v = edge.target;
-        vertex(v.position.x, v.position.y, v.position.z);
-        edge = edge.next;
-      } while (edge != face.edge);
-      endShape(CLOSE);
-    }
-    
-    if (debugEdge != null && showDebugEdge) {
-      visualizeDirectedEdge(debugEdge);
-    }
-  }
-
   void visualizeDirectedEdge(HalfEdge edge) {
     if (edge == null || !showDebugEdge) return;
 
@@ -221,6 +197,77 @@ class Mesh {
       translate(pos.x, pos.y, pos.z);
       sphere(sphereRadMin + (numSpheres - i - 1)*sphereRadInc);
       popMatrix();
+    }
+  }
+
+  Mesh createDual() {
+    Mesh dual = new Mesh();
+    Map<Face, Integer> faceToVertexIndex = new HashMap<>(); // Original face -> corresponding dual vertex
+
+    // Create a vertex for each face in the original mesh.
+    for (Face face : faces) {
+      faceToVertexIndex.put(face, dual.vertices.size());
+      dual.vertices.add(new Vertex(calculateCentroid(face)));
+    }
+    // Create a face for each vertex in the original mesh.
+    for (Vertex vertex : vertices) {
+      List<Face> adjacentFaces = getAdjacentFaces(vertex);
+      int[] dualFaceVertices = new int[adjacentFaces.size()];
+      for (int i = 0; i < adjacentFaces.size(); i++) dualFaceVertices[i] = faceToVertexIndex.get(adjacentFaces.get(i));
+
+      dual.addFace(dualFaceVertices);
+    }
+
+    dual.setOpposites();
+    dual.calculateNormals();
+    return dual;
+  }
+
+  PVector calculateCentroid(Face face) {
+    PVector centroid = new PVector();
+    int vertexCount = 0;
+    HalfEdge edge = face.edge;
+    do {
+      centroid.add(edge.target.position);
+      vertexCount++;
+      edge = edge.next;
+    } while (edge != face.edge);
+
+    return centroid.div(vertexCount);
+  }
+
+  List<Face> getAdjacentFaces(Vertex vertex) {
+    List<Face> adjacentFaces = new ArrayList<>();
+    HalfEdge startEdge = vertex.edge, edge = startEdge;
+    do {
+      adjacentFaces.add(edge.face);
+      edge = getSwingEdge(edge);
+    } while (edge != null && edge != startEdge);
+
+    return adjacentFaces;
+  }
+
+  void draw() {
+    for (Face face : faces) {
+      fill(face.col);
+      if (renderEdges) stroke(0); // Black edges
+      else noStroke();
+
+      beginShape();
+      HalfEdge edge = face.edge;
+      do {
+        if (smoothShading) normal(edge.target.normal.x, edge.target.normal.y, edge.target.normal.z);
+        else normal(face.normal.x, face.normal.y, face.normal.z);
+
+        Vertex v = edge.target;
+        vertex(v.position.x, v.position.y, v.position.z);
+        edge = edge.next;
+      } while (edge != face.edge);
+      endShape(CLOSE);
+    }
+    
+    if (debugEdge != null && showDebugEdge) {
+      visualizeDirectedEdge(debugEdge);
     }
   }
 }

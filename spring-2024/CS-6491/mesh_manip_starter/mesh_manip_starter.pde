@@ -97,4 +97,5 @@ void keyPressed() {
   else if (key == 'p' && mesh != null) mesh.moveDebugEdge(EdgeMove.Previous);
   else if (key == 'o' && mesh != null) mesh.moveDebugEdge(EdgeMove.Opposite);
   else if (key == 's' && mesh != null) mesh.moveDebugEdge(EdgeMove.Swing);
+  else if (key == 'd' && mesh != null) mesh = mesh.createDual();
 }
