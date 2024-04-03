@@ -88,17 +88,31 @@ class Mesh {
     calculateNormals();
   }
 
+  Mesh(List<PVector> vertices, List<int[]> faces, boolean smoothShading, boolean randomColors, boolean renderEdges) {
+    this(vertices, faces);
+    this.smoothShading = smoothShading;
+    this.randomColors = randomColors;
+    this.renderEdges = renderEdges;
+    updateColors();
+  }
+
+  Mesh(Mesh other, List<PVector> vertices, List<int[]> faces) {
+    this(vertices, faces, other.smoothShading, other.randomColors, other.renderEdges);
+  }
+
   boolean smoothShading = false, randomColors = false, renderEdges = false;
 
   HalfEdge debugEdge = null; // Current visualized edge.
   boolean showDebugEdge = false; // Visualize the `currEdge`
 
+  void updateColors() {
+    for (Face face : faces) face.col = randomColors ? randCol() : color(255, 255, 255);
+  }
+
   void toggleSmoothShading() { smoothShading = !smoothShading; }
   void toggleRandomColors() {
     randomColors = !randomColors;
-    for (Face face : faces) {
-      face.col = randomColors ? randCol()  : color(255, 255, 255);
-    }
+    updateColors();
   }
   void toggleEdges() { renderEdges = !renderEdges; }
   void toggleEdgeDebug() {
@@ -260,7 +274,7 @@ class Mesh {
       dualFaces.add(dualFaceVertices);
     }
 
-    return new Mesh(dualVertices, dualFaces);
+    return new Mesh(this, dualVertices, dualFaces);
   }
 
   public Mesh subdivideMidpoint() {
@@ -282,7 +296,7 @@ class Mesh {
         final int midIndex = indexForVertex.get(midPos);
         midpointsIndices[i] = indexForVertex.get(midPos);
 
-        if (prevMidIndex != -1) newFaces.add(new int[]{indexForVertex.get(startPos), prevMidIndex, midIndex});
+        if (prevMidIndex != -1) newFaces.add(new int[]{indexForVertex.get(startPos), midIndex, prevMidIndex});
         else firstMidIndex = midIndex; // Save the first midpoint to close the loop later.
 
         prevMidIndex = midIndex;
@@ -290,11 +304,11 @@ class Mesh {
       }
 
       // Close the loop, and add face containing all midpoints.
-      newFaces.add(new int[]{indexForVertex.get(f.edge.target.position.normalize()), prevMidIndex, firstMidIndex});
+      newFaces.add(new int[]{indexForVertex.get(f.edge.target.position.normalize()), firstMidIndex, prevMidIndex});
       newFaces.add(midpointsIndices); //<>//
     }
     
-    return new Mesh(newVertices, newFaces);
+    return new Mesh(this, newVertices, newFaces);
   }
 
   void draw() {
