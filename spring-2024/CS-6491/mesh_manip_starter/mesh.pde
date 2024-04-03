@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.Objects;
 
 import processing.core.PVector;
 
@@ -13,12 +14,8 @@ class Vertex {
   PVector normal;
   HalfEdge edge; // One outgoing half-edge
 
-  Vertex(PVector position) {
-    this.position = position;
-  }
-  Vertex(float x, float y, float z) {
-    this(new PVector(x, y, z));
-  }
+  Vertex(PVector position) { this.position = position; }
+  Vertex(float x, float y, float z) { this(new PVector(x, y, z)); }
 
   @Override
   public boolean equals(Object other) {
@@ -35,6 +32,17 @@ class Face {
   PVector normal;
   color col = color(255, 255, 255);
   int numVertices = 0;
+
+  PVector calculateCentroid() {
+    PVector centroid = new PVector();
+    HalfEdge e = edge;
+    do {
+      centroid.add(e.target.position);
+      e = e.next;
+    } while (e != edge);
+
+    return centroid.div(numVertices);
+  }
 }
 
 class HalfEdge {
@@ -42,9 +50,7 @@ class HalfEdge {
   HalfEdge next, opposite;
   Face face; // The face left of the edge
 
-  HalfEdge(Vertex target) {
-    this.target = target;
-  }
+  HalfEdge(Vertex target) { this.target = target; }
 }
 
 // Convenience helpers
@@ -141,13 +147,34 @@ class Mesh {
     face.numVertices = vertexIndices.length;
     faces.add(face);
   }
-  
-  // Set opposite half-edges
+
+
   void setOpposites() {
-    Map<String, HalfEdge> edgeMap = new HashMap<>();
+    class EdgeKey {
+      PVector start, end;
+
+      EdgeKey(PVector start, PVector end) {
+        this.start = start;
+        this.end = end;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EdgeKey)) return false;
+        EdgeKey edgeKey = (EdgeKey)o;
+        return start.equals(edgeKey.start) && end.equals(edgeKey.end);
+      }
+      @Override
+      public int hashCode() {
+        return Objects.hash(start.x, start.y, start.z, end.x, end.y, end.z);
+      }
+    }
+
+    Map<EdgeKey, HalfEdge> edgeMap = new HashMap<>();
     for (HalfEdge edge : edges) {
-      final String edgeKey = edge.target.position + " " + edge.next.target.position;
-      final String oppositeKey = edge.next.target.position + " " + edge.target.position;
+      EdgeKey edgeKey = new EdgeKey(edge.target.position, edge.next.target.position);
+      EdgeKey oppositeKey = new EdgeKey(edge.next.target.position, edge.target.position);
       if (edgeMap.containsKey(oppositeKey)) {
         HalfEdge oppositeEdge = edgeMap.get(oppositeKey);
         edge.opposite = oppositeEdge;
@@ -174,7 +201,6 @@ class Mesh {
       } while (edge1 != face.edge);
     }
 
-    // Normalize vertex normals
     for (Vertex vertex : vertices) vertex.normal.normalize();
   }
 
@@ -232,17 +258,6 @@ class Mesh {
     }
   }
 
-  PVector calculateCentroid(Face face) {
-    PVector centroid = new PVector();
-    HalfEdge edge = face.edge;
-    do {
-      centroid.add(edge.target.position);
-      edge = edge.next;
-    } while (edge != face.edge);
-
-    return centroid.div(face.numVertices);
-  }
-
   List<Face> getAdjacentFaces(Vertex vertex) {
     List<Face> adjacentFaces = new ArrayList<>();
     HalfEdge startEdge = vertex.edge, edge = startEdge;
@@ -263,7 +278,7 @@ class Mesh {
     // Create a vertex for each face in the original mesh.
     for (Face face : faces) {
       faceToVertexIndex.put(face, dualVertices.size());
-      dualVertices.add(calculateCentroid(face));
+      dualVertices.add(face.calculateCentroid());
     }
     // Create a face for each vertex in the original mesh.
     for (Vertex vertex : vertices) {
