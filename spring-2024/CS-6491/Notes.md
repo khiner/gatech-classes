@@ -508,8 +508,8 @@ Square, triangular, and hexagonal tiling are all regular planar tilings.
 valence of vertex/face: num faces surrounding it
 
 Dual: swaps faces and vertices
-    put a vertex in center of each face.
-    rotate each edge separating original faces 90 degrees to connect the center vertices
+    - put a vertex in center of each face.
+    - rotate each edge separating original faces 90 degrees to connect the center vertices
 
 Square tiling is _self-dual_.
 

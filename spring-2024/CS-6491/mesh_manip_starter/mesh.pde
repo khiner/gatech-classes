@@ -19,12 +19,22 @@ class Vertex {
   Vertex(float x, float y, float z) {
     this(new PVector(x, y, z));
   }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == this) return true;
+    return other instanceof Vertex && position == ((Vertex)other).position;
+  }
+  
+  @Override
+  public int hashCode() { return position.hashCode(); }
 }
 
 class Face {
   HalfEdge edge; // One half-edge in the face
   PVector normal;
   color col = color(255, 255, 255);
+  int numVertices = 0;
 }
 
 class HalfEdge {
@@ -71,6 +81,13 @@ class Mesh {
   List<Face> faces = new ArrayList<>();
   List<HalfEdge> edges = new ArrayList<>();
 
+  Mesh(List<PVector> vertices, List<int[]> faces) {
+    for (PVector v : vertices) this.vertices.add(new Vertex(v));
+    for (int[] face : faces) addFace(face);
+    setOpposites();
+    calculateNormals();
+  }
+
   boolean smoothShading = false, randomColors = false, renderEdges = false;
 
   HalfEdge debugEdge = null; // Current visualized edge.
@@ -107,6 +124,7 @@ class Mesh {
 
     prevEdge.next = firstEdge; // Close the loop.
     face.edge = firstEdge;
+    face.numVertices = vertexIndices.length;
     faces.add(face);
   }
   
@@ -200,40 +218,15 @@ class Mesh {
     }
   }
 
-  Mesh createDual() {
-    Mesh dual = new Mesh();
-    Map<Face, Integer> faceToVertexIndex = new HashMap<>(); // Original face -> corresponding dual vertex
-
-    // Create a vertex for each face in the original mesh.
-    for (Face face : faces) {
-      faceToVertexIndex.put(face, dual.vertices.size());
-      dual.vertices.add(new Vertex(calculateCentroid(face)));
-    }
-    // Create a face for each vertex in the original mesh.
-    for (Vertex vertex : vertices) {
-      List<Face> adjacentFaces = getAdjacentFaces(vertex);
-      int[] dualFaceVertices = new int[adjacentFaces.size()];
-      for (int i = 0; i < adjacentFaces.size(); i++) dualFaceVertices[i] = faceToVertexIndex.get(adjacentFaces.get(i));
-
-      dual.addFace(dualFaceVertices);
-    }
-
-    dual.setOpposites();
-    dual.calculateNormals();
-    return dual;
-  }
-
   PVector calculateCentroid(Face face) {
     PVector centroid = new PVector();
-    int vertexCount = 0;
     HalfEdge edge = face.edge;
     do {
       centroid.add(edge.target.position);
-      vertexCount++;
       edge = edge.next;
     } while (edge != face.edge);
 
-    return centroid.div(vertexCount);
+    return centroid.div(face.numVertices);
   }
 
   List<Face> getAdjacentFaces(Vertex vertex) {
@@ -245,6 +238,63 @@ class Mesh {
     } while (edge != null && edge != startEdge);
 
     return adjacentFaces;
+  }
+
+  Mesh createDual() {
+    Map<Face, Integer> faceToVertexIndex = new HashMap<>(); // Original face -> corresponding dual vertex
+
+    List<PVector> dualVertices = new ArrayList<>(vertices.size());
+    List<int[]> dualFaces = new ArrayList<>(faces.size());
+
+    // Create a vertex for each face in the original mesh.
+    for (Face face : faces) {
+      faceToVertexIndex.put(face, dualVertices.size());
+      dualVertices.add(calculateCentroid(face));
+    }
+    // Create a face for each vertex in the original mesh.
+    for (Vertex vertex : vertices) {
+      List<Face> adjacentFaces = getAdjacentFaces(vertex);
+      int[] dualFaceVertices = new int[adjacentFaces.size()];
+      for (int i = 0; i < adjacentFaces.size(); i++) dualFaceVertices[i] = faceToVertexIndex.get(adjacentFaces.get(i));
+
+      dualFaces.add(dualFaceVertices);
+    }
+
+    return new Mesh(dualVertices, dualFaces);
+  }
+
+  public Mesh subdivideMidpoint() {
+    List<PVector> newVertices = new ArrayList<>();
+    Map<PVector, Integer> indexForVertex = new HashMap<>();
+    List<int[]> newFaces = new ArrayList<>();    
+    for (Face f : faces) {
+      int[] midpointsIndices = new int[f.numVertices];
+      HalfEdge edge = f.edge;
+      int prevMidIndex = -1, firstMidIndex = -1;
+      for (int i = 0; i < f.numVertices; i++) {
+        // `normalize` to project onto unit sphere
+        final PVector startPos = edge.target.position.normalize();
+        final PVector endPos = edge.next.target.position.normalize();
+        final PVector midPos = PVector.add(startPos, endPos).div(2).normalize();
+        if (indexForVertex.putIfAbsent(startPos, newVertices.size()) == null) newVertices.add(startPos);
+        if (indexForVertex.putIfAbsent(midPos, newVertices.size()) == null) newVertices.add(midPos);
+
+        final int midIndex = indexForVertex.get(midPos);
+        midpointsIndices[i] = indexForVertex.get(midPos);
+
+        if (prevMidIndex != -1) newFaces.add(new int[]{indexForVertex.get(startPos), prevMidIndex, midIndex});
+        else firstMidIndex = midIndex; // Save the first midpoint to close the loop later.
+
+        prevMidIndex = midIndex;
+        edge = edge.next;
+      }
+
+      // Close the loop, and add face containing all midpoints.
+      newFaces.add(new int[]{indexForVertex.get(f.edge.target.position.normalize()), prevMidIndex, firstMidIndex});
+      newFaces.add(midpointsIndices); //<>//
+    }
+    
+    return new Mesh(newVertices, newFaces);
   }
 
   void draw() {
@@ -273,32 +323,30 @@ class Mesh {
 }
 
 Mesh loadMesh(String filename) {
-  Mesh mesh = new Mesh();
   final String[] lines = loadStrings(filename);
   final int numVertices = int(split(lines[0], " ")[1]);
   final int numFaces = int(split(lines[1], " ")[1]);
+
+  List<PVector> vertices = new ArrayList<>(numVertices);
+  List<int[]> faces = new ArrayList<>(numFaces);
 
   // Read vertices.
   String[] words;
   for (int i = 0; i < numVertices; i++) {
     words = split(lines[i + 2], " ");
-    mesh.vertices.add(new Vertex(float(words[0]), float(words[1]), float(words[2])));
+    vertices.add(new PVector(float(words[0]), float(words[1]), float(words[2])));
   }
   
   // Read faces.
   for (int i = 0; i < numFaces; i++) {
     words = split(lines[i + numVertices + 2], " ");
-
     final int nVerts = int(words[0]);
-    int[] vertexIndices = new int[nVerts];
+    final int[] vertexIndices = new int[nVerts];
     for (int k = 1; k <= nVerts; k++) vertexIndices[k - 1] = int(words[k]);
-    
-    mesh.addFace(vertexIndices);
+    faces.add(vertexIndices);
   }
-  
-  mesh.setOpposites(); // Set opposite half-edges.
-  mesh.calculateNormals();
-  
+
+  Mesh mesh = new Mesh(vertices, faces);
   println("Mesh loaded: " + mesh.vertices.size() + " vertices, " + mesh.faces.size() + " faces.");
   return mesh;
 }
