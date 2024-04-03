@@ -99,4 +99,5 @@ void keyPressed() {
   else if (key == 's' && mesh != null) mesh.moveDebugEdge(EdgeMove.Swing);
   else if (key == 'd' && mesh != null) mesh = mesh.createDual();
   else if (key == 'g' && mesh != null) mesh = mesh.subdivideMidpoint();
+  else if (key == 'c' && mesh != null) mesh = mesh.subdivideCatmullClark();
 }

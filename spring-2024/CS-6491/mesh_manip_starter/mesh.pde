@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 
 import processing.core.PVector;
 
@@ -16,15 +17,6 @@ class Vertex {
 
   Vertex(PVector position) { this.position = position; }
   Vertex(float x, float y, float z) { this(new PVector(x, y, z)); }
-
-  @Override
-  public boolean equals(Object other) {
-    if (other == this) return true;
-    return other instanceof Vertex && position == ((Vertex)other).position;
-  }
-  
-  @Override
-  public int hashCode() { return position.hashCode(); }
 }
 
 class Face {
@@ -36,11 +28,7 @@ class Face {
   PVector calculateCentroid() {
     PVector centroid = new PVector();
     HalfEdge e = edge;
-    do {
-      centroid.add(e.target.position);
-      e = e.next;
-    } while (e != edge);
-
+    do { centroid.add(e.target.position); } while ((e = e.next) != edge);
     return centroid.div(numVertices);
   }
 }
@@ -292,7 +280,7 @@ class Mesh {
     return new Mesh(this, dualVertices, dualFaces);
   }
 
-  public Mesh subdivideMidpoint() {
+  Mesh subdivideMidpoint() {
     List<PVector> newVertices = new ArrayList<>();
     Map<PVector, Integer> indexForVertex = new HashMap<>();
     List<int[]> newFaces = new ArrayList<>();    
@@ -320,9 +308,70 @@ class Mesh {
 
       // Close the loop, and add face containing all midpoints.
       newFaces.add(new int[]{indexForVertex.get(f.edge.target.position.normalize()), firstMidIndex, prevMidIndex});
-      newFaces.add(midpointsIndices); //<>//
+      newFaces.add(midpointsIndices);
     }
-    
+
+    return new Mesh(this, newVertices, newFaces);
+  }
+
+  Mesh subdivideCatmullClark() {
+    Map<Face, PVector> facePoints = new HashMap<>();
+    for (Face face : this.faces) facePoints.put(face, face.calculateCentroid());
+
+    Map<HalfEdge, PVector> edgePoints = new HashMap<>();
+    for (Face face : this.faces) {
+      HalfEdge edge = face.edge;
+      do {
+        if (!edgePoints.containsKey(edge)) { // Avoid duplicating calculations for shared edges
+          PVector edgePoint = PVector.add(edge.target.position, edge.next.target.position)
+                                .add(facePoints.get(face))
+                                .add(facePoints.get(edge.opposite.face))
+                                .div(4);
+          edgePoints.put(edge, edgePoint);
+          edgePoints.put(edge.opposite, edgePoint); // Shared edge, same point
+        }
+      } while ((edge = edge.next) != face.edge);
+    }
+
+    Map<Vertex, PVector> newPositions = new HashMap<>();
+    for (Vertex vertex : this.vertices) {
+      PVector avgEdgePoint = new PVector(), avgFacePoint = new PVector();
+      HalfEdge edge = vertex.edge;
+      int count = 0;
+      do {
+        avgEdgePoint.add(edgePoints.get(edge));
+        avgFacePoint.add(facePoints.get(edge.face));
+        count++;
+      } while ((edge = getSwingEdge(edge)) != vertex.edge);
+
+      avgEdgePoint.div(count).mult(2);
+      avgFacePoint.div(count);
+      newPositions.put(vertex, PVector.add(avgEdgePoint, avgFacePoint).add(vertex.position.copy().mult(count - 3)).div(count));
+    }
+
+    // Construct the final mesh.
+    List<PVector> newVertices = new ArrayList<>();
+
+    // Cached vertex add:
+    Map<PVector, Integer> indexForVertex = new HashMap<>();
+    BiConsumer<PVector, List<Integer>> addVertex = (vertex, currFace) -> {
+      if (indexForVertex.putIfAbsent(vertex, newVertices.size()) == null) newVertices.add(vertex);
+      currFace.add(indexForVertex.get(vertex));
+    };
+
+    List<int[]> newFaces = new ArrayList<>();
+    for (Face face : this.faces) {
+      HalfEdge edge = face.edge;
+      do {
+        List<Integer> fis = new ArrayList<>(4); // Face indices
+        addVertex.accept(newPositions.get(edge.target), fis);
+        addVertex.accept(edgePoints.get(edge), fis);
+        addVertex.accept(facePoints.get(face), fis);
+        addVertex.accept(edgePoints.get(getPreviousEdge(edge)), fis);
+        newFaces.add(fis.stream().mapToInt(Integer::intValue).toArray());
+      } while ((edge = edge.next) != face.edge);
+    }
+
     return new Mesh(this, newVertices, newFaces);
   }
 
