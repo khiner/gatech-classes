@@ -89,15 +89,18 @@ void keyPressed() {
   else if (key == '5') readMesh("star.ply");
   else if (key == '6') readMesh("torus.ply");
   else if (key == '7') readMesh("s.ply");
-  else if (key == 'f' && mesh != null) mesh.toggleSmoothShading();
-  else if (key == 'w' && mesh != null) mesh.toggleRandomColors();
-  else if (key == 'e' && mesh != null) mesh.toggleEdges();
-  else if (key == 'v' && mesh != null) mesh.toggleEdgeDebug();
-  else if (key == 'n' && mesh != null) mesh.moveDebugEdge(EdgeMove.Next);
-  else if (key == 'p' && mesh != null) mesh.moveDebugEdge(EdgeMove.Previous);
-  else if (key == 'o' && mesh != null) mesh.moveDebugEdge(EdgeMove.Opposite);
-  else if (key == 's' && mesh != null) mesh.moveDebugEdge(EdgeMove.Swing);
-  else if (key == 'd' && mesh != null) mesh = mesh.createDual();
-  else if (key == 'g' && mesh != null) mesh = mesh.subdivideMidpoint();
-  else if (key == 'c' && mesh != null) mesh = mesh.subdivideCatmullClark();
+  else if (mesh != null) {
+    if (key == 'f') mesh.toggleSmoothShading();
+    else if (key == 'w') mesh.toggleRandomColors();
+    else if (key == 'e') mesh.toggleEdges();
+    else if (key == 'v') mesh.toggleEdgeDebug();
+    else if (key == 'n') mesh.moveDebugEdge(EdgeMove.Next);
+    else if (key == 'p') mesh.moveDebugEdge(EdgeMove.Previous);
+    else if (key == 'o') mesh.moveDebugEdge(EdgeMove.Opposite);
+    else if (key == 's') mesh.moveDebugEdge(EdgeMove.Swing);
+    else if (key == 'd') mesh = mesh.createDual();
+    else if (key == 'g') mesh = mesh.subdivideMidpoint();
+    else if (key == 'c') mesh = mesh.subdivideCatmullClark();
+    else if (key == 'r') mesh.addRandomNoise(); // in-place
+  }
 }

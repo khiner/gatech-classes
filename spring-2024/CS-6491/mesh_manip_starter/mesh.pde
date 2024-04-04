@@ -11,7 +11,7 @@ import processing.core.PVector;
 Random rand = new Random();
 
 class Vertex {
-  final PVector position;
+  PVector position;
   PVector normal;
   HalfEdge edge; // One outgoing half-edge
 
@@ -113,6 +113,7 @@ class Mesh {
     showDebugEdge = !showDebugEdge;
     if (showDebugEdge && debugEdge == null && !edges.isEmpty()) debugEdge = edges.get(0);
   }
+  void moveDebugEdge(EdgeMove move) { debugEdge = getEdge(debugEdge, move); }
 
   void addFace(int[] vertexIndices) {
     Face face = new Face();
@@ -135,7 +136,6 @@ class Mesh {
     face.numVertices = vertexIndices.length;
     faces.add(face);
   }
-
 
   void setOpposites() {
     class EdgeKey {
@@ -192,7 +192,13 @@ class Mesh {
     for (Vertex vertex : vertices) vertex.normal.normalize();
   }
 
-  void moveDebugEdge(EdgeMove move) { debugEdge = getEdge(debugEdge, move); }
+  void addRandomNoise() {
+    for (Vertex vertex : vertices) {
+      // Add random value to each vertex in range [-.1, .1] * surface normal.
+      vertex.position.add(PVector.mult(vertex.normal, (2*rand.nextFloat() - 1) * 0.1));
+    }
+    calculateNormals();
+  }
 
   HalfEdge getEdge(HalfEdge edge, EdgeMove move) {
     if (edge == null) return null;
