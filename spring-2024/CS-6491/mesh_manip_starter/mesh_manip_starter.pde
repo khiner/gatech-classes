@@ -105,5 +105,8 @@ void keyPressed() {
     else if (key == 'l') {
       for (int i = 0; i < 40; ++i) mesh.smoothLaplacian(0.6);
     }
+    else if (key == 't') {
+      for (int i = 0; i < 40; ++i) mesh.smoothTaubin(0.6307, -0.67315);
+    }
   }
 }

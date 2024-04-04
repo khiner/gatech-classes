@@ -225,6 +225,11 @@ class Mesh {
     calculateNormals();
   }
 
+  void smoothTaubin(float lambda1, float mu) {
+    smoothLaplacian(lambda1);
+    smoothLaplacian(mu);
+  }
+
   // Find the neighboring vertices of a vertex.
   List<Vertex> getVertexNeighbors(Vertex vertex) {
     List<Vertex> neighbors = new ArrayList<>();
