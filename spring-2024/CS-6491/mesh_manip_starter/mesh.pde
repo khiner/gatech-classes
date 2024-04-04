@@ -8,6 +8,9 @@ import java.util.function.BiConsumer;
 
 import processing.core.PVector;
 
+// Avoid floating-point precision issues when using `PVector`s as keys.
+String toKey(PVector v) { return String.format("%1.5f,%1.5f,%1.5f", v.x, v.y, v.z); }
+
 Random rand = new Random();
 
 class Vertex {
@@ -200,6 +203,44 @@ class Mesh {
     calculateNormals();
   }
 
+  void smoothLaplacian(float lambda) {
+    List<PVector> newPositions = new ArrayList<>(vertices.size());
+    for (Vertex vertex : vertices) newPositions.add(vertex.position.copy());
+
+    for (int i = 0; i < vertices.size(); i++) {
+      Vertex v = vertices.get(i);
+      List<Vertex> neighbors = getVertexNeighbors(v);
+
+      PVector centroid = new PVector(0, 0, 0);
+      for (Vertex neighbor : neighbors) centroid.add(neighbor.position);
+      if (!neighbors.isEmpty()) centroid.div(neighbors.size());
+
+      PVector originalPosition = v.position;
+      PVector movementVector = PVector.sub(centroid, originalPosition).mult(lambda);
+      newPositions.set(i, PVector.add(originalPosition, movementVector));
+    }
+
+    for (int i = 0; i < vertices.size(); i++) vertices.get(i).position = newPositions.get(i);
+
+    calculateNormals();
+  }
+
+  // Find the neighboring vertices of a vertex.
+  List<Vertex> getVertexNeighbors(Vertex vertex) {
+    List<Vertex> neighbors = new ArrayList<>();
+    HalfEdge startEdge = vertex.edge, edge = startEdge;
+    do {
+      if (edge.opposite != null) neighbors.add(edge.opposite.target);
+    } while ((edge = getSwingEdge(edge)) != null && edge != startEdge);
+    return neighbors;
+  }
+  List<Face> getAdjacentFaces(Vertex vertex) {
+    List<Face> adjacentFaces = new ArrayList<>();
+    HalfEdge startEdge = vertex.edge, edge = startEdge;
+    do { adjacentFaces.add(edge.face); } while ((edge = getSwingEdge(edge)) != startEdge);
+    return adjacentFaces;
+  }
+
   HalfEdge getEdge(HalfEdge edge, EdgeMove move) {
     if (edge == null) return null;
 
@@ -252,17 +293,6 @@ class Mesh {
     }
   }
 
-  List<Face> getAdjacentFaces(Vertex vertex) {
-    List<Face> adjacentFaces = new ArrayList<>();
-    HalfEdge startEdge = vertex.edge, edge = startEdge;
-    do {
-      adjacentFaces.add(edge.face);
-      edge = getSwingEdge(edge);
-    } while (edge != null && edge != startEdge);
-
-    return adjacentFaces;
-  }
-
   Mesh createDual() {
     Map<Face, Integer> faceToVertexIndex = new HashMap<>(); // Original face -> corresponding dual vertex
 
@@ -288,7 +318,7 @@ class Mesh {
 
   Mesh subdivideMidpoint() {
     List<PVector> newVertices = new ArrayList<>();
-    Map<PVector, Integer> indexForVertex = new HashMap<>();
+    Map<String, Integer> indexForVertex = new HashMap<>();
     List<int[]> newFaces = new ArrayList<>();    
     for (Face f : faces) {
       int[] midpointsIndices = new int[f.numVertices];
@@ -299,13 +329,13 @@ class Mesh {
         final PVector startPos = edge.target.position.normalize();
         final PVector endPos = edge.next.target.position.normalize();
         final PVector midPos = PVector.add(startPos, endPos).div(2).normalize();
-        if (indexForVertex.putIfAbsent(startPos, newVertices.size()) == null) newVertices.add(startPos);
-        if (indexForVertex.putIfAbsent(midPos, newVertices.size()) == null) newVertices.add(midPos);
+        if (indexForVertex.putIfAbsent(toKey(startPos), newVertices.size()) == null) newVertices.add(startPos);
+        if (indexForVertex.putIfAbsent(toKey(midPos), newVertices.size()) == null) newVertices.add(midPos);
 
-        final int midIndex = indexForVertex.get(midPos);
-        midpointsIndices[i] = indexForVertex.get(midPos);
+        final int midIndex = indexForVertex.get(toKey(midPos));
+        midpointsIndices[i] = midIndex;
 
-        if (prevMidIndex != -1) newFaces.add(new int[]{indexForVertex.get(startPos), midIndex, prevMidIndex});
+        if (prevMidIndex != -1) newFaces.add(new int[]{indexForVertex.get(toKey(startPos)), midIndex, prevMidIndex});
         else firstMidIndex = midIndex; // Save the first midpoint to close the loop later.
 
         prevMidIndex = midIndex;
@@ -313,7 +343,7 @@ class Mesh {
       }
 
       // Close the loop, and add face containing all midpoints.
-      newFaces.add(new int[]{indexForVertex.get(f.edge.target.position.normalize()), firstMidIndex, prevMidIndex});
+      newFaces.add(new int[]{indexForVertex.get(toKey(f.edge.target.position.normalize())), firstMidIndex, prevMidIndex});
       newFaces.add(midpointsIndices);
     }
 
@@ -358,7 +388,8 @@ class Mesh {
     // Construct the final mesh.
     List<PVector> newVertices = new ArrayList<>();
 
-    // Cached vertex add:
+    // Cached vertex add.
+    // Note: Unlike in midpoint subdivision, we don't seem to use a rounded string key here.
     Map<PVector, Integer> indexForVertex = new HashMap<>();
     BiConsumer<PVector, List<Integer>> addVertex = (vertex, currFace) -> {
       if (indexForVertex.putIfAbsent(vertex, newVertices.size()) == null) newVertices.add(vertex);

@@ -102,5 +102,8 @@ void keyPressed() {
     else if (key == 'g') mesh = mesh.subdivideMidpoint();
     else if (key == 'c') mesh = mesh.subdivideCatmullClark();
     else if (key == 'r') mesh.addRandomNoise(); // in-place
+    else if (key == 'l') {
+      for (int i = 0; i < 40; ++i) mesh.smoothLaplacian(0.6);
+    }
   }
 }
