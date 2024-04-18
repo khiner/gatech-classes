@@ -116,6 +116,86 @@ The following image is of a skillet mesh selected for user interaction and surro
     \end{minipage}
 \end{figure}
 
+\section{Background on Modal Vibration Models}
+
+We briefly summarize the necessary background on modal vibration analysis here, and refer the reader to a suitable text \cite{shabana1990theory}. The linear elastodynamic equation for a finite element model \cite{zienkiewicz1977finite},
+
+\begin{equation}
+    M\ddot{u} + C\dot{u} + Ku = F, \tag{1}
+\end{equation}
+
+describes the displacements $u=u(t)$ of $N$ nodes within a volume. The displacement field $u$ is expanded in a modal displacement basis
+
+\begin{equation}
+    u(t) = \Phi q(t), \tag{2}
+\end{equation}
+
+where $\Phi$ denotes the model's modal matrix, a matrix whose $i$th column $\Phi_i$ represents the $i$th mode shape, and $q = q(t)$ are the corresponding modal amplitudes, i.e., $q_i$ is the modal amplitude of mode shape $\Phi_i$. An important property is that the modal matrix $\Phi$ is independent of time, and completely characterized by values at mesh vertices.
+
+Substituting (2) into (1) and premultiplying by $\Phi^T$ yields
+
+\begin{equation}
+    M_q \ddot{q} + C_q \dot{q} + K_q q = Q, \tag{3}
+\end{equation}
+
+in which
+
+\begin{equation}
+    M_q = \Phi^T M \Phi = \operatorname{diag}(m_i), \tag{4}
+\end{equation}
+
+\begin{equation}
+    K_q = \Phi^T K \Phi = \operatorname{diag}(k_i), \tag{5}
+\end{equation}
+
+\begin{equation}
+    C_q = \Phi^T C \Phi, \tag{6}
+\end{equation}
+
+\begin{equation}
+    Q = \Phi^T F. \tag{7}
+\end{equation}
+
+where all of $M_q$ and $K_q$ are diagonal matrices, but for general damping $C_q$ is dense. If we make the common assumption of proportional (Rayleigh) damping
+
+\begin{equation}
+    C = \alpha M + \beta K \Rightarrow C_q = \operatorname{diag}(\alpha m_i + \beta k_i),
+\end{equation}
+
+then the system of ODEs are completely decoupled by the modal transformation. This allows the motions due to individual modes to be computed independently and combined by linear superposition.
+
+The system of decoupled ordinary differential equations may be written as
+
+\begin{equation}
+    \ddot{q}_i + 2\xi_i \omega_i \dot{q}_i + \omega_i^2 q_i = \frac{Q_i}{m_i}, \quad i = 1..n, \tag{8}
+\end{equation}
+
+where the undamped natural frequency of vibration is
+
+\begin{equation}
+    \omega_i = \sqrt{\frac{k_i}{m_i}} \quad \text{(in radians)}, \tag{9}
+\end{equation}
+
+and the dimensionless modal damping factor is
+
+\begin{equation}
+    \xi_i = \frac{c_i}{2m_i\omega_i} = \frac{1}{2} \left(\frac{\alpha}{\omega_i} + \beta\omega_i\right). \tag{10}
+\end{equation}
+
+We are interested in underdamped systems for which visible damped vibration occurs, and this corresponds to $\xi_i \in (0, 1)$.
+
+Finally, for a system starting from rest at $t=0$, the solution for the $i$th mode due to forcing $Q_i(t)$ is
+
+\begin{equation}
+    q_i(t) = \int_{0}^{t} e^{-\xi_i \omega_i (t-\tau)} \sin \omega_{di} (t- \tau) \frac{Q_i(\tau)}{m_i \omega_{di}} \, d\tau, \tag{11}
+\end{equation}
+
+where the observed damped natural frequency is
+
+\begin{equation}
+    \omega_{di} = \omega_i \sqrt{1 - \xi_i^2}. \tag{12}
+\end{equation}
+
 
 \bibliographystyle{plain}
 \bibliography{bibliography}

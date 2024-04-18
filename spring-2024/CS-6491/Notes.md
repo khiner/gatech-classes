@@ -1130,3 +1130,145 @@ Texture minification - avoid sparkling, scintillation
     - want: one pixel on screen space
     - square pixel in screen space maps to a quadrilateral in texture space.
     - pixel footprint: turn the quadrilateral projection into an elipse, calculate a differential step length d, and choose texture size based on d
+
+
+## Wed Apr 3
+
+volume data: values given at each 3d cell, "sampled" 3d data
+typical grid sizes: 512x512, 128x128
+
+Volume data sources:
+- Medical CT scan - permiability to x rays
+- MRI - measure amount of hydrogen in tissue
+- Fluid simulation - pressure, vorticity, speed
+- Engineering simulation - temp, stress, strain
+- Smoke, clouds
+
+Volume rendering
+- isosurface extraction (e.g. marching cubes)
+- direct volume rendering (ray tracing)
+
+Direct volume rendering
+1) classify each voxel (gives reflectance, opacity (\alpha, prob. light will hit a particle inside))
+2) calculate shading (normals + reflectance -> radiance r)
+3) render the voxels
+
+voxel composition equation
+
+final color = $\alpha_1 r_1 + (1-\alpha_1)[\alpha_2 r_2 + (1-\alpha_2)[\alpha_3 r_3 + (1-\alpha_3)\cdots]]$
+
+
+classification: voxel scalar value -> opacity, reflectance
+
+surface normals are determined from gradient values
+- gradient is perp. to iso-contours
+- $G$ = gradient, $N = -G/\|G\|$
+- use finite differences to estimate gradients
+- $G = \partial v/dx, \partial v/dy$
+
+
+Edge Collapse
+- repeat until N vertices remain
+- select edge with lowest cost (priority queue)
+- collapse edge
+- pick new vertex position
+ce new vertex?
+- midpoint of edge
+- one of the o.g. verts
+- place causing the least surface movement
+
+removes: 1 vert, 2 tris, 3 edges
+
+cost of edge collapse: dist. to plances of nearby tri's
+
+signed distance to line
+- f(x,y) = ax + by + c = 0
+
+sq. dist to line
+- g(x,y) = (ax + by + c)^2 = 0
+
+g+H
+
+line l = ax + by + c = L^TX
+
+(L^TX)^2 = (ax + by + c)^2
+
+Plane P = [a b c d], x = [x y z 1]
+
+signed function f(x) = ax + by + cz + d = P^TX
+
+squared dist: g(x) = (P^TX)^2 = X^T(PP^T)x (4x4 matrix, K_P = PP^T is symmetric, distance sq. to _any_ number of planes)
+
+error: g(x) = \sum_{i=1}^n{X^T K_P_i X} = X^T (\sum K_p_i) X (\sum K_p_i \trangleeq M is 4x4 matrix)
+
+g(x) = X^TMX
+
+minimize x for given M: g(x) = 1/2 X^TAX + X^T + c, (A is 3x3 mat., x^T is a 3-vector, c is scalar)
+
+\Delta g = Ax - b = 0 -> X = A^{-1}b
+
+
+
+## Wed Apr 10
+
+Voronoi diagrams
+
+given: set of points (sites) p1,p2,...pn in the plane
+create: partition of the plane into regions by assigning each point to its nearest site
+
+Fast approximation: rasterize cones
+
+
+even point placement in 2d: repeat
+1) place points at random in plane
+2) calc Voronoi regions (using cones & gpu)
+3) find centroids of regions
+4) move each point to its region's centroid
+
+calculate Voronoi diagrams exactly: several methods, fastes iones are O(nlogn)
+
+Fortune's Alg:
+- sweep a horizontal line from top to bottom
+- maingain 1d slice thru 2d surface
+
+## Fri Apr 12
+
+Delauney triangularion
+
+Straight line dual of the Voronoi Diagram
+
+Connect the _adjacent_ sites from Voronoi diagram
+
+Delauney property: Circumcircles of triangle vertices contain no other sites
+- Can use this prop. to calculate triangles via edge-flips
+    - When a side is found inside a circumcircle of a triangle, flip the edge shared with an adjascent triangle
+    - After flippin middle edge, neighter triangle will have points in the other's circumcircle
+    - Triangles will be less skinny (closer to equilateral)
+
+Calc Delauney triangularion by adding one point at a time
+1) enclose points in 2 triangles
+2) add one point to triangulation
+    - find which triangle contains the point
+    - place inside triangle, make 3 new triangles (throw "parent" out)
+    - see if nearby edges need to be flipped
+
+Repeaat (2) until all points added
+
+DT has nice property:
+- has the largest minimum angle of all possible triangulations of the sides
+
+DT uses:
+- finite element analysis
+- terrain visualization
+- graph algorithms
+
+More useful with _constraint edges_: Constrained DT (CDT)
+- Given: Set of sites p1, p2, ..., pn, and adges e1, e2, ..., em
+- Make: Triangulation of sites that includes all constraint edges + maintains Delaunay property when possible.
+
+Algo:
+1) calc. DT w/ no constraints
+2) repeatedly add constraint edges
+    - delete triangles on the edge's path
+    - insert constraint edge
+    - re-triangulate the two resulting holes
