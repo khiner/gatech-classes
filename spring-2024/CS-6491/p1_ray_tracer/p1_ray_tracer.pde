@@ -12,18 +12,29 @@ void setup() {
   background (0, 0, 0);
 }
 
-static Integer charToCliFileNumber(char ch) {
-  if (ch >= '1' && ch <= '9') return ch - '0';
-  if (ch == '0') return 10;
-  if (ch >= 'a' && ch <= 'd') return ch - 'a' + 11;
-  return null;
+// Exclusing 's' prefix and extension
+static String keyToFileName(char ch) {
+  if (ch >= '1' && ch <= '9') return String.format("%02da", ch - '0');
+
+  switch (ch) {
+    case '!': return "01b";
+    case '@': return "02b";
+    case '#': return "03b";
+    case '$': return "04b";
+    case '%': return "05b";
+    case '^': return "06b";
+    case '&': return "07b";
+    case '*': return "08b";
+    case '(': return "09b";
+    default: return null;
+  }
 }
 
 void keyPressed() {
-  final Integer cli_file_number = charToCliFileNumber(key);
-  if (cli_file_number == null) return;
+  final String file_name = keyToFileName(key);
+  if (file_name == null) return;
 
-  interpret(String.format("s%02d.cli", cli_file_number), new Scene());
+  interpret(String.format("s%s.cli", file_name), new Scene());
 }
 
 int timer;
@@ -56,7 +67,9 @@ void interpret(String filePath, Scene scene) {
     case "surface":
       scene.surface = new Surface(new Color(float(ts[1]), float(ts[2]), float(ts[3])));
       break;
-
+    case "glossy":
+      scene.surface = new Surface(new Color(float(ts[1]), float(ts[2]), float(ts[3])), new Color(float(ts[4]), float(ts[5]), float(ts[6])), float(ts[7]), float(ts[8]), float(ts[9]));
+      break;
     case "begin":
       scene.clearVertices();
       break;
@@ -85,6 +98,9 @@ void interpret(String filePath, Scene scene) {
 
     case "box":
       scene.addBBox(new BBox(new Vec3(float(ts[1]), float(ts[2]), float(ts[3])), new Vec3(float(ts[4]), float(ts[5]), float(ts[6]))));
+      break;
+    case "sphere":
+      scene.addSphere(new Sphere(float(ts[1]), new Vec3(float(ts[2]), float(ts[3]), float(ts[4]))));
       break;
     case "named_object":
       scene.nameLatestObject(ts[1]);
@@ -115,7 +131,7 @@ Color shadeDiffuse(Hit hit, Scene scene) {
   if (hit == null) return scene.backgroundColor;
 
   final Vec3 N = hit.normal, P = hit.point;
-  final Color diffuse = hit.surface.diffuse;
+  final Color diffuse = hit.surface.diffuse; //<>//
   return scene.lights.stream()
     .filter(light -> {
       // If the shadow ray intersects a scene object _before_ it hits the light,

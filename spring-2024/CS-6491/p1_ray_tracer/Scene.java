@@ -42,6 +42,10 @@ class Scene {
     final Mat4 transform = stack.top();
     addObject(new GeometryObject(new BBox(transform.transform(box.min), transform.transform(box.max)), surface));
   }
+  
+  void addSphere(Sphere sphere) {
+    addObject(new GeometryObject(sphere, surface)); // Don't transform sphere primitives.
+  }
 
   void nameLatestObject(String name) {
     final Object object = popObject();
