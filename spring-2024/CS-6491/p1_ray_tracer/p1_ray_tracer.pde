@@ -70,6 +70,10 @@ void interpret(String filePath, Scene scene) {
     case "glossy":
       scene.surface = new Surface(new Color(float(ts[1]), float(ts[2]), float(ts[3])), new Color(float(ts[4]), float(ts[5]), float(ts[6])), float(ts[7]), float(ts[8]), float(ts[9]));
       break;
+    case "rays_per_pixel":
+      scene.raysPerPixel = int(ts[1]);
+      break;
+
     case "begin":
       scene.clearVertices();
       break;
@@ -136,14 +140,14 @@ Color shade(Hit hit, Scene scene) {
 
   for (Light light : scene.lights) {
     Vec3 pToL = light.position.sub(P);
-    Vec3 pToLDir = pToL.normalize();
+    Vec3 pToLDir = pToL.normalize(); //<>//
     // Start the shadow ray epsilon away from the surface to prevent "immediately" hitting the surface at `P`.
     Ray shadowRay = new Ray(P.add(pToLDir.mult(1e-4)), pToLDir);
-    Hit shadowHit = scene.raycast(shadowRay);
-    if (shadowHit == null || shadowHit.t >= pToL.length()) { //<>//
+    Hit shadowHit = scene.raycast(shadowRay); //<>//
+    if (shadowHit == null || shadowHit.t >= pToL.length()) {
       // Diffuse contribution
       float diffuseIntensity = Math.max(N.dot(pToLDir), 0);
-      Color diffuse = diffuseColor.mult(light.c).mult(diffuseIntensity); //<>//
+      Color diffuse = diffuseColor.mult(light.c).mult(diffuseIntensity);
       // Specular contribution
       if (hit.surface.specular != null) {
         Vec3 V = scene.cameraPosition.sub(P).normalize(); // Vector to the viewer
@@ -188,16 +192,25 @@ Vec3 randomInSphere(float radius) {
 void drawScene(Scene scene) {
   println("Drawing scene");
   reset_timer();
-  final Vec3 cameraPos = new Vec3(0, 0, 0);
+  final Vec3 cameraPos = scene.cameraPosition;
+  final int raysPerPixel = scene.raysPerPixel;
+  final boolean shouldSubsample = raysPerPixel > 1;
   final float kw = tan(radians(scene.fovDegrees) / 2);
   final float kh = kw * (float(height) / float(width)); // Scale by aspect ratio.
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      final Vec3 viewPlanePos = new Vec3((x - width/2.0) * (2*kw / width), (y - height/2.0) * (-2*kh / height), -1);
-      // This ray starts at the camera and points at the pixel on the view plane.
-      final Ray cameraRay = new Ray(cameraPos, viewPlanePos.normalize());
-      final Hit hit = scene.raycast(cameraRay);
-      final Color c = shade(hit, scene).mult(255);
+      Color c = new Color(0, 0, 0);
+      for (int r = 0; r < raysPerPixel; r++) {
+        // Calculate a random offset within the pixel to create the sub-pixel ray.
+        // This ray starts at the camera and points at the pixel on the view plane.
+        final float offsetX = shouldSubsample ? (float)Math.random() - 0.5f : 0;
+        final float offsetY = shouldSubsample ? (float)Math.random() - 0.5f : 0;
+        final Vec3 viewPlanePos = new Vec3((x - width/2 + offsetX)*(2*kw/width), (y - height/2 + offsetY)*(-2*kh/height), -1);
+        final Ray cameraRay = new Ray(cameraPos, viewPlanePos.normalize());
+        final Hit hit = scene.raycast(cameraRay);
+        c = c.add(shade(hit, scene));
+      }
+      c = c.div(raysPerPixel).mult(255); // Average the color across sub-pixel rays and scale range from [0,1] to [0,255].
       set(x, y, color(c.r, c.g, c.b));
     }
   }

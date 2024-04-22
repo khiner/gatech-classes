@@ -12,6 +12,9 @@ class Scene {
   final Vec3 cameraPosition = new Vec3(0, 0, 0); // Never changes
   List<Light> lights = new ArrayList();
   List<Object> objects = new ArrayList();
+  // When the number of rays is larger than one, sub-pixel rays are created in random positions within each pixel.
+  // The colors of these rays are averaged together to give the final color of the pixel.
+  int raysPerPixel = 1;
 
   // Active list of objects to be wrapped in an acceleration data structure.
   // Non-null after `beginAccel` is called, and null again after `endAccel`.
