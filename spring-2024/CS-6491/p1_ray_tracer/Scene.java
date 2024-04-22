@@ -9,6 +9,7 @@ class Scene {
   Mat4Stack stack = new Mat4Stack();
   float fovDegrees = 0;
   Color backgroundColor = new Color(0, 0, 0);
+  final Vec3 cameraPosition = new Vec3(0, 0, 0); // Never changes
   List<Light> lights = new ArrayList();
   List<Object> objects = new ArrayList();
 
@@ -44,7 +45,8 @@ class Scene {
   }
   
   void addSphere(Sphere sphere) {
-    addObject(new GeometryObject(sphere, surface)); // Don't transform sphere primitives.
+    final Mat4 transform = stack.top();
+    addObject(new GeometryObject(new Sphere(sphere.radius, transform.transform(sphere.position)), surface));
   }
 
   void nameLatestObject(String name) {

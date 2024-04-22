@@ -125,30 +125,66 @@ void interpret(String filePath, Scene scene) {
   });
 }
 
-// Compute diffuse color at the hit point using the scene's light sources.
-// Returns the scene's background coler if there is no hit.
-Color shadeDiffuse(Hit hit, Scene scene) {
+// Compute color at the hit point using the scene's light sources and materials properties.
+// Returns the scene's background color if there is no hit.
+Color shade(Hit hit, Scene scene) {
   if (hit == null) return scene.backgroundColor;
 
   final Vec3 N = hit.normal, P = hit.point;
-  final Color diffuse = hit.surface.diffuse; //<>//
-  return scene.lights.stream()
-    .filter(light -> {
-      // If the shadow ray intersects a scene object _before_ it hits the light,
-      // the light does _not_ contribute to this point.
-      final Vec3 pToL = light.position.sub(P), pToLDir = pToL.normalize();
-      // Start the shadow ray epsilon away from the surface to prevent "immediately" hitting the surface _at_ `P`.
-      final Ray shadowRay = new Ray(P.add(pToLDir.mult(1e-4)), pToLDir);
-      final Hit shadowHit = scene.raycast(shadowRay);
-      return shadowHit == null || shadowHit.t >= pToL.length();
-    })
-    .map(light -> {
-      final Vec3 lightDir = light.position.sub(P).normalize();
-      return diffuse.mult(light.c).mult(max(N.dot(lightDir), 0));
-    })
-    .reduce(new Color(0, 0, 0), Color::add);
+  final Color diffuseColor = hit.surface.diffuse;
+  Color c = new Color(0, 0, 0);
+
+  for (Light light : scene.lights) {
+    Vec3 pToL = light.position.sub(P);
+    Vec3 pToLDir = pToL.normalize();
+    // Start the shadow ray epsilon away from the surface to prevent "immediately" hitting the surface at `P`.
+    Ray shadowRay = new Ray(P.add(pToLDir.mult(1e-4)), pToLDir);
+    Hit shadowHit = scene.raycast(shadowRay);
+    if (shadowHit == null || shadowHit.t >= pToL.length()) { //<>//
+      // Diffuse contribution
+      float diffuseIntensity = Math.max(N.dot(pToLDir), 0);
+      Color diffuse = diffuseColor.mult(light.c).mult(diffuseIntensity); //<>//
+      // Specular contribution
+      if (hit.surface.specular != null) {
+        Vec3 V = scene.cameraPosition.sub(P).normalize(); // Vector to the viewer
+        Vec3 H = pToLDir.add(V).normalize(); // Halfway vector
+        float specIntensity = (float) Math.pow(Math.max(N.dot(H), 0), hit.surface.specPower);
+        Color specular = hit.surface.specular.mult(light.c).mult(specIntensity);
+        diffuse = diffuse.add(specular);
+      }
+      c = c.add(diffuse);
+    }
+  }
+
+  // Reflective contribution
+  if (hit.surface.reflectivity > 0) {
+    Vec3 R = reflect(P.sub(scene.cameraPosition).normalize(), N); // Reflect direction
+    if (hit.surface.glossRadius > 0) {
+      R = R.add(randomInSphere(hit.surface.glossRadius).normalize()); // Add fuzz factor
+    }
+    Ray reflectRay = new Ray(P.add(R.mult(1e-4)), R);
+    Hit reflectHit = scene.raycast(reflectRay);
+    if (reflectHit != null) {
+      Color reflectedColor = shade(reflectHit, scene); // Recursive call for the reflected ray
+      c = c.add(reflectedColor.mult(hit.surface.reflectivity));
+    }
+  }
+
+  return c;
 }
 
+// Calculate reflection direction
+Vec3 reflect(Vec3 I, Vec3 N) { return I.sub(N.mult(2 * I.dot(N))); }
+
+// Generate a random point inside a sphere of a given radius, using rejection sampling.
+Vec3 randomInSphere(float radius) {
+    Vec3 p;
+    do {
+        p = new Vec3((float)Math.random(), (float)Math.random(), (float)Math.random()).mult(2.0f).sub(new Vec3(1, 1, 1));
+    } while (p.dot(p) >= 1.0); // Ensure the point is within the unit sphere
+    return p.mult(radius);
+}
+ //<>//
 void drawScene(Scene scene) {
   println("Drawing scene");
   reset_timer();
@@ -161,7 +197,7 @@ void drawScene(Scene scene) {
       // This ray starts at the camera and points at the pixel on the view plane.
       final Ray cameraRay = new Ray(cameraPos, viewPlanePos.normalize());
       final Hit hit = scene.raycast(cameraRay);
-      final Color c = shadeDiffuse(hit, scene).mult(255);
+      final Color c = shade(hit, scene).mult(255);
       set(x, y, color(c.r, c.g, c.b));
     }
   }
