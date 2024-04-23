@@ -62,6 +62,16 @@ class Scene {
     namedObjects.put(name, object);
   }
 
+  // `velocity` is the amount of translation the object undergoes during one frame.
+  void setLatestObjectVelocity(Vec3 velocity) {
+    final Object object = popObject();
+    if (object == null) {
+      throw new IllegalArgumentException("Attempted to set the velocity of the latest added object, but no " +
+        (accelObjects != null ? "accellerated " : "") + "objects have been added to the scene.");
+    }
+    addObject(new MovingObject(object, velocity));
+  }
+
   // Create an instance of a named object and add that object to the list of scene objects.
   // Save the inverse of the current transformation matrix as part of the instance.
   void createInstance(String name) {

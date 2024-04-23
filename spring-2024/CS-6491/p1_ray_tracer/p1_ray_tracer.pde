@@ -118,7 +118,13 @@ void interpret(String filePath, Scene scene) {
     case "end_accel":
       scene.endAccel();
       break;
-
+    // Change the last object that was defined into a moving object.
+    // The values specify the amount of translation this object undergoes during one frame.
+    // You can implement this in a manner similar to an instanced object, by translating the incoming ray's origin.
+    // Remember that any shadow rays shot from this object should use the same random time!
+    case "moving_object":
+      scene.setLatestObjectVelocity(new Vec3(float(ts[1]), float(ts[2]), float(ts[3])));
+      break;
     case "read":
       interpret(ts[1], scene);
       break;
@@ -131,29 +137,28 @@ void interpret(String filePath, Scene scene) {
 
 // Compute color at the hit point using the scene's light sources and materials properties.
 // Returns the scene's background color if there is no hit.
-Color shade(Hit hit, Scene scene) {
+Color shade(Hit hit, Scene scene, float time) {
   if (hit == null) return scene.backgroundColor;
 
-  final Vec3 N = hit.normal, P = hit.point;
+  final Vec3 N = hit.normal, P = hit.point; //<>//
   final Color diffuseColor = hit.surface.diffuse;
-  Color c = new Color(0, 0, 0);
-
-  for (Light light : scene.lights) {
-    Vec3 pToL = light.position.sub(P);
-    Vec3 pToLDir = pToL.normalize(); //<>//
+  Color c = new Color(0, 0, 0); // Accumulated return color
+  for (Light light : scene.lights) { //<>//
+    final Vec3 pToL = light.position.sub(P);
+    final Vec3 pToLDir = pToL.normalize();
     // Start the shadow ray epsilon away from the surface to prevent "immediately" hitting the surface at `P`.
-    Ray shadowRay = new Ray(P.add(pToLDir.mult(1e-4)), pToLDir);
-    Hit shadowHit = scene.raycast(shadowRay); //<>//
+    final Ray shadowRay = new Ray(P.add(pToLDir.mult(1e-4)), pToLDir, time);
+    final Hit shadowHit = scene.raycast(shadowRay);
     if (shadowHit == null || shadowHit.t >= pToL.length()) {
       // Diffuse contribution
       float diffuseIntensity = Math.max(N.dot(pToLDir), 0);
       Color diffuse = diffuseColor.mult(light.c).mult(diffuseIntensity);
       // Specular contribution
       if (hit.surface.specular != null) {
-        Vec3 V = scene.cameraPosition.sub(P).normalize(); // Vector to the viewer
-        Vec3 H = pToLDir.add(V).normalize(); // Halfway vector
-        float specIntensity = (float) Math.pow(Math.max(N.dot(H), 0), hit.surface.specPower);
-        Color specular = hit.surface.specular.mult(light.c).mult(specIntensity);
+        final Vec3 V = scene.cameraPosition.sub(P).normalize(); // Vector to the viewer
+        final Vec3 H = pToLDir.add(V).normalize(); // Halfway vector
+        final float specIntensity = (float)Math.pow(Math.max(N.dot(H), 0), hit.surface.specPower);
+        final Color specular = hit.surface.specular.mult(light.c).mult(specIntensity);
         diffuse = diffuse.add(specular);
       }
       c = c.add(diffuse);
@@ -163,14 +168,13 @@ Color shade(Hit hit, Scene scene) {
   // Reflective contribution
   if (hit.surface.reflectivity > 0) {
     Vec3 R = reflect(P.sub(scene.cameraPosition).normalize(), N); // Reflect direction
-    if (hit.surface.glossRadius > 0) {
-      R = R.add(randomInSphere(hit.surface.glossRadius).normalize()); // Add fuzz factor
-    }
-    Ray reflectRay = new Ray(P.add(R.mult(1e-4)), R);
-    Hit reflectHit = scene.raycast(reflectRay);
+    if (hit.surface.glossRadius > 0) R = R.add(randomInSphere(hit.surface.glossRadius).normalize()); // Add fuzz factor
+
+    final Ray reflectRay = new Ray(P.add(R.mult(1e-4)), R, time);
+    final Hit reflectHit = scene.raycast(reflectRay);
     if (reflectHit != null) {
-      Color reflectedColor = shade(reflectHit, scene); // Recursive call for the reflected ray
-      c = c.add(reflectedColor.mult(hit.surface.reflectivity));
+      final Color reflected = shade(reflectHit, scene, time); // Recursively reflected the ray
+      c = c.add(reflected.mult(hit.surface.reflectivity));
     }
   }
 
@@ -206,9 +210,10 @@ void drawScene(Scene scene) {
         final float offsetX = shouldSubsample ? (float)Math.random() - 0.5f : 0;
         final float offsetY = shouldSubsample ? (float)Math.random() - 0.5f : 0;
         final Vec3 viewPlanePos = new Vec3((x - width/2 + offsetX)*(2*kw/width), (y - height/2 + offsetY)*(-2*kh/height), -1);
-        final Ray cameraRay = new Ray(cameraPos, viewPlanePos.normalize());
+        final float time = (float)Math.random(); // Time during the frame's duration
+        final Ray cameraRay = new Ray(cameraPos, viewPlanePos.normalize(), time);
         final Hit hit = scene.raycast(cameraRay);
-        c = c.add(shade(hit, scene));
+        c = c.add(shade(hit, scene, time));
       }
       c = c.div(raysPerPixel).mult(255); // Average the color across sub-pixel rays and scale range from [0,1] to [0,255].
       set(x, y, color(c.r, c.g, c.b));

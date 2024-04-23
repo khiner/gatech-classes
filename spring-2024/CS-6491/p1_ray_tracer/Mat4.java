@@ -77,7 +77,7 @@ public class Mat4 {
     );
   }
 
-  public Ray transformRay(Ray ray) { return new Ray(transform(ray.origin), transformDirection(ray.direction)); }
+  public Ray transformRay(Ray ray) { return new Ray(transform(ray.origin), transformDirection(ray.direction), ray.time); }
 
   public static Mat4 translate(float tx, float ty, float tz) {
     Mat4 result = new Mat4();
@@ -86,6 +86,7 @@ public class Mat4 {
     result.data[11] = tz;
     return result;
   }
+  public static Mat4 translate(Vec3 v) { return translate(v.x, v.y, v.z); }
 
   public static Mat4 scale(float sx, float sy, float sz) {
     Mat4 result = new Mat4();
