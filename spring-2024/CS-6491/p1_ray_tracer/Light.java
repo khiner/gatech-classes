@@ -1,9 +1,9 @@
-class Light {
-  final Vec3 position;
+abstract class Light {
   final Color c;
 
-  Light(Vec3 position, Color c) {
-    this.position = position;
+  Light(Color c) {
     this.c = c;
   }
+
+  abstract Vec3 samplePosition();
 }

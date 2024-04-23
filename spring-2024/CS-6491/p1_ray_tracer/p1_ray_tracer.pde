@@ -62,7 +62,12 @@ void interpret(String filePath, Scene scene) {
       scene.fovDegrees = float(ts[1]);
       break;
     case "light":
-      scene.lights.add(new Light(new Vec3(float(ts[1]), float(ts[2]), float(ts[3])), new Color(float(ts[4]), float(ts[5]), float(ts[6]))));
+      scene.lights.add(new PointLight(new Vec3(float(ts[1]), float(ts[2]), float(ts[3])), new Color(float(ts[4]), float(ts[5]), float(ts[6]))));
+      break;
+    // Create a disk light source, with center (x, y, z), a given radius, the direction that the light is facing (dx, dy, dz), and the light color (r, g, b).
+    // Shadow rays are shot to random locations on this disk. When many rays per pixel are used, this creates soft shadows.
+    case "disk_light":
+      scene.lights.add(new DiskLight(float(ts[4]), new Vec3(float(ts[1]), float(ts[2]), float(ts[3])), new Vec3(float(ts[5]), float(ts[6]), float(ts[7])), new Color(float(ts[8]), float(ts[9]), float(ts[10]))));
       break;
     case "surface":
       scene.surface = new Surface(new Color(float(ts[1]), float(ts[2]), float(ts[3])));
@@ -135,33 +140,31 @@ void interpret(String filePath, Scene scene) {
   });
 }
 
-// Compute color at the hit point using the scene's light sources and materials properties.
+// Compute color at the hit point using the scene's light sources and materials properties. //<>//
 // Returns the scene's background color if there is no hit.
 Color shade(Hit hit, Scene scene, float time) {
-  if (hit == null) return scene.backgroundColor;
+  if (hit == null) return scene.backgroundColor; //<>//
 
-  final Vec3 N = hit.normal, P = hit.point; //<>//
+  final Vec3 N = hit.normal, P = hit.point;
   final Color diffuseColor = hit.surface.diffuse;
   Color c = new Color(0, 0, 0); // Accumulated return color
-  for (Light light : scene.lights) { //<>//
-    final Vec3 pToL = light.position.sub(P);
+  for (Light light : scene.lights) {
+    final Vec3 pToL = light.samplePosition().sub(P);
     final Vec3 pToLDir = pToL.normalize();
-    // Start the shadow ray epsilon away from the surface to prevent "immediately" hitting the surface at `P`.
+    // Start the shadow ray epsilo%5n away from the surface to prevent "immediately" hitting the surface at `P`.
     final Ray shadowRay = new Ray(P.add(pToLDir.mult(1e-4)), pToLDir, time);
     final Hit shadowHit = scene.raycast(shadowRay);
     if (shadowHit == null || shadowHit.t >= pToL.length()) {
       // Diffuse contribution
-      float diffuseIntensity = Math.max(N.dot(pToLDir), 0);
-      Color diffuse = diffuseColor.mult(light.c).mult(diffuseIntensity);
+      final float diffuseIntensity = Math.max(N.dot(pToLDir), 0);
+      c = c.add(diffuseColor.mult(light.c).mult(diffuseIntensity));
       // Specular contribution
       if (hit.surface.specular != null) {
         final Vec3 V = scene.cameraPosition.sub(P).normalize(); // Vector to the viewer
         final Vec3 H = pToLDir.add(V).normalize(); // Halfway vector
         final float specIntensity = (float)Math.pow(Math.max(N.dot(H), 0), hit.surface.specPower);
-        final Color specular = hit.surface.specular.mult(light.c).mult(specIntensity);
-        diffuse = diffuse.add(specular);
+        c = c.add(hit.surface.specular.mult(light.c).mult(specIntensity));
       }
-      c = c.add(diffuse);
     }
   }
 
@@ -186,11 +189,12 @@ Vec3 reflect(Vec3 I, Vec3 N) { return I.sub(N.mult(2 * I.dot(N))); }
 
 // Generate a random point inside a sphere of a given radius, using rejection sampling.
 Vec3 randomInSphere(float radius) {
-    Vec3 p;
-    do {
-        p = new Vec3((float)Math.random(), (float)Math.random(), (float)Math.random()).mult(2.0f).sub(new Vec3(1, 1, 1));
-    } while (p.dot(p) >= 1.0); // Ensure the point is within the unit sphere
-    return p.mult(radius);
+  Vec3 p;
+  do {
+    p = new Vec3((float)Math.random(), (float)Math.random(), (float)Math.random()).mult(2).sub(1);
+  } while (p.dot(p) >= 1.0); // Ensure the point is within the unit sphere.
+
+  return p.mult(radius);
 }
  //<>//
 void drawScene(Scene scene) {
