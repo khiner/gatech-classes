@@ -5,5 +5,5 @@ abstract class Light {
     this.c = c;
   }
 
-  abstract Vec3 samplePosition();
+  abstract Vec3 samplePoint();
 }

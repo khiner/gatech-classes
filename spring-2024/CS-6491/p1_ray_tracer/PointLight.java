@@ -6,5 +6,5 @@ class PointLight extends Light {
     this.position = position;
   }
 
-  Vec3 samplePosition() { return position; }
+  Vec3 samplePoint() { return position; }
 }

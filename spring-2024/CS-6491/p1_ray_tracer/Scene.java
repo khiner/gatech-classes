@@ -6,15 +6,17 @@ import java.util.Objects;
 import java.util.Comparator;
 
 class Scene {
-  Mat4Stack stack = new Mat4Stack();
+  final Vec3 cameraPosition = new Vec3(0, 0, 0); // Not yet configurable
+  Lens lens = new Lens(0, 0);
   float fovDegrees = 0;
-  Color backgroundColor = new Color(0, 0, 0);
-  final Vec3 cameraPosition = new Vec3(0, 0, 0); // Never changes
-  List<Light> lights = new ArrayList();
-  List<Object> objects = new ArrayList();
   // When the number of rays is larger than one, sub-pixel rays are created in random positions within each pixel.
   // The colors of these rays are averaged together to give the final color of the pixel.
   int raysPerPixel = 1;
+  Color backgroundColor = new Color(0, 0, 0);
+  List<Light> lights = new ArrayList();
+  List<Object> objects = new ArrayList();
+
+  Mat4Stack stack = new Mat4Stack();
 
   // Active list of objects to be wrapped in an acceleration data structure.
   // Non-null after `beginAccel` is called, and null again after `endAccel`.
