@@ -7,14 +7,14 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 void setup() {
-  size (300, 300);
+  size(300, 300);
   noStroke();
   background (0, 0, 0);
 }
 
 // Exclusing 's' prefix and extension
 static String keyToFileName(char ch) {
-  if (ch >= '1' && ch <= '9') return String.format("%02da", ch - '0');
+  if (ch >= '0' && ch <= '9') return String.format("%02da", ch - '0');
 
   switch (ch) {
     case '!': return "01b";

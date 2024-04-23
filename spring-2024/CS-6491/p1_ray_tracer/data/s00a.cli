@@ -1,0 +1,25 @@
+# implicit surface
+
+rays_per_pixel 100
+lens  0.15  4
+fov 60
+
+# blue background
+
+background 0.2 0.2 1
+
+# light sources 
+
+light -2 2 0  .4 .4 .4
+disk_light  -3 3 -4  1  1 -0.5 0.5  .8 .8 .8
+
+# no ground plane
+
+translate 0 0 -5
+glossy   0 0.4 0  .7 .7 .7  20  0 0
+
+begin_accel
+read implicit_mesh.cli
+end_accel
+
+render
