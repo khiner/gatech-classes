@@ -1179,7 +1179,7 @@ ce new vertex?
 
 removes: 1 vert, 2 tris, 3 edges
 
-cost of edge collapse: dist. to plances of nearby tri's
+cost of edge collapse: dist. to planes of nearby tri's
 
 signed distance to line
 - f(x,y) = ax + by + c = 0
@@ -1199,7 +1199,7 @@ signed function f(x) = ax + by + cz + d = P^TX
 
 squared dist: g(x) = (P^TX)^2 = X^T(PP^T)x (4x4 matrix, K_P = PP^T is symmetric, distance sq. to _any_ number of planes)
 
-error: g(x) = \sum_{i=1}^n{X^T K_P_i X} = X^T (\sum K_p_i) X (\sum K_p_i \trangleeq M is 4x4 matrix)
+error: $g(x) = \sum_{i=1}^n{X^T K_P_i X} = X^T (\sum K_p_i) X (\sum K_p_i)$\trangleeq M is 4x4 matrix)
 
 g(x) = X^TMX
 
