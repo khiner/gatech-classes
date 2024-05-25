@@ -3,8 +3,11 @@
 \usepackage{mathtools}
 \usepackage{amsfonts}
 \usepackage{hyperref}
+\usepackage{enumitem}
 \usepackage[margin=1in]{geometry}
 \usepackage[style=ieee]{biblatex}
+
+\setlist[itemize]{itemsep=0.8pt}
 
 \addbibresource{Bib.bib}
 
@@ -65,22 +68,29 @@ MIDI performance data is collected from live performances on a Roland TD-17 elec
 
 To prepare the data for training and evaluation, we perform the following pipeline to find 0.5s labeled segments of single-drum audio clips:
 \begin{itemize}
-\item Filter the dataset down to a subset of sessions recorded with more conventional drum kit settings (i.e., excluding heavily electronic drum kits), to ease the learning task.
-\item Find $k=5$ drum instrument classes with the highest note-onset occurrences across this reduced dataset.
+\item Filter out sessions recorded with unconventional drum kits, to ease the learning task. 6 manually-selected kits out of 43 were excluded from training.
+\item Find the $k=5$ drum instrument classes with the highest note-onset occurrences across this reduced dataset.
 \item Using heuristic methods, search across the reduced MIDI session dataset to find sections of the recordings that are likely to contain audio belonging to only \textit{one} of the most common $k$ drum instrument classes. \footnote{More details can be found in the \href{https://github.com/khiner/DrumClassification\#prepare-data-for-training}{Data Preparation section} of the accompanying project repo}.
 \item Run a cleanup pass to account for imprecise MIDI alignment by removing rows with clips whose peak audio onset arrives late in the clip.
 \end{itemize}
 
-The resulting ``chopped'' dataset has the following distribution of class labels, in decreasing order of occurrence frequency:
-\textit{closed hi-hat}, \textit{bass drum}, \textit{ride cymbal}, \textit{snare}, and \textit{pedal hi-hat} (shown in \ref{fig:class_occurrences}).
+Figure \ref{fig:slim_dataset_note_occurrences} shows the distribution of unique MIDI note occurrences in the "slimmed" dataset by instrument.
 
-We note that the dataset is highly imbalanced, and we leave it to future work to explore model adaptations or data augmentation/reduction techniques to address this issue.
+Figure \ref{fig:class_occurrences} shows the highly unbalanced distribution of class labels in the ``chopped'' dataset.
+We do not explore model/training adaptations or augmentation strategies to explicitly account for this class imbalance in this project.
 
 \begin{figure}
-\centering
-\includegraphics[width=0.45\textwidth]{figures/chopped_dataset_label_occurrences.png}
-\caption{Distribution of drum instrument classes in the ``chopped'' set.}
-\label{fig:class_occurrences}
+  \centering
+  \includegraphics[width=0.45\textwidth]{figures/slim_dataset_note_occurrences.png}
+  \caption{Distribution of unique MIDI note occurrences in the ``slimmed" dataset, by instrument name}
+  \label{fig:slim_dataset_note_occurrences}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.45\textwidth]{figures/chopped_dataset_label_occurrences.png}
+  \caption{Distribution of drum instrument classes in the ``chopped'' set.}
+  \label{fig:class_occurrences}
 \end{figure}
 
 \subsection{Audio feature extraction}
